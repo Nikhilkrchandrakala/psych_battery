@@ -1,0 +1,10 @@
+{
+  "name": "SSB Psychological Assessment & Evaluation Platform",
+  "description": "A timed psychological assessment module for the SSB course platform, featuring automated slide presentation, handwritten response uploads, and a full assessor review workflow.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

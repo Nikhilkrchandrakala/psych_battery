@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Custom Colors for Elegant Dark */
+  --color-app-bg: #0A0A0C;
+  --color-app-header: #0C0C0E;
+  --color-app-sidebar: #121214;
+  --color-app-card: #161618;
+  --color-app-border: #27272A; /* zinc-800 approx */
+  --color-app-accent: #C5A028; /* sophisticated gold */
+  --color-app-accent-light: #E8C040;
+  --color-app-accent-dark: #8C6A0F;
+  --color-app-text-main: #D4D4D8; /* zinc-300 approx */
+  --color-app-text-bright: #F4F4F5; /* zinc-100 approx */
+  --color-app-text-muted: #71717A; /* zinc-500 approx */
+}
+
+@layer base {
+  body {
+    @apply bg-app-bg text-app-text-main antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-app-text-bright tracking-tight;
+  }
+}
+
+/* Custom Utilities */
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+}
