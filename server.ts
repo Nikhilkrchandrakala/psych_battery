@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
-import { User, Assessment, Slide, Submission } from './server/models.js';
+import { User, Assessment, Slide, Submission, AdminUser } from './server/models.js';
 
 dotenv.config();
 
@@ -17,13 +17,42 @@ app.use(express.json());
 
 // Authentication Middleware
 const authenticate = async (req: any, res: any, next: any) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  const authHeader = req.headers.authorization;
+  let token = null;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else if (req.headers.token) {
+    token = req.headers.token;
+  }
+
   if (!token) return res.status(401).json({ message: 'No token provided' });
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
-    req.user = await User.findById(decoded.id);
-    if (!req.user) return res.status(401).json({ message: 'User not found' });
+    const decoded = jwt.verify(token.trim(), JWT_SECRET) as any;
+    let foundUser = null;
+
+    // Check role from decoded payload
+    if (decoded.role === 'admin' || decoded.role === 'franchise') {
+      const admin = await AdminUser.findById(decoded.id);
+      if (admin) {
+        foundUser = admin.toObject ? admin.toObject() : admin;
+        foundUser.role = 'admin';
+      }
+    }
+
+    // Fallback/Standard lookup in User (students / main site UserDetails)
+    if (!foundUser) {
+      const user = await User.findById(decoded.id);
+      if (user) {
+        foundUser = user.toObject ? user.toObject() : user;
+        if (!foundUser.role) {
+          foundUser.role = 'student';
+        }
+      }
+    }
+
+    if (!foundUser) return res.status(401).json({ message: 'User not found' });
+    req.user = foundUser;
     next();
   } catch (err) {
     res.status(401).json({ message: 'Invalid token' });
@@ -74,13 +103,29 @@ async function startServer() {
   app.post('/api/auth/login', async (req, res) => {
     try {
       const { email, password } = req.body;
-      const user = await User.findOne({ email });
-      if (!user || !(await bcrypt.compare(password, user.password as string))) {
+      let foundUser: any = await User.findOne({ email: email.toLowerCase() });
+      let calculatedRole = 'student';
+
+      if (!foundUser) {
+        const admin = await AdminUser.findOne({ email: email.toLowerCase() });
+        if (admin) {
+          foundUser = admin;
+          calculatedRole = 'admin';
+        }
+      }
+
+      if (!foundUser || !(await bcrypt.compare(password, foundUser.password as string))) {
         return res.status(401).json({ message: 'Invalid credentials' });
       }
 
-      const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
-      res.json({ user, token });
+      const role = foundUser.role || calculatedRole;
+      const userObj = foundUser.toObject ? foundUser.toObject() : foundUser;
+      
+      delete userObj.password;
+      userObj.role = role;
+
+      const token = jwt.sign({ id: foundUser._id, role }, JWT_SECRET, { expiresIn: '7d' });
+      res.json({ user: userObj, token });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -254,3 +299,5 @@ async function startServer() {
 }
 
 startServer();
+
+export default app;

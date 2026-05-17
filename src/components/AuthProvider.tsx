@@ -27,6 +27,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdminUser, setIsAdminUser] = useState(false);
 
   const checkAuth = async () => {
+    // SSO: Extract token from query params if available
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token');
+    if (urlToken) {
+      localStorage.setItem('auth_token', urlToken);
+      // Clean up URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     const token = localStorage.getItem('auth_token');
     if (!token) {
       setLoading(false);

@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
+  phone: String,
   password: { type: String, required: true },
   role: { type: String, enum: ['student', 'assessor', 'admin'], default: 'student' },
   profileImage: String,
@@ -87,3 +88,21 @@ export const User = mongoose.model('User', UserSchema);
 export const Assessment = mongoose.model('Assessment', AssessmentSchema);
 export const Slide = mongoose.model('Slide', SlideSchema);
 export const Submission = mongoose.model('Submission', SubmissionSchema);
+
+const AdminUserSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, default: 'admin' },
+}, { collection: 'adminusers', timestamps: true });
+
+AdminUserSchema.set('toJSON', {
+  transform: (doc, ret: any) => {
+    ret.id = ret._id;
+    delete ret._id;
+    delete ret.__v;
+    delete ret.password;
+    return ret;
+  }
+});
+
+export const AdminUser = mongoose.model('AdminUser', AdminUserSchema);
