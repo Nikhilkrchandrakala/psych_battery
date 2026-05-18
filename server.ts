@@ -15,14 +15,88 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev-only';
 
 app.use(express.json());
 
+// --- MOCK DATA FOR OFFLINE / BYPASS PREVIEW MODE ---
+const MOCK_ASSESSMENTS = [
+  {
+    _id: 'mock-assessment-1',
+    id: 'mock-assessment-1',
+    title: 'Psychological Test Battery - Mock Series 1',
+    description: 'A comprehensive timed evaluation of psychological profiles, comprising TAT, WAT, and SRT.',
+    duration: 30,
+    slidesCount: 3
+  },
+  {
+    _id: 'mock-assessment-2',
+    id: 'mock-assessment-2',
+    title: 'TAT (Thematic Apperception Test) Practice',
+    description: 'Practice series containing high-resolution thematic slides with a 30-second viewing timer.',
+    duration: 15,
+    slidesCount: 2
+  }
+];
+
+const MOCK_SLIDES: Record<string, any[]> = {
+  'mock-assessment-1': [
+    { _id: 'slide-1-1', id: 'slide-1-1', assessmentId: 'mock-assessment-1', imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb', order: 1, duration: 10 },
+    { _id: 'slide-1-2', id: 'slide-1-2', assessmentId: 'mock-assessment-1', imageUrl: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05', order: 2, duration: 10 },
+    { _id: 'slide-1-3', id: 'slide-1-3', assessmentId: 'mock-assessment-1', imageUrl: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d', order: 3, duration: 10 }
+  ],
+  'mock-assessment-2': [
+    { _id: 'slide-2-1', id: 'slide-2-1', assessmentId: 'mock-assessment-2', imageUrl: 'https://images.unsplash.com/photo-1472214222541-d510753a4907', order: 1, duration: 15 },
+    { _id: 'slide-2-2', id: 'slide-2-2', assessmentId: 'mock-assessment-2', imageUrl: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e', order: 2, duration: 15 }
+  ]
+};
+
+const mockSubmissions: any[] = [];
+
 // Authentication Middleware
 const authenticate = async (req: any, res: any, next: any) => {
+  const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+
   const authHeader = req.headers.authorization;
   let token = null;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.split(' ')[1];
   } else if (req.headers.token) {
     token = req.headers.token;
+  }
+
+  if (isBypass) {
+    let mockUser = {
+      _id: 'mock-user-123456789012',
+      id: 'mock-user-123456789012',
+      name: 'Preview Student',
+      email: 'student@ssb.com',
+      role: 'student'
+    };
+
+    if (token) {
+      try {
+        const decoded = jwt.verify(token.trim(), JWT_SECRET) as any;
+        if (decoded.role === 'admin') {
+          mockUser = {
+            _id: 'mock-admin-123456789012',
+            id: 'mock-admin-123456789012',
+            name: 'Preview Admin',
+            email: 'admin@ssb.com',
+            role: 'admin'
+          };
+        } else if (decoded.role === 'assessor') {
+          mockUser = {
+            _id: 'mock-assessor-123456789012',
+            id: 'mock-assessor-123456789012',
+            name: 'Preview Assessor',
+            email: 'assessor@ssb.com',
+            role: 'assessor'
+          };
+        }
+      } catch (e) {
+        // Continue with default mock student if token verify fails
+      }
+    }
+    
+    req.user = mockUser;
+    return next();
   }
 
   if (!token) return res.status(401).json({ message: 'No token provided' });
@@ -101,6 +175,24 @@ async function startServer() {
   });
 
   app.post('/api/auth/login', async (req, res) => {
+    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    if (isBypass) {
+      const { email } = req.body;
+      const lowercaseEmail = (email || '').toLowerCase();
+      const role = lowercaseEmail.includes('admin') ? 'admin' : (lowercaseEmail.includes('assessor') ? 'assessor' : 'student');
+      
+      const mockUser = {
+        _id: `mock-${role}-123456789012`,
+        id: `mock-${role}-123456789012`,
+        name: `Preview ${role.charAt(0).toUpperCase() + role.slice(1)}`,
+        email: lowercaseEmail || `${role}@ssb.com`,
+        role: role
+      };
+
+      const token = jwt.sign({ id: mockUser._id, role }, JWT_SECRET, { expiresIn: '7d' });
+      return res.json({ user: mockUser, token });
+    }
+
     try {
       const { email, password } = req.body;
       let foundUser: any = await User.findOne({ email: email.toLowerCase() });
@@ -137,6 +229,11 @@ async function startServer() {
 
   // --- ASSESSMENT ROUTES ---
   app.get('/api/assessments', authenticate, async (req, res) => {
+    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    if (isBypass) {
+      return res.json(MOCK_ASSESSMENTS);
+    }
+
     try {
       const assessments = await Assessment.find();
       res.json(assessments);
@@ -146,6 +243,13 @@ async function startServer() {
   });
 
   app.get('/api/assessments/:id', authenticate, async (req, res) => {
+    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    if (isBypass) {
+      const assessment = MOCK_ASSESSMENTS.find(a => a._id === req.params.id);
+      if (!assessment) return res.status(404).json({ message: 'Not found' });
+      return res.json(assessment);
+    }
+
     try {
       const assessment = await Assessment.findById(req.params.id);
       if (!assessment) return res.status(404).json({ message: 'Not found' });
@@ -185,6 +289,12 @@ async function startServer() {
   });
 
   app.get('/api/assessments/:id/slides', authenticate, async (req, res) => {
+    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    if (isBypass) {
+      const slides = MOCK_SLIDES[req.params.id] || [];
+      return res.json(slides);
+    }
+
     try {
       const slides = await Slide.find({ assessmentId: req.params.id }).sort('order');
       res.json(slides);
@@ -219,6 +329,17 @@ async function startServer() {
 
   // --- SUBMISSION ROUTES ---
   app.get('/api/submissions', authenticate, async (req: any, res) => {
+    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    if (isBypass) {
+      let filtered = mockSubmissions;
+      if (req.user.role === 'student') {
+        filtered = mockSubmissions.filter(s => s.userId === req.user._id);
+      } else if (req.user.role === 'assessor') {
+        filtered = mockSubmissions.filter(s => s.assessorId === req.user._id);
+      }
+      return res.json(filtered);
+    }
+
     try {
       let query: any = {};
       if (req.user.role === 'student') query.userId = req.user._id;
@@ -232,6 +353,13 @@ async function startServer() {
   });
 
   app.get('/api/submissions/:id', authenticate, async (req, res) => {
+    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    if (isBypass) {
+      const submission = mockSubmissions.find(s => s._id === req.params.id);
+      if (!submission) return res.status(404).json({ message: 'Submission not found' });
+      return res.json(submission);
+    }
+
     try {
       const submission = await Submission.findById(req.params.id).populate('userId', 'name email').populate('assessmentId', 'title');
       res.json(submission);
@@ -241,6 +369,21 @@ async function startServer() {
   });
 
   app.post('/api/submissions', authenticate, async (req: any, res) => {
+    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    if (isBypass) {
+      const newSub = {
+        ...req.body,
+        _id: `mock-sub-${Date.now()}`,
+        id: `mock-sub-${Date.now()}`,
+        userId: req.user._id,
+        user: { name: req.user.name, email: req.user.email },
+        assessment: MOCK_ASSESSMENTS.find(a => a._id === req.body.assessmentId) || { title: 'Psychology Test Battery' },
+        createdAt: new Date().toISOString()
+      };
+      mockSubmissions.push(newSub);
+      return res.status(201).json(newSub);
+    }
+
     try {
       const submission = new Submission({ ...req.body, userId: req.user._id });
       await submission.save();
@@ -251,6 +394,16 @@ async function startServer() {
   });
 
   app.put('/api/submissions/:id', authenticate, async (req, res) => {
+    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    if (isBypass) {
+      const idx = mockSubmissions.findIndex(s => s._id === req.params.id);
+      if (idx !== -1) {
+        mockSubmissions[idx] = { ...mockSubmissions[idx], ...req.body };
+        return res.json(mockSubmissions[idx]);
+      }
+      return res.status(404).json({ message: 'Submission not found' });
+    }
+
     try {
       const submission = await Submission.findByIdAndUpdate(req.params.id, req.body, { new: true });
       res.json(submission);
@@ -261,6 +414,15 @@ async function startServer() {
 
   // --- USER MANAGEMENT ---
   app.get('/api/users', authenticate, isAdmin, async (req, res) => {
+    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    if (isBypass) {
+      return res.json([
+        { _id: 'mock-user-123456789012', name: 'Preview Student', email: 'student@ssb.com', role: 'student' },
+        { _id: 'mock-assessor-123456789012', name: 'Preview Assessor', email: 'assessor@ssb.com', role: 'assessor' },
+        { _id: 'mock-admin-123456789012', name: 'Preview Admin', email: 'admin@ssb.com', role: 'admin' }
+      ]);
+    }
+
     try {
       const users = await User.find();
       res.json(users);
