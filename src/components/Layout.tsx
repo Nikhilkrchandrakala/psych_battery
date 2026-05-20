@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { LogOut, User, Menu, X, Shield, BookOpen, ClipboardList, Calendar, Users, LayoutDashboard } from 'lucide-react';
+import { LogOut, User, Menu, X, Shield, BookOpen, ClipboardList, Calendar, Users, LayoutDashboard, ArrowLeft, ExternalLink } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { cn } from '../lib/utils';
 
 const Layout: React.FC = () => {
-  const { user, profile, isAdminUser, logout } = useAuth();
+  const { user, profile, isAdminUser, logout, mainSiteUrl, adminPanelUrl } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -37,6 +37,16 @@ const Layout: React.FC = () => {
           </div>
 
           <nav className="space-y-1">
+            {/* Back to Main Site / Admin Panel */}
+            <a
+              href={profile?.role === 'assessor' || profile?.role === 'admin' ? adminPanelUrl : `${mainSiteUrl}/ProfileDashboard`}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group font-medium text-sm text-app-text-muted hover:text-app-accent hover:bg-app-accent/5 mb-4"
+            >
+              <ArrowLeft size={18} className="group-hover:text-app-accent transition-colors" />
+              <span>{profile?.role === 'assessor' || profile?.role === 'admin' ? 'Back to Admin Panel' : 'Back to Main Site'}</span>
+              <ExternalLink size={12} className="ml-auto opacity-40" />
+            </a>
+
             <div className="px-3 py-2 text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] mb-3">
               Platform Suite
             </div>
@@ -151,7 +161,15 @@ const Layout: React.FC = () => {
                   {item.label}
                 </Link>
               ))}
-              <div className="pt-4 mt-4 border-t border-app-border">
+              <div className="pt-4 mt-4 border-t border-app-border space-y-4">
+                <a
+                  href={profile?.role === 'assessor' || profile?.role === 'admin' ? adminPanelUrl : `${mainSiteUrl}/ProfileDashboard`}
+                  className="flex items-center gap-4 text-app-accent font-medium text-lg"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <ArrowLeft size={24} />
+                  {profile?.role === 'assessor' || profile?.role === 'admin' ? 'Back to Admin' : 'Back to Main Site'}
+                </a>
                  <button
                   onClick={handleLogout}
                   className="flex items-center gap-4 text-red-400 font-medium text-lg"

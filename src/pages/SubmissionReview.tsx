@@ -145,7 +145,7 @@ const SubmissionReview: React.FC = () => {
       <div className="flex gap-1 bg-app-sidebar/50 p-1 rounded-2xl border border-app-border w-fit shadow-inner">
         {[
           { id: 'dossier', label: 'Stimuli Dossier', icon: FileText },
-          { id: 'evaluation', label: 'Clinical Remarks', icon: MessageSquare },
+          { id: 'evaluation', label: 'Clinical Remarks & OCR', icon: MessageSquare },
           { id: 'meeting', label: 'Intervention Plan', icon: Calendar }
         ].map(tab => (
           <button
@@ -168,23 +168,23 @@ const SubmissionReview: React.FC = () => {
            {activeTab === 'dossier' && (
              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                 {submission.answerSheetUrls?.map((url, i) => (
+                 {submission.uploadedFiles?.map((url, i) => (
                    <div key={i} className="bg-app-sidebar border border-app-border rounded-[2.5rem] p-6 shadow-2xl group flex flex-col space-y-4">
                      <div className="flex items-center justify-between text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2">
-                        <span>Plate Index {i + 1}</span>
-                        <a href={url} target="_blank" rel="noreferrer" className="text-app-accent hover:text-app-text-bright transition-colors flex items-center gap-1.5 underline decoration-app-accent/30 underline-offset-4">
+                        <span>Page {i + 1}</span>
+                        <a href={`http://localhost:3000${url}`} target="_blank" rel="noreferrer" className="text-app-accent hover:text-app-text-bright transition-colors flex items-center gap-1.5 underline decoration-app-accent/30 underline-offset-4">
                           Expand <Maximize2 size={12} />
                         </a>
                      </div>
                      <div className="bg-app-card rounded-2xl border border-app-border overflow-hidden relative cursor-zoom-in h-[500px]">
-                        <img src={url} alt={`Dossier Sheet ${i + 1}`} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+                        <img src={`http://localhost:3000${url}`} alt={`Handwritten Page ${i + 1}`} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
                      </div>
                    </div>
                  ))}
-                 {!submission.answerSheetUrls?.length && (
+                 {!submission.uploadedFiles?.length && (
                    <div className="bg-app-sidebar border border-app-border border-dashed rounded-[3rem] p-24 col-span-2 text-center opacity-50 space-y-4">
                       <AlertCircle size={48} className="mx-auto text-app-border" />
-                      <p className="text-app-text-muted font-serif italic text-xl">Dossier images are pending student transmission.</p>
+                      <p className="text-app-text-muted font-serif italic text-xl">Handwritten answers are pending student transmission.</p>
                    </div>
                  )}
                </div>
@@ -196,14 +196,23 @@ const SubmissionReview: React.FC = () => {
                <div className="space-y-4">
                   <div className="flex items-center gap-3 text-app-accent">
                     <Sparkles size={24} className="fill-current" />
-                    <h3 className="text-2xl font-black text-app-text-bright tracking-tight">Clinical Remarks</h3>
+                    <h3 className="text-2xl font-black text-app-text-bright tracking-tight">Clinical Remarks & OCR Transcript</h3>
                   </div>
                   <p className="text-app-text-muted text-sm font-serif italic leading-relaxed">
-                    Provide detailed psychological interpretation of the candidate's responses. Focus on consistency, spontaneity, and thematic undercurrents.
+                    Review the AI transcription of the handwritten notes, and provide your detailed psychological interpretation of the candidate's responses.
                   </p>
                </div>
 
                <div className="space-y-6">
+                  {submission.evaluation && (
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 block">Gemini 1.5 Flash - OCR Transcript</label>
+                      <div className="w-full bg-app-card/50 border border-app-border rounded-3xl p-6 text-app-text-muted font-mono text-sm h-64 overflow-y-auto whitespace-pre-wrap">
+                        {submission.evaluation}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-3">
                     <label className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 block">Comprehensive Assessment</label>
                     <textarea 

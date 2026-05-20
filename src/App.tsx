@@ -4,7 +4,6 @@ import { useAuth } from './components/AuthProvider';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
-import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import AssessmentEngine from './pages/AssessmentEngine'; 
 import SubmissionUpload from './pages/SubmissionUpload';
@@ -26,7 +25,8 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
+      {/* Legacy /login route — redirect to home (ProtectedRoute handles auth) */}
+      <Route path="/login" element={<Navigate to="/" replace />} />
       
       {/* Routes with Sidebar Layout */}
       <Route element={<Layout />}>

@@ -1,16 +1,33 @@
 import express from 'express';
+import cors from 'cors';
 import path from 'path';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import { User, Assessment, Slide, Submission, AdminUser } from './server/models.js';
+import multer from 'multer';
+import fs from 'fs';
+import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev-only';
+
+// CORS — allow main site, admin panel, and local dev origins
+app.use(cors({
+  origin: [
+    'https://ssbwithisv.in',
+    'https://www.ssbwithisv.in',
+    'https://psych.ssbwithisv.in',
+    'http://localhost:5173',
+    'http://localhost:5001',
+    'http://localhost:3000',
+  ],
+  credentials: true,
+}));
 
 app.use(express.json());
 
@@ -156,71 +173,11 @@ async function startServer() {
   }
 
   // --- AUTH ROUTES ---
-  app.post('/api/auth/register', async (req, res) => {
-    try {
-      const { name, email, password, role } = req.body;
-      const existingUser = await User.findOne({ email });
-      if (existingUser) return res.status(400).json({ message: 'Email already in use' });
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const user = new User({ name, email, password: hashedPassword, role });
-      await user.save();
-
-      const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
-      res.status(201).json({ user, token });
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
-    }
-  });
-
-  app.post('/api/auth/login', async (req, res) => {
-    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
-    if (isBypass) {
-      const { email } = req.body;
-      const lowercaseEmail = (email || '').toLowerCase();
-      const role = lowercaseEmail.includes('admin') ? 'admin' : (lowercaseEmail.includes('assessor') ? 'assessor' : 'student');
-      
-      const mockUser = {
-        _id: `mock-${role}-123456789012`,
-        id: `mock-${role}-123456789012`,
-        name: `Preview ${role.charAt(0).toUpperCase() + role.slice(1)}`,
-        email: lowercaseEmail || `${role}@ssb.com`,
-        role: role
-      };
-
-      const token = jwt.sign({ id: mockUser._id, role }, JWT_SECRET, { expiresIn: '7d' });
-      return res.json({ user: mockUser, token });
-    }
-
-    try {
-      const { email, password } = req.body;
-      let foundUser: any = await User.findOne({ email: email.toLowerCase() });
-      let calculatedRole = 'student';
-
-      if (!foundUser) {
-        const admin = await AdminUser.findOne({ email: email.toLowerCase() });
-        if (admin) {
-          foundUser = admin;
-          calculatedRole = 'admin';
-        }
-      }
-
-      if (!foundUser || !(await bcrypt.compare(password, foundUser.password as string))) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-      }
-
-      const role = foundUser.role || calculatedRole;
-      const userObj = foundUser.toObject ? foundUser.toObject() : foundUser;
-      
-      delete userObj.password;
-      userObj.role = role;
-
-      const token = jwt.sign({ id: foundUser._id, role }, JWT_SECRET, { expiresIn: '7d' });
-      res.json({ user: userObj, token });
-    } catch (error: any) {
-      res.status(500).json({ message: error.message });
-    }
-  });
+  // NOTE: /api/auth/register and /api/auth/login have been removed.
+  // Authentication now happens via SSO from the main site (ssbwithisv.in).
+  // The main site passes a JWT token via URL query parameter (?token=...)
+  // which the frontend's AuthProvider reads and stores.
+  // Only /api/auth/me is kept for token validation.
 
   app.get('/api/auth/me', authenticate, (req: any, res: any) => {
     res.json(req.user);
@@ -325,6 +282,94 @@ async function startServer() {
       res.status(400).json({ message: error.message });
     }
   });
+
+  // --- SUBMISSION UPLOAD & OCR ROUTES ---
+  const uploadDir = path.join(process.cwd(), 'public/uploads/assessments');
+  if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  const storage = multer.diskStorage({
+      destination: (req, file, cb) => cb(null, uploadDir),
+      filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.]/g, '')}`)
+  });
+  const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB per file
+
+  app.post('/api/submissions/:id/upload', authenticate, upload.array('files', 20), async (req: any, res: any) => {
+    try {
+      const submissionId = req.params.id;
+      const submission = await Submission.findById(submissionId);
+      if (!submission) return res.status(404).json({ message: 'Submission not found' });
+      
+      // Security: Only allow the student who owns the submission or an admin to upload
+      if (req.user.role === 'student' && submission.userId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      if (!req.files || (req.files as any[]).length === 0) {
+        return res.status(400).json({ message: 'No files uploaded' });
+      }
+
+      const files = req.files as any[];
+      const filePaths = files.map(f => `/uploads/assessments/${f.filename}`);
+
+      // Add files to submission
+      submission.uploadedFiles = [...(submission.uploadedFiles || []), ...filePaths];
+      submission.status = 'REVIEW_PENDING';
+      
+      // Perform OCR in background to not block the request
+      runOCR(submissionId, filePaths);
+
+      await submission.save();
+      res.json({ message: 'Files uploaded successfully', files: filePaths });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  async function runOCR(submissionId: string, filePaths: string[]) {
+    if (!process.env.GEMINI_API_KEY) {
+      console.warn("Skipping OCR: No GEMINI_API_KEY found");
+      return;
+    }
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      let fullTranscript = '';
+      
+      for (const filePath of filePaths) {
+        const absolutePath = path.join(process.cwd(), 'public', filePath);
+        if (fs.existsSync(absolutePath)) {
+          const fileData = fs.readFileSync(absolutePath);
+          const mimeType = filePath.endsWith('.png') ? 'image/png' : 'image/jpeg';
+          
+          try {
+            const response = await ai.models.generateContent({
+              model: 'gemini-1.5-flash',
+              contents: [
+                {
+                  role: 'user',
+                  parts: [
+                    { inlineData: { data: fileData.toString('base64'), mimeType } },
+                    { text: 'Please transcribe the handwritten text in this image accurately. Do not summarize, just output the raw text.' }
+                  ]
+                }
+              ]
+            });
+            fullTranscript += `\\n\\n--- Page Transcript ---\\n\\n${response.text}`;
+          } catch (apiErr) {
+            console.error(`Gemini OCR failed for ${filePath}:`, apiErr);
+          }
+        }
+      }
+      
+      if (fullTranscript.trim()) {
+        await Submission.findByIdAndUpdate(submissionId, { evaluation: fullTranscript.trim() });
+        console.log(`OCR Complete for submission ${submissionId}`);
+      }
+    } catch (err) {
+      console.error("OCR Pipeline Error:", err);
+    }
+  }
 
   // --- SUBMISSION ROUTES ---
   app.get('/api/submissions', authenticate, async (req: any, res) => {
