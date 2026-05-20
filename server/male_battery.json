@@ -1,0 +1,961 @@
+[
+  {
+    "slideType": "INSTRUCTIONS",
+    "content": "INSTRUCTIONS FOR THE PSYCH TEST\n\nGreetings of the Day.\n\nToday you will undergo a set of psychological tests designed to understand your natural way of thinking, feeling, acting, and dealing with situations. These tests are not school examinations and there are no fixed right or wrong answers. You need not compare yourself with others. Every individual is likely to react in his/her own way.\n\nDo not try to project an artificial personality or write what you think the Board wants to see. The tests are designed to study spontaneity and consistency. Therefore, your first natural response is usually more useful than an overthought response.\n\nThe Psych Test battery consists of four different tests\n\nThematic Apperception Test (TAT)\n\nWord Association Test (WAT)\n\nSituation Reaction Test (SRT)\n\nSelf Description\n\nInstructions for each test will be flashed on the screen for 3 minutes prior commencement of that test. Read the instructions carefully. They are self-explanatory. Manage your time sensibly and attempt every test with full involvement. Even if one response does not go well, do not carry it forward mentally into the next test.\n\nRemain calm, write legibly, and express yourself freely. We are not searching for perfection; we are trying to understand your personality.\n\nAll the best.",
+    "displayTime": 180,
+    "order": 1
+  },
+  {
+    "slideType": "INSTRUCTIONS",
+    "content": "THEMATIC APPERCEPTION TEST (TAT)",
+    "displayTime": 10,
+    "order": 2
+  },
+  {
+    "slideType": "INSTRUCTIONS",
+    "content": "This is a test of your imagination. In this test you will be shown several pictures one after the other. What you are required to do is write a story around the picture and the characters shown in the picture, covering\n\na. What led to the situation (PAST)\n\nb. What is going on (PRESENT)\n\nc. What will be the outcome (FUTURE)\n\nYou will also describe the feelings, thoughts and actions of the characters shown in the picture.\n\nIn total you will be shown 11 pictures, and 12th picture will be a blank slide wherein you are free to imagine a picture of your own choice and then write a story around that picture which you have imagined.\n\nEach picture will be shown for 30 seconds, and you will be given 04 minutes to write the story\n\nOnce the picture goes off the screen, you may start writing the story for four minutes and once four minutes are over the next picture will automatically be flashed on the screen.\n\nINSTRUCTIONS FOR TAT",
+    "displayTime": 180,
+    "order": 3
+  },
+  {
+    "slideType": "IMAGE",
+    "imageUrl": "/uploads/images/tat_male_1.png",
+    "displayTime": 30,
+    "order": 4
+  },
+  {
+    "slideType": "BLACKOUT",
+    "content": "WRITE",
+    "displayTime": 240,
+    "order": 5
+  },
+  {
+    "slideType": "IMAGE",
+    "imageUrl": "/uploads/images/tat_male_2.png",
+    "displayTime": 30,
+    "order": 6
+  },
+  {
+    "slideType": "BLACKOUT",
+    "content": "WRITE",
+    "displayTime": 240,
+    "order": 7
+  },
+  {
+    "slideType": "IMAGE",
+    "imageUrl": "/uploads/images/tat_male_3.png",
+    "displayTime": 30,
+    "order": 8
+  },
+  {
+    "slideType": "BLACKOUT",
+    "content": "WRITE",
+    "displayTime": 240,
+    "order": 9
+  },
+  {
+    "slideType": "IMAGE",
+    "imageUrl": "/uploads/images/tat_male_4.png",
+    "displayTime": 30,
+    "order": 10
+  },
+  {
+    "slideType": "BLACKOUT",
+    "content": "WRITE",
+    "displayTime": 240,
+    "order": 11
+  },
+  {
+    "slideType": "IMAGE",
+    "imageUrl": "/uploads/images/tat_male_5.png",
+    "displayTime": 30,
+    "order": 12
+  },
+  {
+    "slideType": "BLACKOUT",
+    "content": "WRITE",
+    "displayTime": 240,
+    "order": 13
+  },
+  {
+    "slideType": "IMAGE",
+    "imageUrl": "/uploads/images/tat_male_6.png",
+    "displayTime": 30,
+    "order": 14
+  },
+  {
+    "slideType": "BLACKOUT",
+    "content": "WRITE",
+    "displayTime": 240,
+    "order": 15
+  },
+  {
+    "slideType": "IMAGE",
+    "imageUrl": "/uploads/images/tat_male_7.png",
+    "displayTime": 30,
+    "order": 16
+  },
+  {
+    "slideType": "BLACKOUT",
+    "content": "WRITE",
+    "displayTime": 240,
+    "order": 17
+  },
+  {
+    "slideType": "IMAGE",
+    "imageUrl": "/uploads/images/tat_male_8.png",
+    "displayTime": 30,
+    "order": 18
+  },
+  {
+    "slideType": "BLACKOUT",
+    "content": "WRITE",
+    "displayTime": 240,
+    "order": 19
+  },
+  {
+    "slideType": "IMAGE",
+    "imageUrl": "/uploads/images/tat_male_9.png",
+    "displayTime": 30,
+    "order": 20
+  },
+  {
+    "slideType": "BLACKOUT",
+    "content": "WRITE",
+    "displayTime": 240,
+    "order": 21
+  },
+  {
+    "slideType": "IMAGE",
+    "imageUrl": "/uploads/images/tat_male_10.png",
+    "displayTime": 30,
+    "order": 22
+  },
+  {
+    "slideType": "BLACKOUT",
+    "content": "WRITE",
+    "displayTime": 240,
+    "order": 23
+  },
+  {
+    "slideType": "IMAGE",
+    "imageUrl": "/uploads/images/tat_male_11.png",
+    "displayTime": 30,
+    "order": 24
+  },
+  {
+    "slideType": "BLACKOUT",
+    "content": "WRITE",
+    "displayTime": 240,
+    "order": 25
+  },
+  {
+    "slideType": "INSTRUCTIONS",
+    "content": "TAT PICTURE 12 (BLANK SLIDE)\n\nImagine a picture of your own choice and prepare to write a story around it.",
+    "displayTime": 30,
+    "order": 26
+  },
+  {
+    "slideType": "BLACKOUT",
+    "content": "WRITE",
+    "displayTime": 240,
+    "order": 27
+  },
+  {
+    "slideType": "INSTRUCTIONS",
+    "content": "STOP WRITING!\n\nPrepare for a short break.",
+    "displayTime": 10,
+    "order": 28
+  },
+  {
+    "slideType": "BREAK",
+    "displayTime": 60,
+    "order": 29
+  },
+  {
+    "slideType": "INSTRUCTIONS",
+    "content": "WORD ASSOCIATION TEST (WAT)",
+    "displayTime": 10,
+    "order": 30
+  },
+  {
+    "slideType": "INSTRUCTIONS",
+    "content": "This is another test of imagination. In this test, you will be shown several words one after the other. What you are required to do is, express the first thought or idea that comes to your mind on seeing a particular word in the form of a sentence.\n\nYou may or may not use the word, to express your thought or idea.\n\nEach word will be shown for 15 seconds. Within that time, you must see the word and record your response against the relevant column number.\n\nIn case no thought or idea comes to your mind on seeing a particular word, leave that column blank and proceed to the next.\n\nIn total you will be shown 60 words, and you will be given time to turn over the page after 20th and 40th word.\n\nINSTRUCTIONS FOR WAT",
+    "displayTime": 180,
+    "order": 31
+  },
+  {
+    "slideType": "WORD",
+    "content": "ADDRESS",
+    "displayTime": 15,
+    "order": 32
+  },
+  {
+    "slideType": "WORD",
+    "content": "AGONY",
+    "displayTime": 15,
+    "order": 33
+  },
+  {
+    "slideType": "WORD",
+    "content": "SEARCH",
+    "displayTime": 15,
+    "order": 34
+  },
+  {
+    "slideType": "WORD",
+    "content": "FINISH",
+    "displayTime": 15,
+    "order": 35
+  },
+  {
+    "slideType": "WORD",
+    "content": "TRICKY",
+    "displayTime": 15,
+    "order": 36
+  },
+  {
+    "slideType": "WORD",
+    "content": "LAZY",
+    "displayTime": 15,
+    "order": 37
+  },
+  {
+    "slideType": "WORD",
+    "content": "SLOW",
+    "displayTime": 15,
+    "order": 38
+  },
+  {
+    "slideType": "WORD",
+    "content": "EXCELLENT",
+    "displayTime": 15,
+    "order": 39
+  },
+  {
+    "slideType": "WORD",
+    "content": "DEAR",
+    "displayTime": 15,
+    "order": 40
+  },
+  {
+    "slideType": "WORD",
+    "content": "WHEEL",
+    "displayTime": 15,
+    "order": 41
+  },
+  {
+    "slideType": "WORD",
+    "content": "GROUP",
+    "displayTime": 15,
+    "order": 42
+  },
+  {
+    "slideType": "WORD",
+    "content": "FIGHT",
+    "displayTime": 15,
+    "order": 43
+  },
+  {
+    "slideType": "WORD",
+    "content": "FAR",
+    "displayTime": 15,
+    "order": 44
+  },
+  {
+    "slideType": "WORD",
+    "content": "FUNCTION",
+    "displayTime": 15,
+    "order": 45
+  },
+  {
+    "slideType": "WORD",
+    "content": "KNOWLEDGE",
+    "displayTime": 15,
+    "order": 46
+  },
+  {
+    "slideType": "WORD",
+    "content": "GUARD",
+    "displayTime": 15,
+    "order": 47
+  },
+  {
+    "slideType": "WORD",
+    "content": "MURDER",
+    "displayTime": 15,
+    "order": 48
+  },
+  {
+    "slideType": "WORD",
+    "content": "SICK",
+    "displayTime": 15,
+    "order": 49
+  },
+  {
+    "slideType": "WORD",
+    "content": "FIRE",
+    "displayTime": 15,
+    "order": 50
+  },
+  {
+    "slideType": "WORD",
+    "content": "SHOOT",
+    "displayTime": 15,
+    "order": 51
+  },
+  {
+    "slideType": "BREAK",
+    "content": "TURN THE PAGE",
+    "displayTime": 5,
+    "order": 52
+  },
+  {
+    "slideType": "WORD",
+    "content": "COLD",
+    "displayTime": 15,
+    "order": 53
+  },
+  {
+    "slideType": "WORD",
+    "content": "STEAL",
+    "displayTime": 15,
+    "order": 54
+  },
+  {
+    "slideType": "WORD",
+    "content": "DACOIT",
+    "displayTime": 15,
+    "order": 55
+  },
+  {
+    "slideType": "WORD",
+    "content": "KIDNAPER",
+    "displayTime": 15,
+    "order": 56
+  },
+  {
+    "slideType": "WORD",
+    "content": "FAMILIAR",
+    "displayTime": 15,
+    "order": 57
+  },
+  {
+    "slideType": "WORD",
+    "content": "FACE-OFF",
+    "displayTime": 15,
+    "order": 58
+  },
+  {
+    "slideType": "WORD",
+    "content": "DOUBT",
+    "displayTime": 15,
+    "order": 59
+  },
+  {
+    "slideType": "WORD",
+    "content": "COURAGE",
+    "displayTime": 15,
+    "order": 60
+  },
+  {
+    "slideType": "WORD",
+    "content": "COWARD",
+    "displayTime": 15,
+    "order": 61
+  },
+  {
+    "slideType": "WORD",
+    "content": "DIED",
+    "displayTime": 15,
+    "order": 62
+  },
+  {
+    "slideType": "WORD",
+    "content": "PATRIOT",
+    "displayTime": 15,
+    "order": 63
+  },
+  {
+    "slideType": "WORD",
+    "content": "LARGE",
+    "displayTime": 15,
+    "order": 64
+  },
+  {
+    "slideType": "WORD",
+    "content": "HATERS",
+    "displayTime": 15,
+    "order": 65
+  },
+  {
+    "slideType": "WORD",
+    "content": "PERISH",
+    "displayTime": 15,
+    "order": 66
+  },
+  {
+    "slideType": "WORD",
+    "content": "DRINKING",
+    "displayTime": 15,
+    "order": 67
+  },
+  {
+    "slideType": "WORD",
+    "content": "SLEEPER",
+    "displayTime": 15,
+    "order": 68
+  },
+  {
+    "slideType": "WORD",
+    "content": "RAREST",
+    "displayTime": 15,
+    "order": 69
+  },
+  {
+    "slideType": "WORD",
+    "content": "NOTORIOUS",
+    "displayTime": 15,
+    "order": 70
+  },
+  {
+    "slideType": "WORD",
+    "content": "READER",
+    "displayTime": 15,
+    "order": 71
+  },
+  {
+    "slideType": "WORD",
+    "content": "PLAYER",
+    "displayTime": 15,
+    "order": 72
+  },
+  {
+    "slideType": "BREAK",
+    "content": "TURN THE PAGE",
+    "displayTime": 5,
+    "order": 73
+  },
+  {
+    "slideType": "WORD",
+    "content": "PERSONAL",
+    "displayTime": 15,
+    "order": 74
+  },
+  {
+    "slideType": "WORD",
+    "content": "GAMES",
+    "displayTime": 15,
+    "order": 75
+  },
+  {
+    "slideType": "WORD",
+    "content": "FREEDOM",
+    "displayTime": 15,
+    "order": 76
+  },
+  {
+    "slideType": "WORD",
+    "content": "FUNNY",
+    "displayTime": 15,
+    "order": 77
+  },
+  {
+    "slideType": "WORD",
+    "content": "SECRET",
+    "displayTime": 15,
+    "order": 78
+  },
+  {
+    "slideType": "WORD",
+    "content": "STUPID",
+    "displayTime": 15,
+    "order": 79
+  },
+  {
+    "slideType": "WORD",
+    "content": "SECOND",
+    "displayTime": 15,
+    "order": 80
+  },
+  {
+    "slideType": "WORD",
+    "content": "SECULAR",
+    "displayTime": 15,
+    "order": 81
+  },
+  {
+    "slideType": "WORD",
+    "content": "SPEAKER",
+    "displayTime": 15,
+    "order": 82
+  },
+  {
+    "slideType": "WORD",
+    "content": "EXAMINATION",
+    "displayTime": 15,
+    "order": 83
+  },
+  {
+    "slideType": "WORD",
+    "content": "LIVELY",
+    "displayTime": 15,
+    "order": 84
+  },
+  {
+    "slideType": "WORD",
+    "content": "LIE",
+    "displayTime": 15,
+    "order": 85
+  },
+  {
+    "slideType": "WORD",
+    "content": "LEGEND",
+    "displayTime": 15,
+    "order": 86
+  },
+  {
+    "slideType": "WORD",
+    "content": "LISTEN",
+    "displayTime": 15,
+    "order": 87
+  },
+  {
+    "slideType": "WORD",
+    "content": "LAUGH",
+    "displayTime": 15,
+    "order": 88
+  },
+  {
+    "slideType": "WORD",
+    "content": "CRYING",
+    "displayTime": 15,
+    "order": 89
+  },
+  {
+    "slideType": "WORD",
+    "content": "DRIVE",
+    "displayTime": 15,
+    "order": 90
+  },
+  {
+    "slideType": "WORD",
+    "content": "BRAVE",
+    "displayTime": 15,
+    "order": 91
+  },
+  {
+    "slideType": "WORD",
+    "content": "WEAPON",
+    "displayTime": 15,
+    "order": 92
+  },
+  {
+    "slideType": "WORD",
+    "content": "FORTUNE",
+    "displayTime": 15,
+    "order": 93
+  },
+  {
+    "slideType": "BREAK",
+    "content": "10 MINUTES BREAK - Protocol Cooling",
+    "displayTime": 600,
+    "order": 94
+  },
+  {
+    "slideType": "INSTRUCTIONS",
+    "content": "SITUATION REACTION TEST (SRT)",
+    "displayTime": 10,
+    "order": 95
+  },
+  {
+    "slideType": "INSTRUCTIONS",
+    "content": "In this test several situations are presented to you. You are required to write how you would feel, think and act in each of those situations.\n\nYou will be given 30 minutes to attempt 60 situations.\n\nINSTRUCTIONS FOR SRT\n\nThese 60 situations will be flashed on the screen as follows:-\n\n6 situations per slide\n\nTotal slides = 10\n\nResponses should be practical and action-oriented.\n\nWrite briefly and clearly\n\nDo not write explanations or theories\n\nA timer of 30 minutes will be displayed on the top right corner of the screen\n\nYou are allowed to scroll front and back to visit all the situations in this time frame",
+    "displayTime": 180,
+    "order": 96
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "1. 'H'i's' 'f'a't'h'e'r' 'w'h'o' 'i's' 'a'n' 'A'r'm'y' 'o'f'f'i'c'e'r' 'w'a's' 'r'e't'u'r'n'i'n'g' 'v'i'c't'o'r'i'o'u's' 'f'r'o'm' 't'h'e' 'w'a'r' 'a'n'd' 'h'e' 'h'a'd' 'g'o'n'e' 't'o' 'r'e'c'e'i'v'e' 'h'i'm' 'a't' 'R'a'i'l'w'a'y' 'S't'a't'i'o'n'.' 'A's' 'h'e' 'w'a's' 'w'a'i't'i'n'g' 'f'o'r' 't'h'e' 't'r'a'i'n' 't'o' 'a'r'r'i'v'e',' 'h'e' 'h'e'a'r'd' 'a' 'l'o'u'd' 'e'x'p'l'o's'i'o'n'.' 'I't' 'w'a's' 't'h'e' 'a'm'm'u'n'i't'i'o'n' 't'r'u'c'k' 's't'a'n'd'i'n'g' 'o'u't's'i'd'e' 'w'h'i'c'h' 'h'a'd' 'c'a'u'g'h't' 'f'i'r'e'.' 'H'e'…'…'…'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 97
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "2. 'T'h'e'y' 'w'e'r'e' 'c'l'i'm'b'i'n'g' 'a' 's'm'a'l'l' 'r'o'c'k' 'a'n'd' 'w'e'r'e' 'a'b'o'u't' 't'o' 'r'e'a'c'h' 't'h'e' 't'o'p',' 'w'h'e'n' 'h'e' 's'a'w' 'o'n'e' 'o'f' 'h'i's' 'c'o'l'l'e'a'g'u'e's' 's'l'i'p'p'i'n'g' 'd'o'w'n'.' 'H'e' '…'…'…'.'...",
+    "displayTime": 30,
+    "order": 98
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "3. 'T'h'e' 'c'o'l'l'e'g'e' 'e'l'e'c't'i'o'n's' 'w'e'r'e' 'o'n' 'a'n'd' 'h'e' 'w'a's' 'b'e'i'n'g' 'f'o'r'c'e'd' 't'o' 'v'o't'e' 'f'o'r' 's'o'm'e'o'n'e' 'w'h'o'm' 'h'e' 'd'i'd' 'n'o't' 'l'i'k'e'.' 'H'e' '…'…'…'…'…'…'...",
+    "displayTime": 30,
+    "order": 99
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "4. 'H'e' 'w'a's' 'g'o'i'n'g' 'f'o'r' 'a' 'w'a'l'k' 'a'n'd' 's'u'd'd'e'n'l'y' 'h'e' 'w'a's' 'c'o'n'f'r'o'n't'e'd' 'b'y' 't'w'o' 'g'o'o'n'd'a's'.' 'H'e' '…'…'…'…'…'…'…'…'…'.'...",
+    "displayTime": 30,
+    "order": 100
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "5. 'H'e' 'h'a'd' 'b'o'a'r'd'e'd' 'a' 'w'r'o'n'g' 't'r'a'i'n' 'a'n'd' 'c'a'm'e' 't'o' 'k'n'o'w' 'o'n'l'y' 'w'h'e'n' 'h'e' 'w'a's' 'a's'k'e'd' 't'o' 'p'a'y' 'm'o'n'e'y' 'b'y' 't'h'e' 'T'T'E'.' 'H'e'…'…'…'…'…'…'…'.'...",
+    "displayTime": 30,
+    "order": 101
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "6. 'W'h'i'l'e' 'c'l'i'm'b'i'n'g' 'a' 'r'o'c'k' 't'o' 'b'r'i'n'g' 'w'a't'e'r' 'f'r'o'm' 't'h'e' 's'p'r'i'n'g' 'f'o'r' 'h'i's' 'f'r'i'e'n'd's',' 'h'e' 'g'o't' 'i'n'j'u'r'e'd' 'i'n' 'h'i's' 'l'e'g' 'a'n'd' 'w'a's' 'u'n'a'b'l'e' 't'o' 'w'a'l'k' 'b'a'c'k'.' 'H'e' '…'…'…'…'…'…'…'…'...",
+    "displayTime": 30,
+    "order": 102
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "7. 'T'h'e' 'f'r'i'e'n'd'l'y' 'd'i's'c'u's's'i'o'n' 't'o'o'k' 'a' 'h'e'a't'e'd' 't'u'r'n'.' 'H'e' '…'...",
+    "displayTime": 30,
+    "order": 103
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "8. 'W'h'i'l'e' 'p'l'a'y'i'n'g' 'a' 'h'o'c'k'e'y' 'm'a't'c'h',' 'h'e' 't'w'i's't'e'd' 'h'i's' 'a'n'k'l'e' 'v'e'r'y' 'b'a'd'l'y'.' 'H'e' '…'...",
+    "displayTime": 30,
+    "order": 104
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "9. 'H'e' 'w'a's' 'c'y'c'l'i'n'g' 't'o'w'a'r'd's' 't'h'e' 'm'a'r'k'e't' 't'o' 'b'u'y' 'm'e'd'i'c'i'n'e's' 'f'o'r' 'h'i's' 's'i'c'k' 'm'o't'h'e'r',' 'w'h'e'n' 'a' 't'r'u'c'k' 'h'i't' 'a'g'a'i'n's't' 'h'i's' 'c'y'c'l'e' 'a'n'd' 'h'e' 'w'a's' 'i'n'j'u'r'e'd'.' 'I't' 'w'a's' 'd'a'r'k' 'a'n'd' 'l'o'n'e'l'y'.' 'H'e'…'...",
+    "displayTime": 30,
+    "order": 105
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "10. 'H'e' 'w'o'k'e' 'u'p' 'i'n' 't'h'e' 'r'u'n'n'i'n'g' 't'r'a'i'n' 'a'n'd' 'f'o'u'n'd' 't'h'a't' 'h'i's' 'l'u'g'g'a'g'e' 'w'a's' 'm'i's's'i'n'g'.' 'H'e' '…'...",
+    "displayTime": 30,
+    "order": 106
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "11. 'W'h'e'n' 'h'i's' 'b'u's' 'w'a's' 'o'v'e'r' 't'u'r'n'e'd' 'd'u'r'i'n'g' 't'h'e' 'j'o'u'r'n'e'y',' 'm'a'n'y' 'p'e'o'p'l'e' 'g'o't' 'i'n'j'u'r'e'd' 's'e'r'i'o'u's'l'y' 'w'h'i'l'e' 'h'e' 'h'i'm's'e'l'f' 'e's'c'a'p'e'd' 'w'i't'h' 'm'i'n'o'r' 's'c'r'a't'c'h'e's'.' 'H'e' '…'...",
+    "displayTime": 30,
+    "order": 107
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "12. 'H'e' 'w'a's' 'b'e'a't'e'n' 'b'y' 's'o'm'e' 'o'f' 'h'i's' 'c'l'a's's' 'f'e'l'l'o'w's' 'a's' 'h'e' 'w'a's' 't'r'y'i'n'g' 't'o' 'd'i's's'u'a'd'e' 't'h'e'm' 'f'r'o'm' 'j'o'i'n'i'n'g' 't'h'e' 's't'r'i'k'e'.' 'H'e' '…'...",
+    "displayTime": 30,
+    "order": 108
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "13. 'T'h'e' 'h'a'r'v'e's't'i'n'g' 'w'a's' 'o'n' 'a'n'd' 'h'i's' 'f'a't'h'e'r' 's'u'd'd'e'n'l'y' 't'o'o'k' 's'e'r'i'o'u's'l'y' 'i'l'l'.' 'H'i's' 'm'o't'h'e'r' 'w'a's' 'i'n' 't'h'e' 'h'o's'p'i't'a'l' 'f'o'r' 'a'n' 'o'p'e'r'a't'i'o'n'.' 'H'e' '…'…'…'…'…'…'…'…'…'…'…'...",
+    "displayTime": 30,
+    "order": 109
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "14. 'H'e' 'w'a's' 'c'o'm'i'n'g' 'b'a'c'k' 'h'o'm'e' 'f'o'r'm' 'c'o'l'l'e'g'e' 'w'h'e'n' 'o'n' 't'h'e' 'w'a'y' 'h'e' 's'a'w' 'a' 'd'r'o'w'n'i'n'g' 'i'n' 'a' 'p'o'n'd'.' 'H'e' '…'…'…'…'…'…'…'…'…'…'...",
+    "displayTime": 30,
+    "order": 110
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "15. 'T'h'e' 'a'p'p'o'i'n't'e'd' 'd'a'y' 'o'f' 't'h'e' 'w'e'd'd'i'n'g' 'o'f' 'h'i's' 'o'n'l'y' 's'i's't'e'r' 'h'a'd' 'a'r'r'i'v'e'd' 'b'u't' 'h'i's' 'f'a't'h'e'r' 'w'h'o' 'w'a's' 't'o' 'r'e'a'c'h' 'f'r'o'm' 'o'v'e'r's'e'a's' 'w'a's' 'h'e'l'd' 'u'p'.' 'S'o',' 'h'e' '…'…'…'…'…'…'…'.'...",
+    "displayTime": 30,
+    "order": 111
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "16. 'D'u'e' 't'o' 'c'y'c'l'o'n'e',' 'h'i's' 'f'a'm'i'l'y' 'l'o's't' 'a'l'l' 't'h'e'i'r' 'p'o's's'e's's'i'o'n's',' 'a'n'd' 't'h'e'y' 'h'a'd' 't'o' 'm'a'k'e' 'a' 'f'r'e's'h' 's't'a'r't'.' 'H'e' 'i's' 't'h'e' 'e'l'd'e's't' 's'o'n' 'i'n' 'f'a'm'i'l'y'.' 'H'e' '…'…'…'…'…'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 112
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "17. 'W'h'i'l'e' 't'r'a'v'e'l'i'n'g' 'i'n' 'a' 't'r'a'i'n' 's'o'm'e' 'p'e'o'p'l'e' 's't'a'r't'e'd' 'a'r'g'u'i'n'g' 'w'i't'h' 'h'i'm'.' 'H'e' '…'…'…'…'…'…'...",
+    "displayTime": 30,
+    "order": 113
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "18. 'H'e' 'h'a'd' 'r'e'a'c'h'e'd' 'G'a'n'g'a'n'a'g'a'r' 't'h'a't' 'v'e'r'y' 'd'a'y' 'd'u'r'i'n'g' 'P'a'k'i's't'a'n' 'a'g'g'r'e's's'i'o'n' 'i'n' '1'9'7'1' 'w'h'e'n' 'a' 'b'o'm'b' 'w'a's' 'd'r'o'p'p'e'd' 'b'y' 't'h'e' 'e'n'e'm'y' 'i'n' 'h'i's' 'l'o'c'a'l'i't'y'.' 'H'e' '…'…'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 114
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "19. 'O'n' 'a' 'c'o'l'd' 'w'i'n't'e'r' 'm'o'r'n'i'n'g',' 'h'e' 'w'a's' 't'a'k'i'n'g' 't'h'e' 'v'i'c't'i'm' 'o'f' 't'h'e' 'a'c'c'i'd'e'n't' 't'o' 't'h'e' 'h'o's'p'i't'a'l' 'w'h'e'n' 'h'i's' 't'a'x'i' 'c'o'l'l'i'd'e'd' 'w'i't'h' 'a' 's'p'e'e'd'i'n'g' 't'r'u'c'k',' 'a'n'd' 't'h'e'i'r' 'd'r'i'v'e'r' 'w'a's' 's'e'r'i'o'u's'l'y' 'i'n'j'u'r'e'd'.' 'H'e' 'o'n'l'y' 'g'o't' 'm'i'n'o'r' 'b'r'u'i's'e's'.' 'H'e' '…'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 115
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "20. 'H'e' 'w'a's' 't'h'e' 'C'a'p't'a'i'n' 'o'f' 't'h'e' 'C'o'l'l'e'g'e' 'h'o'c'k'e'y' 't'e'a'm'.' 'O'n'e' 'o'f' 'h'i's' 'i'm'p'o'r't'a'n't' 'p'l'a'y'e'r's' 'w'a's' 'u'n'a'b'l'e' 't'o' 't'a'k'e' 'p'a'r't'.' 'H'e' '…'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 116
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "21. 'H'e' 'w'a's' 'i'r'o'n'i'n'g' 'h'i's' 'n'e'w' 'p'a'n't' 'w'h'e'n' 's'u'd'd'e'n'l'y' 'h'e' 'r'e'c'e'i'v'e'd' 'a'n' 'e'l'e'c't'r'i'c' 's'h'o'c'k' 'a'n'd' 'h'e' 'n'o't'i'c'e'd' 't'h'e' 'w'i'r'e' 'b'u'r'n'i'n'g'.' 'H'e'…'…'…'…'.'...",
+    "displayTime": 30,
+    "order": 117
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "22. 'A'f't'e'r' 'p'a's's'i'n'g' 'H'i'g'h' 'S'c'h'o'o'l' 'h'e' 'w'a's' 'b'e'i'n'g' 'f'o'r'c'e'd' 't'o' 't'a'k'e' 'u'p' 't'h'e' 'j'o'b' 'i'n' 't'h'e' 'r'a'i'l'w'a'y's' 'b'u't' 'h'e' 'w'a's' 'n'o't' 'i'n't'e'r'e's't'e'd' 'i'n' 'i't'.' 'H'e' '…'.'.'...",
+    "displayTime": 30,
+    "order": 118
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "23. 'H'e' 'w'a's' 'a' 'm'e'm'b'e'r' 'o'f' 't'h'e' 'c'r'i'c'k'e't' 't'e'a'm' 'a'n'd' 'o'n'c'e' 't'h'e' 'C'a'p't'a'i'n' 'o'f' 't'h'e' 't'e'a'm' 'd'i'd' 'n'o't' 't'u'r'n' 'u'p' 'f'o'r' 't'h'e' 'm'a't'c'h',' 'h'e' '…'…'…'…'.'...",
+    "displayTime": 30,
+    "order": 119
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "24. 'J'u's't' 't'w'o' 'd'a'y's' 'b'e'f'o'r'e' 't'h'e' 's'e'm'i'f'i'n'a'l' 'o'f' 't'h'e' 'b'r'i'd'g'e' 't'o'u'r'n'a'm'e'n't' 'h'i's' 'p'a'r't'n'e'r' 'w'a's' 'c'a'l'l'e'd' 'b'y' 'h'i's' 'p'a'r'e'n't's' 'a't' 'a'n' 'o'u't' 's't'a't'i'o'n' 'f'o'r' 'a'n' 'u'r'g'e'n't' 'w'o'r'k'.' 'H'e' '…'…'…'…'…'…'.'...",
+    "displayTime": 30,
+    "order": 120
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "25. 'H'e' 'w'a's' 'i'n' 'c'h'a'r'g'e' 'o'f' 'w'i'r'e'l'e's's' 'b'o'a'r'd' 'i'n' 'a' 's'a'i'l'i'n'g' 's'h'i'p' 'w'h'i'c'h' 'u'n'f'o'r't'u'n'a't'e'l'y' 'l'o's't' 'i't's' 'c'o'm'm'u'n'i'c'a't'i'o'n' 'w'i't'h' 't'h'e' 'c'o'a's't'.' 'H'e' '…'…'…'…'…'…'…'…'…'…'...",
+    "displayTime": 30,
+    "order": 121
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "26. 'A' 's't'r'i'k'e' 'f'l'a'r'e'd' 'u'p' 'i'n' 'h'i's' 'c'o'l'l'e'g'e' 'a'n'd' 't'h'e' 's't'u'd'e'n't's' 's'e't' 't'h'e' 'c'o'l'l'e'g'e' 'b'u's' 'o'n' 'f'i'r'e'.' 'H'e'…'…'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 122
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "27. 'I't' 'w'a's' 'h'i's' 'v'e'r'y' 'f'i'r's't' 'v'i's'i't' 't'o' 't'h'e' 's'n'o'w' 'b'o'u'n'd' 'a'r'e'a'.' 'O'n' 'h'i's' 'f'i'r's't' 'd'a'y' 'o'u't' 'f'r'o'm' 'a' 'd'i's't'a'n'c'e',' 'h'e' 's'a'w' 'a' 'm'a'n' 'b'e'i'n'g' 'b'u'r'i'e'd' 'u'n'd'e'r' 's'n'o'w'.' 'H'e' '…'…'…'…'…'…'…'…'…'.'...",
+    "displayTime": 30,
+    "order": 123
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "28. 'T'h'o'u'g'h' 'h'e' 'w'a's' 'n'o't' 'a' 'g'o'o'd' 's'w'i'm'm'e'r',' 'h'e' 'h'a'd' 'b'e'e'n' 'p'e'r's'u'a'd'e'd' 'b'y' 'h'i's' 'f'r'i'e'n'd' 't'o' 'g'o' 'f'o'r' 's'w'i'm'm'i'n'g' 'i'n' 't'h'e' 'r'i'v'e'r'.' 'W'h'i'l'e' 'b'e' 's't'a'y'e'd' 'i'n' 's'h'a'l'l'o'w' 'w'a't'e'r',' 'h'i's' 'f'r'i'e'n'd' 'w'e'n't' 'm'i'd' 's't'r'e'a'm' 'a'n'd' 's'u'd'd'e'n'l'y' 'g'o't' 'c'a'u'g'h't' 'i'n' 'a' 'w'h'i'r'l'p'o'o'l'.' 'H'e' '…'…'…'.'...",
+    "displayTime": 30,
+    "order": 124
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "29. 'H'e' 'w'a's' 'a'p'p'o'i'n't'e'd' 'a' 'm'o'n'i't'o'r' 'i'n' 't'h'e' 'c'l'a's's' 'a'n'd' 'h'e'…'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 125
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "30. 'H'e' 'h'a'd' 'd'e'v'e'l'o'p'e'd' 's'o'm'e' 'e'c'z'e'm'a' 'o'n' 'h'i's' 'l'e'g' 'a'n'd' 'c'o'u'l'd' 'n'o't' 'g'e't' 'a'n'y' 'e'f'f'e'c't'i'v'e' 't'r'e'a't'm'e'n't'.' 'T'h'e'r'e'f'o'r'e',' 'h'e' '…'...",
+    "displayTime": 30,
+    "order": 126
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "31. 'W'h'e'n' 't'h'e' 'c'r'i'c'k'e't' 'm'a't'c'h' 'w'a's' 'o'n',' 'a' 'f'i'g'h't' 's'u'd'd'e'n'l'y' 's't'a'r't'e'd' 'b'e't'w'e'e'n' 't'h'e' 's'y'm'p'a't'h'i'z'e'r's' 'o'f' 't'h'e' 'r'i'v'a'l' 't'e'a'm's'.' 'H'e'…'…'…'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 127
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "32. 'T'h'e' 's'e'a' 'w'a's' 'v'e'r'y' 'r'o'u'g'h' 'a'n'd' 'i't' 'w'a's' 'n'i'g'h't' 't'i'm'e'.' 'A's' 't'h'e' 's'h'i'p' 'd'u't'y' 'o'f'f'i'c'e'r' 'w'a's' 't'a'k'i'n'g' 'a' 'r'o'u'n'd' 'h'e' 'f'e'l'l' 'i'n't'o' 't'h'e' 's'e'a'.' 'H'e' '…'…'…'…'...",
+    "displayTime": 30,
+    "order": 128
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "33. 'T'w'o' 'o'f' 'h'i's' 'c'o'm'm'o'n' 'f'r'i'e'n'd's' 'h'a'd' 'q'u'a'r'r'e'l'e'd' 'a's' 's'o'm'e'o'n'e' 'e'l's'e' 'h'a'd' 'c'r'e'a't'e'd' 'm'i's'u'n'd'e'r's't'a'n'd'i'n'g' 'b'e't'w'e'e'n' 't'h'e'm'.' 'H'e' '…'…'…'…'…'...",
+    "displayTime": 30,
+    "order": 129
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "34. 'W'h'e'n' 'h'i's' 'B'.'S'c'.' 'r'e's'u'l't' 'c'a'm'e' 'o'u't' 'h'i's' 'p'a'r'e'n't's' 'i'n's'i's't'e'd' 'h'i's' 'd'o'i'n'g' 'M'.'S'c'.' 'w'h'e'r'e'a's',' 'h'e' '…'…'…'…'…'…'…'…'…'…'…'...",
+    "displayTime": 30,
+    "order": 130
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "35. 'A's' 't'h'e' 'p'r'e'f'e'c't' 'o'f' 't'h'e' 'f'i'n'a'l' 'y'e'a'r' 'B'.'T'e'c'h'.',' 'h'e' 'f'o'u'n'd' 'h'i'm's'e'l'f' 'u'n'd'e'r' 'l'o't' 'o'f' 'p'o'l'i't'i'c'a'l' 'p'r'e's's'u'r'e' 't'o' 'p'a'r't'i'c'i'p'a't'e' 'i'n' 't'h'e' 't'o't'a'l' 'c'o'l'l'e'g'e' 's't'r'i'k'e'.' 'H'e' '…'…'…'…'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 131
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "36. 'T'h'e' 'q'u'e's't'i'o'n' 'o'f' 'h'i's' 'm'a'r'r'i'a'g'e' 'c'r'e'a't'e'd' 'a' 'r'i'f't' 'b'e't'w'e'e'n' 'h'i's' 'f'a't'h'e'r' 'a'n'd' 'g'r'a'n'd'f'a't'h'e'r'.' 'H'e' '…'...",
+    "displayTime": 30,
+    "order": 132
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "37. 'S'o'm'e' 'p'e'o'p'l'e' 't'r'i'e'd' 't'o' 'h'a'r'a's's' 'h'i's' 'm'o't'h'e'r'.' 'H'e' '…'…'…'…'.'...",
+    "displayTime": 30,
+    "order": 133
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "38. 'H'e' 'w'a's' 't'o' 'a'p'p'e'a'r' 'f'o'r' 'a'n' 'e'x'a'm' 'a'n'd' 's'u'd'd'e'n'l'y',' 't'h'e' 'c'u'r'f'e'w' 'w'a's' 'i'm'p'o's'e'd' 'i'n' 't'h'a't' 'a'r'e'a'.' 'H'e' '…'…'…'…'…'…'…'…'…'.'...",
+    "displayTime": 30,
+    "order": 134
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "39. 'H'e' 'w'a's' 's't'i'l'l' 'a' 's't'u'd'e'n't' 'w'h'e'n' 'h'i's' 'f'a't'h'e'r' 'd'i'e'd'.' 'H'i's' 'm'o't'h'e'r' 'w'a's' 'i'l'l'i't'e'r'a't'e' 'a'n'd' 't'o'o' 'p'o'o'r' 't'o' 'g'u'i'd'e' 'a'n'd' 'h'e'l'p' 'h'i'm'.' 'H'e' '…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 135
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "40. 'D'u'r'i'n'g' 't'h'e' 'b'l'a'c'k'-'o'u't' 'e'x'e'r'c'i's'e's' 'h'e' 'w'a's' 't'h'e' 's'c'o'u't' 'o'n' 'd'u't'y',' 'b'u't' 'o'n'e' 'r'i'c'h' 'm'a'n' 'w'a's' 'a'd'a'm'a'n't' 'o'n' 'k'e'e'p'i'n'g' 'h'i's' 'l'i'g'h't's' 'o'n'.' 'H'e' '…'…'...",
+    "displayTime": 30,
+    "order": 136
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "41. 'I't' 'w'a's' 'n'o'o'n' 't'i'm'e' 'a'n'd' 'v'e'r'y' 'h'o't'.' 'H'e' 'h'a'd' 't'o' 'r'e'a'c'h' 'h'o'm'e' 'u'r'g'e'n't'l'y' 'a' 'g'o'o'd' 't'e'n' 'K'm's' 'a'w'a'y'.' 'H'a'v'i'n'g' 'w'a'i't'e'd' 'l'o'n'g' 'a't' 't'h'e' 'b'u's' 's't'o'p' 'h'e' 'd'e'c'i'd'e'd' 't'o' '…'…'…'…'…'…'…'…'…'…'…'…'…'…'...",
+    "displayTime": 30,
+    "order": 137
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "42. 'H'e' 'w'e'n't' 'f'o'r' 'a' 'p'i'c'n'i'c' 'w'i't'h' 'h'i's' 'f'r'i'e'n'd's' 'a'n'd' 'o'n' 't'h'e' 'w'a'y',' 'h'e' 'h'a'd' 'h'o't' 'a'r'g'u'm'e'n't's' 'w'i't'h' 't'h'e'm'.' 'H'e'…'…'…'…'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 138
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "43. 'H'i's' 'f'a't'h'e'r' 'n'e'e'd'e'd' 't'r'e'a't'm'e'n't' 'a'n'd' 'h'e' 'w'a's' 's'h'o'r't' 'o'f' 'm'o'n'e'y'.' 'H'e' '…'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 139
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "44. 'H'e' 'h'a'd' 'g'o'n'e' 'f'o'r' 'h'u'n't'i'n'g' 'w'i't'h' 'h'i's' 'f'r'i'e'n'd's'.' 'T'h'e'y' 'w'e'r'e' 'i'n' 't'h'e' 'f'o'r'e's't',' 'a'n'd' 't'h'e'y' 'h'a'd' 'l'o's't' 't'h'e'i'r' 'w'a'y'.' 'H'e' '…'…'…'…'…'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 140
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "45. 'H'e' 'a'n'd' 'h'i's' 'f'r'i'e'n'd's' 'w'e'r'e' 's't'a'n'd'i'n'g' 'i'n' 't'h'e' 'c'o'm'p'a'r't'm'e'n't' 'd'o'o'r'w'a'y',' 'w'h'e'n' 't'h'e' 't'r'a'i'n' 's'u'd'd'e'n'l'y' 'm'o'v'e'd' 'a'n'd' 'h'i's' 'f'r'i'e'n'd' 'f'e'l'l' 'd'o'w'n'.' 'H'e' '…'...",
+    "displayTime": 30,
+    "order": 141
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "46. 'H'e' 'w'a's' 't'r'a'v'e'l'i'n'g' 'i'n' 't'h'e' 'c'a'r' 'w'h'i'c'h' 'u'n'e'x'p'e'c't'e'd'l'y' 'b'r'o'k'e' 'o'n' 't'h'e' 'w'a'y'.' 'I't' 'w'a's' 'g'e't't'i'n'g' 'd'a'r'k' 'a'n'd' 'n'o' 'h'e'l'p' 'w'a's' 'i'n' 't'h'e' 's'i'g'h't'.' 'H'e' '…'…'…'…'…'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 142
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "47. 'H'e' 'w'a's' 'm'a'd'e' 'C'a'p't'a'i'n' 'o'f' 't'h'e' 't'u'g' 'o'f' 'w'a'r' 't'e'a'm',' 'a'n'd' 't'h'e' 'm'a't'c'h' 'w'a's' 't'o' 'b'e' 'h'e'l'd' 't'h'e' 'v'e'r'y' 'n'e'x't' 'd'a'y'.' 'H'e'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 143
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "48. 'H'e' 'w'a's' 'r'e't'u'r'n'i'n'g' 'a'l'o'n'e' 'f'r'o'm' 'a' 'm'i'd'n'i'g'h't' 's'h'o'w' 'w'h'e'n' 'h'e' 's'p'o't't'e'd' 't'w'o' 'g'o'o'n'd'a's' 'b'e'h'i'n'd' 'a' 'g'r'o'u'p' 'o'f' 't'r'e'e's' 'b'l'i'n'd' 'f'o'l'd'i'n'g' 'a' 'l'a'd'y'.' 'H'e' '…'.'.'…'...",
+    "displayTime": 30,
+    "order": 144
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "49. 'H'e' 'a'n'd' 'h'i's' 'f'r'i'e'n'd's' 'w'e'r'e' 'g'o'i'n'g' 'f'o'r' 'a'n' 'a'f't'e'r'n'o'o'n' 'w'a'l'k' 'o'n' 'a' 'c'o'l'd' 'w'i'n'd'y' 'd'a'y'.' 'S'u'd'd'e'n'l'y' 't'w'o' 'm'e'n' 's'u'r'r'o'u'n'd'e'd' 'h'i's' 'f'r'i'e'n'd' 'a'n'd' 's't'a'r't'e'd' 'r'e'm'o'v'i'n'g' 'h'i's' 'w'r'i's't' 'w'a't'c'h'.' 'H'e' '…'…'…'…'…'...",
+    "displayTime": 30,
+    "order": 145
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "50. 'H'e' 'w'a's' 'o'u't' 'o'n' 'p'i'c'n'i'c' 'w'i't'h' 'h'i's' 'f'r'i'e'n'd's' 'w'h'e'n' 'o'n'e' 'o'f' 't'h'e' 'b'o'y's' 's't'o'l'e' 'm'a'n'g'o'e's' 'f'r'o'm' 't'h'e' 'g'a'r'd'e'n' 'a'n'd' 't'h'e' 'g'a'r'd'e'n'e'r' 'c'a'm'e' 'o'u't' 'w'i't'h' 'h'i's' 's't'i'c'k'.' 'H'e' '…'…'…'…'…'…'…'…'…'.'...",
+    "displayTime": 30,
+    "order": 146
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "51. 'H'e' 'w'a's' 'o'n' 'b'o'a'r'd' 'a' 't'r'a'i'n' 'f'o'r' 'g'o'i'n'g' 't'o' 'a'n' 'i'n't'e'r'v'i'e'w' 'w'h'e'n' 'h'e' 'r'e'c'e'i'v'e'd' 'a' 'c'a'l'l' 'i'n'f'o'r'm'i'n'g' 'h'i'm' 'o'f' 'h'i's' 'f'a't'h'e'r'''s' 's'e'r'i'o'u's' 'c'o'n'd'i't'i'o'n'.' 'H'e' '…'…'…'…'…'…'…'…'…'…'...",
+    "displayTime": 30,
+    "order": 147
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "52. 'H'e' 'u'r'g'e'n't'l'y' 'h'a'd' 't'o' 'a'c'c'o'm'p'a'n'y' 'h'i's' 'f'r'i'e'n'd' 'o'n' 'c'y'c'l'e' 'a't' 'n'i'g'h't' 't'o' 't'h'e' 'l'a't't'e'r'''s' 'h'o'm'e' 'w'h'i'c'h' 'w'a's' 'f'i'v'e' 'K'm's' 'o'u't' 'o'f' 't'h'e' 'c'i't'y' 'a'r'e'a'.' 'T'h'e'y' 'h'a'd' 'h'a'r'd'l'y' 'r'e'a'c'h'e'd' 'h'a'l'f'w'a'y' 'w'h'e'n' 'h'i's' 'c'y'c'l'e' 'g'o't' 'p'u'n'c't'u'r'e'd' 'a'n'd' 't'h'e'r'e' 'w'a's' 'n'o' 'a'l't'e'r'n'a't'i'v'e'.' 'H'e' '…'…'…'…'…'…'…'...",
+    "displayTime": 30,
+    "order": 148
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "53. 'H'e' 'w'a's' 'c'a'l'l'e'd' 'f'o'r' 'a'n' 'i'n't'e'r'v'i'e'w' 'f'o'r' 'a' 'j'o'b' 'h'e' 'b'a'd'l'y' 'n'e'e'd'e'd' 'b'u't' 'o'n' 't'h'e' 's'a'm'e' 'd'a'y' 'h'i's' 'f'a't'h'e'r' 'f'e'l'l' 's'e'r'i'o'u's'l'y' 'i'l'l'.' 'H'e'…'…'…'…'…'…'.'...",
+    "displayTime": 30,
+    "order": 149
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "54. 'H'e' 's'a'w' 't'h'e' 's'o'n' 'o'f' 'a'n' 'e'n'e'm'y' 'd'r'o'w'n'i'n'g' 'i'n' 't'h'e' 'r'i'v'e'r'.' 'H'e' '…'…'…'…'...",
+    "displayTime": 30,
+    "order": 150
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "55. 'I't' 'w'a's' 'n'i'g'h't' 't'i'm'e' 'a'n'd' 'a's' 'h'e' 's'w'i't'c'h'e'd' 'o'n' 't'h'e' 'l'i'g'h't' 'o'f' 'h'i's' 'b'a't'h'r'o'o'm',' 'h'e' 'f'o'u'n'd' 'a' 'b'i'g' 's'n'a'k'e' 'h'a'n'g'i'n'g' 'f'r'o'm' 't'h'e' 'c'e'i'l'i'n'g'.' 'H'e' '…'…'…'...",
+    "displayTime": 30,
+    "order": 151
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "56. 'H'e' 'w'a's' 'r'a't'h'e'r' 'y'o'u'n'g' 'w'h'e'n' 'h'i's' 'f'a't'h'e'r' 'w'a's' 'k'i'l'l'e'd' 'i'n' 't'h'e' 'w'a'r' 'a'n'd' 'l'a't'e'r' 'h'i's' 'm'o't'h'e'r' 'w'a's' 'k'i'd'n'a'p'p'e'd' 'b'y' 's'o'm'e'o'n'e'.' 'H'e'…'…'…'…'…'...",
+    "displayTime": 30,
+    "order": 152
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "57. 'F'o'u'r' 'o'f' 't'h'e'm' 'd'e'c'i'd'e'd' 't'o' 'g'o' 'o'n' 'f'o'o't' 'f'r'o'm' 'D'e'h'r'a'd'u'n' 't'o' 'M'u's's'o'o'r'i'e' 'b'u't' 't'h'a't' 'd'a'y' 'i't' 's't'a'r't'e'd' 'r'a'i'n'i'n'g' 'a'n'd' 't'h'e'y' 'w'e'r'e' 't'o'l'd' 't'h'e' 'm'o'u'n't'a'i'n' 's'l'o'p'e's' 'w'o'u'l'd' 'b'e' 's'l'i'p'p'e'r'y'.' 'H'e' '…'…'…'…'…'.'.'...",
+    "displayTime": 30,
+    "order": 153
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "58. 'H'e' 'w'a's' 'r'e'q'u'i'r'e'd' 't'o' 't'a'k'e' 'p'a'r't' 'i'n' 't'h'e' 'c'o'l'l'e'g'e' 's'e'm'i'n'a'r'.' 'W'h'e'n' 'h'e' 'w'e'n't' 't'o' 'l'i'b'r'a'r'y' 'f'o'r' 'g'e't't'i'n'g' 'b'o'o'k's' 'o'n' 't'h'e' 's'u'b'j'e'c't',' 'h'e' 'f'o'u'n'd' 't'h'a't' 'a'l'l' 't'h'e' 'b'o'o'k's' 'h'a'd' 'a'l'r'e'a'd'y' 'b'e'e'n' 'i's's'u'e'd' 't'o' 'o't'h'e'r's'.' 'H'e' '…'…'.'.'...",
+    "displayTime": 30,
+    "order": 154
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "59. 'I't' 'w'a's' 'n'i'g'h't't'i'm'e' 'a'n'd' 't'h'e' 't'r'a'i'n' 'w'a's' 'i'n' 'h'i'g'h' 's'p'e'e'd' 'w'h'e'n' 'a' 'w'e'l'l'-'b'u'i'l't' 'm'a'n' 'w'i't'h' 'a' 'p'i's't'o'l' 'e'n't'e'r'e'd' 'h'i's' 'c'o'm'p'a'r't'm'e'n't' 'a'n'd' 't'r'i'e'd' 't'o' 't'a'k'e' 'h'i's' 's'u'i't'c'a's'e'.' 'H'e' '…'…'…'…'…'…'…'…'...",
+    "displayTime": 30,
+    "order": 155
+  },
+  {
+    "slideType": "SITUATION",
+    "content": "60. 'H'e' 'w'a's' 'a's'k'e'd' 't'o' 'o'r'g'a'n'i'z'e' 'a' 'v'a'r'i'e't'y' 's'h'o'w' 'w'i't'h'i'n' 'a'n' 'e'x't'r'e'm'e'l'y' 's'h'o'r't' 't'i'm'e'.' 'H'e' '…'…'…'…'…'…'…'…'…'…'…'…'…'.'...",
+    "displayTime": 30,
+    "order": 156
+  },
+  {
+    "slideType": "BREAK",
+    "content": "2 MINUTES BREAK",
+    "displayTime": 120,
+    "order": 157
+  },
+  {
+    "slideType": "INSTRUCTIONS",
+    "content": "SELF DESCRIPTION TEST (SDT)",
+    "displayTime": 10,
+    "order": 158
+  },
+  {
+    "slideType": "INSTRUCTIONS",
+    "content": "'I'n' 't'h'i's' 't'e's't',' 'y'o'u' 'w'i'l'l' 'b'e' 'c'o'v'e'r'i'n'g' 't'h'e' 'f'o'l'l'o'w'i'n'g' 'f'i'v'e' 'p'a'r'a'g'r'a'p'h's':'-'\n'\n'P'a'r'e'n't's'’' 'o'p'i'n'i'o'n' 'a'b'o'u't' 'y'o'u'?'\n'\n't'e'a'c'h'e'r's'’'/' 'E'm'p'l'o'y'e'r's'’' 'o'p'i'n'i'o'n' 'a'b'o'u't' 'y'o'u'?'\n'\n'f'r'i'e'n'd's'’' '/'C'o'l'l'e'a'g'u'e's'’' 'o'p'i'n'i'o'n' 'a'b'o'u't' 'y'o'u'?'\n'\n'Y'o'u'r' 'o'w'n' 'o'p'i'n'i'o'n' 'a'b'o'u't' 'y'o'u'r's'e'l'f'?'\n'\n'W'h'a't' 'd'o' 'y'o'u' 'w'a'n't' 't'o' 'b'e'c'o'm'e'?'\n'\n'T'h'e' 't'o't'a'l' 't'i'm'e' 'l'i'm'i't' 'f'o'r' 't'h'i's' 't'e's't' 'i's' '1'5' 'm'i'n'u't'e's'.'\n'\n'I'N'S'T'R'U'C'T'I'O'N'S' 'F'O'R' 'S'D'",
+    "displayTime": 900,
+    "order": 159
+  },
+  {
+    "slideType": "INSTRUCTIONS",
+    "content": "'T'h'a'n'k' 'y'o'u'\n'\n'P'l'e'a's'e' 's'c'a'n' 'y'o'u'r' 'd'o's's'i'e'r' 'a'n'd' 'u'p'l'o'a'd' 'i't' 'i'n' 'y'o'u'r' 'p'r'o'f'i'l'e'.' 'Y'o'u' 'w'i'l'l' 'g'e't' 'a' 'f'i'x'e'd' 'd'a't'e' 'a'n'd' 't'i'm'e' 'f'o'r' '1':'1' 'f'e'e'd'b'a'c'k' 'b'y' 't'h'e' 'P's'y'c'h'o'l'o'g'i's't'/' 'T'e'c'h'n'i'c'a'l' 'O'f'f'i'c'e'r' '('T'O')'.'",
+    "displayTime": 30,
+    "order": 160
+  }
+]

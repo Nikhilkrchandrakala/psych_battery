@@ -40,11 +40,15 @@ const LoginPage: React.FC = () => {
       <div className="max-w-md w-full bg-app-sidebar rounded-[2.5rem] shadow-2xl overflow-hidden border border-app-border relative z-10">
         <div className="px-10 pt-16 pb-10 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-app-accent to-transparent opacity-50" />
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-app-card rounded-3xl mb-8 border border-app-border shadow-inner group transition-all">
-            <ShieldCheck size={44} className="text-app-accent group-hover:scale-110 transition-transform" />
+          <div className="inline-flex items-center justify-center mb-6 transition-all">
+            <img 
+              src="/assets/logo/ISV2.png" 
+              alt="SSB with ISV Logo" 
+              className="h-24 w-auto object-contain hover:scale-105 transition-transform" 
+            />
           </div>
           <h1 className="text-4xl font-black tracking-tighter text-app-text-bright mb-3">
-            SSB<span className="text-app-text-muted">PSYCH</span>
+            SSB<span className="text-app-accent">PSYCH</span>
           </h1>
           <p className="text-app-text-muted text-sm uppercase font-black tracking-[0.2em]">Secure Evaluation Portal</p>
         </div>
@@ -102,21 +106,35 @@ const LoginPage: React.FC = () => {
             </button>
 
             {!isRegistering && (
-              <div className="p-4 bg-app-card/30 border border-app-border rounded-xl space-y-2">
-                <p className="text-[9px] font-black text-app-text-muted uppercase tracking-widest">Test Credentials</p>
-                <div className="flex flex-col gap-1">
-                  <div className="flex justify-between text-[10px] font-bold">
-                    <span className="text-app-text-muted">Email:</span>
-                    <button 
+              <div className="p-4 bg-app-card/30 border border-app-border rounded-xl space-y-4">
+                <div>
+                  <p className="text-[9px] font-black text-app-text-muted uppercase tracking-widest mb-2">Test Credentials</p>
+                  <div className="grid grid-cols-2 gap-3 text-center">
+                    <button
+                      type="button"
                       onClick={() => { setEmail('candidate@test.com'); setPassword('password123'); }}
-                      className="text-app-accent hover:underline"
+                      className="p-2.5 bg-app-card hover:bg-app-accent/10 border border-app-border hover:border-app-accent/30 rounded-xl transition-all text-[10px] font-black text-app-text-bright uppercase tracking-wider cursor-pointer"
                     >
-                      candidate@test.com
+                      Candidate Role
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => { setEmail('admin@ssb.com'); setPassword('password123'); }}
+                      className="p-2.5 bg-app-card hover:bg-app-accent/10 border border-app-border hover:border-app-accent/30 rounded-xl transition-all text-[10px] font-black text-app-accent uppercase tracking-wider cursor-pointer"
+                    >
+                      Admin Role
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5 pt-2 border-t border-app-border/40">
+                  <div className="flex justify-between text-[10px] font-bold">
+                    <span className="text-app-text-muted">Selected Email:</span>
+                    <span className="text-app-text-bright font-mono">{email || 'None selected'}</span>
                   </div>
                   <div className="flex justify-between text-[10px] font-bold">
                     <span className="text-app-text-muted">Passphrase:</span>
-                    <span className="text-app-text-bright">password123</span>
+                    <span className="text-app-text-bright font-mono">{email ? 'password123' : '—'}</span>
                   </div>
                 </div>
               </div>

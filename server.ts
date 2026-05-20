@@ -440,6 +440,9 @@ async function startServer() {
     }
   });
 
+  // Serve uploaded images/slides static directory
+  app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
+
   // Vite Middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

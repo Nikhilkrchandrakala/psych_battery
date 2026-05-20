@@ -19,6 +19,8 @@ const AssessmentEditor: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeSlideId, setActiveSlideId] = useState<string | null>(null);
+  const [fontSizeMultiplier, setFontSizeMultiplier] = useState<number>(1.0);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -239,12 +241,21 @@ const AssessmentEditor: React.FC = () => {
                  )}
 
                  {(activeSlide.slideType === 'WORD' || activeSlide.slideType === 'SITUATION' || activeSlide.slideType === 'INSTRUCTIONS') && (
-                   <h2 className={cn(
-                    "font-black text-app-text-bright tracking-tight",
-                    activeSlide.slideType === 'WORD' ? "text-7xl" : "text-4xl italic font-serif leading-tight max-w-3xl"
-                   )}>
-                     {activeSlide.content || 'ENTER CONTENT...'}
-                   </h2>
+                    <h2 
+                      style={{ 
+                        fontSize: activeSlide.slideType === 'WORD' 
+                          ? `calc(${fontSizeMultiplier} * 4.5rem)` 
+                          : activeSlide.slideType === 'SITUATION'
+                          ? `calc(${fontSizeMultiplier} * 2.25rem)`
+                          : `calc(${fontSizeMultiplier} * 1.5rem)`
+                      }}
+                      className={cn(
+                        "font-black text-app-text-bright tracking-tight font-sans whitespace-pre-wrap",
+                        activeSlide.slideType === 'WORD' ? "" : "italic leading-tight max-w-3xl"
+                      )}
+                    >
+                      {activeSlide.content || 'ENTER CONTENT...'}
+                    </h2>
                  )}
 
                  {activeSlide.slideType === 'BLACKOUT' && (
@@ -256,8 +267,18 @@ const AssessmentEditor: React.FC = () => {
                  {activeSlide.slideType === 'BREAK' && (
                    <div className="flex flex-col items-center gap-6">
                       <Clock size={64} className="text-app-accent animate-pulse" />
-                      <h2 className="text-4xl font-black text-app-text-bright uppercase tracking-tighter italic">Evaluation Intermission</h2>
-                      <p className="text-app-text-muted font-serif italic">The protocol will resume shortly.</p>
+                      <h2 
+                        style={{ fontSize: `calc(${fontSizeMultiplier} * 2.5rem)` }}
+                        className="text-4xl font-black text-app-text-bright uppercase tracking-tighter italic font-sans"
+                      >
+                        Evaluation Intermission
+                      </h2>
+                      <p 
+                        style={{ fontSize: `calc(${fontSizeMultiplier} * 1.125rem)` }}
+                        className="text-app-text-muted font-sans italic"
+                      >
+                        The protocol will resume shortly.
+                      </p>
                    </div>
                  )}
 
@@ -380,6 +401,26 @@ const AssessmentEditor: React.FC = () => {
                   <div className="flex justify-between text-[8px] font-black text-app-text-muted uppercase">
                     <span>Instinct (1s)</span>
                     <span>Deliberate (60s)</span>
+                  </div>
+                </div>
+
+                <div className="space-y-3 border-t border-app-border/40 pt-4">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Typography Scale</label>
+                    <span className="text-xs font-black text-app-accent">{Math.round(fontSizeMultiplier * 100)}%</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0.6" 
+                    max="1.8" 
+                    step="0.05"
+                    value={fontSizeMultiplier}
+                    onChange={(e) => setFontSizeMultiplier(Number(e.target.value))}
+                    className="w-full accent-app-accent"
+                  />
+                  <div className="flex justify-between text-[8px] font-black text-app-text-muted uppercase">
+                    <span>Compact (60%)</span>
+                    <span>Enlarged (180%)</span>
                   </div>
                 </div>
               </div>

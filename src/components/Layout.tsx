@@ -28,10 +28,12 @@ const Layout: React.FC = () => {
       <aside className="hidden md:flex w-64 bg-app-sidebar border-r border-app-border flex-col shrink-0">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-9 h-9 bg-app-accent rounded-lg flex items-center justify-center font-black text-white shadow-lg shadow-app-accent/20">
-              S
-            </div>
-            <span className="text-app-text-bright font-bold tracking-tight text-lg">SSB Academy</span>
+            <img 
+              src="/assets/logo/ISV2.png" 
+              alt="Logo" 
+              className="w-10 h-10 object-contain rounded-full shadow-lg shadow-app-accent/20"
+            />
+            <span className="text-app-text-bright font-bold tracking-tight text-lg">SSB with ISV</span>
           </div>
 
           <nav className="space-y-1">
@@ -124,7 +126,14 @@ const Layout: React.FC = () => {
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)} />
           <aside className="absolute inset-y-0 left-0 w-72 bg-app-sidebar p-6 flex flex-col animate-in slide-in-from-left duration-300">
             <div className="flex items-center justify-between mb-8">
-              <span className="text-app-text-bright font-bold tracking-tight text-lg italic">SSBP<span className="text-app-accent">.</span></span>
+              <div className="flex items-center gap-2">
+                <img 
+                  src="/assets/logo/ISV2.png" 
+                  alt="Logo" 
+                  className="w-8 h-8 object-contain rounded-full"
+                />
+                <span className="text-app-text-bright font-bold tracking-tight text-lg">SSB with ISV</span>
+              </div>
               <button onClick={() => setIsMenuOpen(false)} className="p-2 text-app-text-muted">
                 <X size={24} />
               </button>

@@ -45,13 +45,21 @@ const Dashboard: React.FC = () => {
     return submissions.find(s => s.assessmentId === assessmentId);
   };
 
+  const getWelcomeName = () => {
+    const rawName = profile?.name || user?.name || user?.email || 'User';
+    if (rawName.includes('@')) {
+      return rawName.split('@')[0];
+    }
+    return rawName.split(' ')[0];
+  };
+
   return (
     <div className="space-y-12">
       {/* Welcome Header */}
       <section>
         <div className="flex items-end gap-2 mb-2">
            <h1 className="text-5xl font-black tracking-tighter text-app-text-bright">
-            Welcome, {profile?.name.split(' ')[0]}
+            Welcome, {getWelcomeName()}
           </h1>
           <span className="w-3 h-3 bg-app-accent rounded-full mb-3 shadow-[0_0_10px_#C5A028]"></span>
         </div>
