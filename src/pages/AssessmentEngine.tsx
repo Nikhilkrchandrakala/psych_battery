@@ -9,7 +9,7 @@ import { cn } from '../lib/utils';
 
 const AssessmentEngine: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { user, profile } = useAuth();
+  const { user, profile, mainSiteUrl } = useAuth();
   const navigate = useNavigate();
 
   const [assessment, setAssessment] = useState<Assessment | null>(null);
@@ -167,7 +167,7 @@ const AssessmentEngine: React.FC = () => {
     }
     
     setTimeout(() => {
-      navigate(`/upload/${submissionId}`);
+      window.location.href = `${mainSiteUrl}/ProfileDashboard?tab=psycheTest&submissionId=${submissionId}`;
     }, 2500);
   };
 

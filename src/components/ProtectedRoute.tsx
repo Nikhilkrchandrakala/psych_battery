@@ -22,7 +22,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, requireAd
   if (!user) {
     // Redirect to main site login — PsychBattery no longer has standalone login
     const mainLogin = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:5173/SignIn'
+      ? 'http://localhost:3000/SignIn'
       : 'https://ssbwithisv.in/SignIn';
     window.location.href = mainLogin;
     return null;

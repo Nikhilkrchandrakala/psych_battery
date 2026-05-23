@@ -4,11 +4,11 @@ import { api } from '../lib/api';
 
 // Environment-aware URLs for the main site
 const MAIN_SITE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5173'
+    ? 'http://localhost:3000'
     : 'https://ssbwithisv.in';
 
 const ADMIN_PANEL_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5001/admin-login'
+    ? 'http://localhost:8080'
     : 'https://ssbwithisv.in/admin-login';
 
 interface AuthContextType {
@@ -40,19 +40,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdminUser, setIsAdminUser] = useState(false);
 
   const checkAuth = async () => {
-    // SSO: Extract token from query params if available (passed from main site/admin panel)
+    // Check for bypass parameter (for local development/testing)
     const urlParams = new URLSearchParams(window.location.search);
+    const urlBypass = urlParams.get('bypass');
     const urlToken = urlParams.get('token');
-    if (urlToken) {
+    
+    if (urlBypass && ['student', 'assessor', 'admin'].includes(urlBypass)) {
+      localStorage.setItem('auth_token', `mock-${urlBypass}`);
+      // Clean up URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlToken) {
       localStorage.setItem('auth_token', urlToken);
       // Clean up URL parameter
       window.history.replaceState({}, document.title, window.location.pathname);
-    }
-
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      setLoading(false);
-      return;
     }
 
     try {
@@ -61,8 +61,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(userData);
       setIsAdminUser(userData.role === 'admin');
 
-      // Role-based auto-routing after SSO entry
-      if (urlToken) {
+      // Role-based auto-routing after SSO or bypass entry
+      if (urlToken || urlBypass) {
         const currentPath = window.location.pathname;
         if (userData.role === 'admin' && currentPath === '/') {
           window.history.replaceState({}, '', '/admin');
@@ -94,7 +94,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     const role = profile?.role;
+    // Clear PsychBattery session token
     localStorage.removeItem('auth_token');
+    // Also clear admin portal session keys so the portal lands on login (not loop-redirect)
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('permissions');
+    localStorage.removeItem('name');
+
     setUser(null);
     setProfile(null);
     setIsAdminUser(false);

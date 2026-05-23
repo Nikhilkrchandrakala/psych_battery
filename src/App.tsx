@@ -5,12 +5,25 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import Dashboard from './pages/Dashboard';
-import AssessmentEngine from './pages/AssessmentEngine'; 
+import AssessmentEngine from './pages/AssessmentEngine';
 import SubmissionUpload from './pages/SubmissionUpload';
 import AssessorDashboard from './pages/AssessorDashboard';
 import SubmissionReview from './pages/SubmissionReview';
 import AdminDashboard from './pages/AdminDashboard';
 import AssessmentEditor from './pages/AssessmentEditor';
+
+/**
+ * Redirects users to their role-appropriate home page on root visit.
+ * - Admins    → /admin
+ * - Assessors → /assessor
+ * - Students  → student test dashboard (rendered in-place)
+ */
+const RoleRedirect: React.FC = () => {
+  const { profile } = useAuth();
+  if (profile?.role === 'admin') return <Navigate to="/admin" replace />;
+  if (profile?.role === 'assessor') return <Navigate to="/assessor" replace />;
+  return <Dashboard />;
+};
 
 export default function App() {
   const { loading } = useAuth();
@@ -27,11 +40,12 @@ export default function App() {
     <Routes>
       {/* Legacy /login route — redirect to home (ProtectedRoute handles auth) */}
       <Route path="/login" element={<Navigate to="/" replace />} />
-      
+
       {/* Routes with Sidebar Layout */}
       <Route element={<Layout />}>
         <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<Dashboard />} />
+          {/* Root redirects based on role — students see Dashboard, others redirect */}
+          <Route path="/" element={<RoleRedirect />} />
           <Route path="/upload/:id" element={<SubmissionUpload />} />
         </Route>
 

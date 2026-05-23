@@ -109,19 +109,8 @@ const AdminDashboard: React.FC = () => {
               </span>
             </div>
             <p className="text-app-text-muted text-xl font-serif italic max-w-2xl leading-relaxed">
-              Global protocol control, user management, and evaluation infrastructure monitoring.
+              Global protocol control, user management, and assessor progress monitoring.
             </p>
-          </div>
-          
-          <div className="hidden lg:flex items-center gap-4 bg-app-sidebar border border-app-border p-2 rounded-2xl shadow-lg shadow-black/40">
-             <div className="px-4 py-2 border-r border-app-border">
-                <div className="text-[9px] font-black text-app-text-muted uppercase tracking-widest mb-1">System Load</div>
-                <div className="text-sm font-black text-green-400">OPTIMAL</div>
-             </div>
-             <div className="px-4 py-2">
-                <div className="text-[9px] font-black text-app-text-muted uppercase tracking-widest mb-1">Database</div>
-                <div className="text-sm font-black text-app-text-bright font-mono">1.2ms</div>
-             </div>
           </div>
         </div>
       </div>
@@ -131,7 +120,7 @@ const AdminDashboard: React.FC = () => {
         {[
           { id: 'users', label: 'Identity Registry', icon: Users },
           { id: 'assessments', label: 'Protocol Catalog', icon: Layers },
-          { id: 'assignments', label: 'Evaluation Queue', icon: UserPlus }
+          { id: 'assignments', label: 'Assessor Progress', icon: UserPlus }
         ].map(tab => (
           <button
             key={tab.id}
@@ -276,28 +265,42 @@ const AdminDashboard: React.FC = () => {
            <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-black/10">
-                  <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border">Dossier Context</th>
-                  <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border">Evaluation Status</th>
+                  <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border">Candidate</th>
+                  <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border">Submission Status</th>
+                  <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border">PIQ OCR</th>
                   <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border">Assigned Assessor</th>
-                  <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border text-right">Cadence</th>
+                  <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {submissions.map((s) => (
+                {submissions.map((s) => {
+                  const piqStatus = (s as any).piqStatus || 'PENDING';
+                  const piqStatusStyles: Record<string, string> = {
+                    PENDING:    'bg-gray-500/10 text-gray-400 border-gray-500/20',
+                    PROCESSING: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+                    PARSED:     'bg-green-500/10 text-green-400 border-green-500/20',
+                    FAILED:     'bg-red-500/10 text-red-400 border-red-500/20',
+                  };
+                  return (
                   <tr key={s.id} className="border-b border-app-border hover:bg-white/5 transition-colors group">
                     <td className="p-6">
                        <div className="text-sm font-black text-app-text-bright">
-                        {users.find(u => u.uid === s.userId)?.name || 'Unknown Candidate'}
+                        {users.find(u => u.uid === s.userId)?.name || users.find(u => u.id === s.userId)?.name || 'Unknown Candidate'}
                        </div>
                        <div className="text-[9px] font-black text-app-accent uppercase tracking-widest mt-1 opacity-60">
-                        Protocol: {assessments.find(a => a.id === s.assessmentId)?.title}
+                        {assessments.find(a => a.id === s.assessmentId)?.title}
                        </div>
                     </td>
                     <td className="p-6">
                        <div className="flex items-center gap-2">
                           <span className="w-1.5 h-1.5 bg-app-accent rounded-full animate-pulse" />
-                          <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">{s.status.replace('_', ' ')}</span>
+                          <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">{s.status.replace(/_/g, ' ')}</span>
                        </div>
+                    </td>
+                    <td className="p-6">
+                       <span className={cn('px-2 py-1 rounded-lg border text-[9px] font-black uppercase tracking-[0.15em]', piqStatusStyles[piqStatus] || piqStatusStyles['PENDING'])}>
+                         {piqStatus}
+                       </span>
                     </td>
                     <td className="p-6">
                        <select 
@@ -307,17 +310,18 @@ const AdminDashboard: React.FC = () => {
                        >
                          <option value="">Pending Assignment</option>
                          {users.filter(u => u.role === 'assessor' || u.role === 'admin').map(a => (
-                           <option key={a.uid} value={a.uid}>{a.name}</option>
+                           <option key={a.uid || a.id} value={a.uid || a.id}>{a.name}</option>
                          ))}
                        </select>
                     </td>
                     <td className="p-6 text-right">
-                       <Link to={`/review/${s.id}`} className="p-2 text-app-text-muted hover:text-app-text-bright transition-colors">
+                       <Link to={`/review/${s.id}`} className="p-2 text-app-text-muted hover:text-app-accent transition-colors" title="Open Dossier Viewer">
                           <ArrowRight size={18} />
                        </Link>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
            </table>
          </div>

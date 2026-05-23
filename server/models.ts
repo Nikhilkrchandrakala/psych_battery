@@ -64,6 +64,9 @@ const SubmissionSchema = new mongoose.Schema({
   startedAt: Date,
   completedAt: Date,
   uploadedFiles: [String],
+  piqFiles: [String],
+  piqParsedData: String,
+  piqStatus: { type: String, enum: ['PENDING', 'PROCESSING', 'PARSED', 'FAILED'], default: 'PENDING' },
   assessorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   assessorRemarks: String,
   evaluation: String,
@@ -84,10 +87,31 @@ SubmissionSchema.set('toJSON', {
   }
 });
 
+const NotificationSchema = new mongoose.Schema({
+  recipientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  submissionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Submission', required: true },
+  title: { type: String, required: true },
+  message: String,
+  isRead: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+}, { timestamps: true });
+
+NotificationSchema.set('toJSON', {
+  transform: (doc, ret: any) => {
+    ret.id = ret._id;
+    delete ret._id;
+    delete ret.__v;
+    return ret;
+  }
+});
+
 export const User = mongoose.model('User', UserSchema);
 export const Assessment = mongoose.model('Assessment', AssessmentSchema);
 export const Slide = mongoose.model('Slide', SlideSchema);
 export const Submission = mongoose.model('Submission', SubmissionSchema);
+export const Notification = mongoose.model('Notification', NotificationSchema);
+
 
 const AdminUserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },

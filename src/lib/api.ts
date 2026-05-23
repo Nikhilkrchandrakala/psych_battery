@@ -42,5 +42,9 @@ export const api = {
   users: {
     list: () => fetchWithAuth('/users'),
     update: (id: string, data: any) => fetchWithAuth(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  },
+  notifications: {
+    list: () => fetchWithAuth('/notifications'),
+    markAsRead: (id: string) => fetchWithAuth(`/notifications/${id}/read`, { method: 'PUT' }),
   }
 };

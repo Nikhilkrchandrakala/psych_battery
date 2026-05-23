@@ -14,9 +14,27 @@ const Layout: React.FC = () => {
     logout();
   };
 
+  const handleBackToAdmin = (e: React.MouseEvent) => {
+    e.preventDefault();
+    // Clear ALL session keys — both PsychBattery and Admin Portal
+    // so the admin portal doesn't detect an assessor token and loop back to 5173
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('permissions');
+    localStorage.removeItem('name');
+    const dest = (profile?.role === 'assessor' || profile?.role === 'admin')
+      ? adminPanelUrl
+      : `${mainSiteUrl}/ProfileDashboard`;
+    window.location.href = dest;
+  };
+
   const navItems = [
-    { label: 'My Dashboard', path: '/', icon: LayoutDashboard, show: !!user },
-    { label: 'Assessor assignments', path: '/assessor', icon: Users, show: profile?.role === 'assessor' || isAdminUser },
+    // Student-only: test dashboard
+    { label: 'My Dashboard', path: '/', icon: LayoutDashboard, show: profile?.role === 'student' },
+    // Assessors + Admins: candidate dossier list
+    { label: 'Candidate Dossiers', path: '/assessor', icon: Users, show: profile?.role === 'assessor' || isAdminUser },
+    // Admin only: admin hub
     { label: 'Admin Hub', path: '/admin', icon: Shield, show: isAdminUser },
   ];
 
@@ -40,6 +58,7 @@ const Layout: React.FC = () => {
             {/* Back to Main Site / Admin Panel */}
             <a
               href={profile?.role === 'assessor' || profile?.role === 'admin' ? adminPanelUrl : `${mainSiteUrl}/ProfileDashboard`}
+              onClick={handleBackToAdmin}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group font-medium text-sm text-app-text-muted hover:text-app-accent hover:bg-app-accent/5 mb-4"
             >
               <ArrowLeft size={18} className="group-hover:text-app-accent transition-colors" />
@@ -165,7 +184,7 @@ const Layout: React.FC = () => {
                 <a
                   href={profile?.role === 'assessor' || profile?.role === 'admin' ? adminPanelUrl : `${mainSiteUrl}/ProfileDashboard`}
                   className="flex items-center gap-4 text-app-accent font-medium text-lg"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={handleBackToAdmin}
                 >
                   <ArrowLeft size={24} />
                   {profile?.role === 'assessor' || profile?.role === 'admin' ? 'Back to Admin' : 'Back to Main Site'}

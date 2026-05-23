@@ -3,12 +3,32 @@ import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { AssessmentSubmission, UserProfile } from '../types';
 import { useAuth } from '../components/AuthProvider';
-import { Users, Search, Filter, Calendar, ExternalLink, Shield, ArrowRight, User as UserIcon } from 'lucide-react';
+import { Users, Search, Filter, ExternalLink, Shield, ArrowRight, User as UserIcon, Bell, Check } from 'lucide-react';
 import { cn } from '../lib/utils';
+
+interface NotificationItem {
+  id: string;
+  recipientId: string;
+  studentId: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  submissionId: {
+    id: string;
+    assessmentId: string;
+    status: string;
+  };
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
 
 const AssessorDashboard: React.FC = () => {
   const { user, profile } = useAuth();
   const [submissions, setSubmissions] = useState<(AssessmentSubmission & { student?: UserProfile })[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,6 +37,9 @@ const AssessorDashboard: React.FC = () => {
       try {
         const subData = await api.submissions.list();
         setSubmissions(subData);
+
+        const notifData = await (api as any).notifications.list();
+        setNotifications(notifData);
       } catch (error) {
         console.error('Failed to fetch assessor data:', error);
       } finally {
@@ -26,6 +49,15 @@ const AssessorDashboard: React.FC = () => {
 
     fetchData();
   }, [user]);
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await (api as any).notifications.markAsRead(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    } catch (e) {
+      console.error('Failed to mark notification as read:', e);
+    }
+  };
 
   if (loading) return (
     <div className="flex justify-center items-center h-96">
@@ -69,16 +101,46 @@ const AssessorDashboard: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-               <h3 className="text-xs font-black text-app-text-muted uppercase tracking-[0.2em] border-b border-app-border pb-3">
-                Quick Actions
+               <h3 className="text-xs font-black text-app-text-muted uppercase tracking-[0.2em] border-b border-app-border pb-3 flex items-center gap-2">
+                <Bell size={12} className="text-app-accent animate-pulse" /> Real-Time Alerts
                </h3>
-               <div className="space-y-2">
-                 <button className="w-full flex items-center justify-between p-3 rounded-xl bg-app-card border border-app-border text-xs font-bold text-app-text-bright hover:bg-white/5 transition-all">
-                   Manage Schedule <Calendar size={14} className="text-app-accent" />
-                 </button>
-                 <button className="w-full flex items-center justify-between p-3 rounded-xl bg-app-card border border-app-border text-xs font-bold text-app-text-bright hover:bg-white/5 transition-all">
-                   Evaluation Templates <ExternalLink size={14} className="text-app-accent" />
-                 </button>
+               <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                 {notifications.filter(n => !n.isRead).length === 0 ? (
+                   <p className="text-[11px] text-app-text-muted italic font-serif">
+                     Zero active dossier alerts. All systems sync'd.
+                   </p>
+                 ) : (
+                   notifications.filter(n => !n.isRead).map((notif) => (
+                     <div key={notif.id} className="p-3 bg-app-card rounded-xl border border-app-border space-y-2 hover:border-app-accent/30 transition-all">
+                       <div className="flex justify-between items-start gap-2">
+                         <div className="text-[11px] font-black text-app-text-bright tracking-tight leading-tight">
+                           {notif.title}
+                         </div>
+                         <button 
+                           onClick={() => handleMarkAsRead(notif.id)}
+                           className="p-1 hover:bg-white/10 rounded text-app-text-muted hover:text-green-400 transition-all"
+                           title="Mark as Read"
+                         >
+                           <Check size={10} />
+                         </button>
+                       </div>
+                       <p className="text-[10px] text-app-text-muted leading-relaxed">
+                         {notif.message}
+                       </p>
+                       <div className="flex justify-between items-center text-[9px] pt-1">
+                         <span className="text-app-accent font-semibold">
+                           {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                         </span>
+                         <Link 
+                           to={`/review/${notif.submissionId?.id || notif.submissionId}`}
+                           className="hover:underline text-app-text-bright font-black tracking-widest uppercase"
+                         >
+                           Review dossier →
+                         </Link>
+                       </div>
+                     </div>
+                   ))
+                 )}
                </div>
             </div>
           </div>
