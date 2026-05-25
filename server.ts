@@ -218,6 +218,37 @@ async function startServer() {
     res.json(req.user);
   });
 
+  app.get('/api/debug-auth', (req: any, res: any) => {
+    const authHeader = req.headers.authorization || '';
+    let token = '';
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.headers.token) {
+      token = req.headers.token;
+    } else if (req.query.token) {
+      token = req.query.token as string;
+    }
+    
+    const envSecret = process.env.JWT_SECRET ? process.env.JWT_SECRET.substring(0, 10) + '...' : 'NOT_SET';
+    
+    let decoded = null;
+    let error = null;
+    if (token) {
+      try {
+        decoded = jwt.verify(token.trim(), JWT_SECRET) as any;
+      } catch (e: any) {
+        error = e.message;
+      }
+    }
+    
+    res.json({
+      hasToken: !!token,
+      secretPrefix: envSecret,
+      decoded,
+      error
+    });
+  });
+
   // --- ASSESSMENT ROUTES ---
   app.get('/api/assessments', authenticate, async (req, res) => {
     const isBypass = process.env.BYPASS_AUTH === 'true';
