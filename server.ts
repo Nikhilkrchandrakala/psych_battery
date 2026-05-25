@@ -230,6 +230,18 @@ async function startServer() {
     }
     
     const envSecret = process.env.JWT_SECRET ? process.env.JWT_SECRET.substring(0, 10) + '...' : 'NOT_SET';
+    const secretLength = process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 0;
+    
+    // Non-reversible hash of secret to verify exact match without exposing key
+    let secretHash = 0;
+    if (process.env.JWT_SECRET) {
+      let hash = 0;
+      for (let i = 0; i < process.env.JWT_SECRET.length; i++) {
+        hash = (hash << 5) - hash + process.env.JWT_SECRET.charCodeAt(i);
+        hash |= 0;
+      }
+      secretHash = hash;
+    }
     
     let decoded = null;
     let error = null;
@@ -244,6 +256,8 @@ async function startServer() {
     res.json({
       hasToken: !!token,
       secretPrefix: envSecret,
+      secretLength,
+      secretHash,
       decoded,
       error
     });
