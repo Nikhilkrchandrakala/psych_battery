@@ -93,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const logout = () => {
-    const role = profile?.role;
+    const role = profile?.role || localStorage.getItem('role');
     // Clear PsychBattery session token
     localStorage.removeItem('auth_token');
     // Also clear admin portal session keys so the portal lands on login (not loop-redirect)

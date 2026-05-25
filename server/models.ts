@@ -8,6 +8,12 @@ const UserSchema = new mongoose.Schema({
   role: { type: String, enum: ['student', 'assessor', 'admin'], default: 'student' },
   profileImage: String,
   assignedAssessor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  assessorType: { type: String, enum: ['GTO', 'TO', 'Psych', 'IO', null], default: null },
+  clinicalStage: { type: String, enum: ['Screening', 'Psychology', 'GTO', 'Interview', 'Conference', 'Completed'], default: 'Screening' },
+  assignedGTO: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  assignedTO: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  assignedPsych: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  assignedIO: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 }, { timestamps: true });
 
 UserSchema.set('toJSON', {

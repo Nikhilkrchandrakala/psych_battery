@@ -51,12 +51,32 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const assignStudentToAssessor = async (userId: string, assessorId: string) => {
+  const assignSpecializedAssessor = async (userId: string, field: 'assignedGTO' | 'assignedTO' | 'assignedPsych' | 'assignedIO', assessorId: string) => {
     try {
-      await api.users.update(userId, { assignedAssessor: assessorId });
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, assignedAssessor: assessorId } : u));
+      const val = assessorId === "" ? null : assessorId;
+      await api.users.update(userId, { [field]: val });
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, [field]: val } : u));
     } catch (error) {
-      console.error('Failed to assign student to assessor:', error);
+      console.error(`Failed to assign student to ${field}:`, error);
+    }
+  };
+
+  const updateStudentClinicalStage = async (userId: string, stage: string) => {
+    try {
+      await api.users.update(userId, { clinicalStage: stage });
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, clinicalStage: stage as any } : u));
+    } catch (error) {
+      console.error('Failed to update student clinical stage:', error);
+    }
+  };
+
+  const updateAssessorSpecialization = async (userId: string, assessorType: string) => {
+    try {
+      const val = assessorType === "" ? null : assessorType;
+      await api.users.update(userId, { assessorType: val });
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, assessorType: val as any } : u));
+    } catch (error) {
+      console.error('Failed to update assessor specialization:', error);
     }
   };
 
@@ -185,22 +205,93 @@ const AdminDashboard: React.FC = () => {
                          <option value="admin">Admin</option>
                        </select>
                     </td>
-                    <td className="p-6">
-                       {u.role === 'student' ? (
-                          <select 
-                            value={u.assignedAssessor || ''}
-                            onChange={(e) => assignStudentToAssessor(u.id, e.target.value)}
-                            className="bg-app-card border border-app-border rounded-lg px-3 py-1.5 text-[9px] font-black text-app-accent uppercase focus:outline-none focus:ring-1 focus:ring-app-accent cursor-pointer w-full"
-                          >
-                            <option value="">No Assessor</option>
-                            {users.filter(usr => usr.role === 'assessor' || usr.role === 'admin').map(a => (
-                              <option key={a.id} value={a.id}>{a.name}</option>
-                            ))}
-                          </select>
-                       ) : (
-                          <div className="text-[9px] font-black text-app-text-muted uppercase tracking-widest text-center">N/A</div>
-                       )}
-                    </td>
+                     <td className="p-6">
+                        {u.role === 'student' ? (
+                          <div className="space-y-2 max-w-[280px]">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[8px] font-black text-app-text-muted uppercase tracking-wider shrink-0 w-16">Stage:</span>
+                              <select
+                                value={u.clinicalStage || 'Screening'}
+                                onChange={(e) => updateStudentClinicalStage(u.id, e.target.value)}
+                                className="bg-app-card border border-app-border rounded px-2 py-0.5 text-[8px] font-bold text-app-text-bright focus:outline-none cursor-pointer w-full"
+                              >
+                                {['Screening', 'Psychology', 'GTO', 'Interview', 'Conference', 'Completed'].map(st => (
+                                  <option key={st} value={st}>{st}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[8px] font-black text-app-text-muted uppercase tracking-wider shrink-0 w-16">Psych:</span>
+                              <select
+                                value={u.assignedPsych || ''}
+                                onChange={(e) => assignSpecializedAssessor(u.id, 'assignedPsych', e.target.value)}
+                                className="bg-app-card border border-app-border rounded px-2 py-0.5 text-[8px] font-bold text-purple-400 focus:outline-none cursor-pointer w-full"
+                              >
+                                <option value="">Unassigned</option>
+                                {users.filter(usr => usr.role === 'assessor' && usr.assessorType === 'Psych').map(a => (
+                                  <option key={a.id} value={a.id}>{a.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[8px] font-black text-app-text-muted uppercase tracking-wider shrink-0 w-16">GTO:</span>
+                              <select
+                                value={u.assignedGTO || ''}
+                                onChange={(e) => assignSpecializedAssessor(u.id, 'assignedGTO', e.target.value)}
+                                className="bg-app-card border border-app-border rounded px-2 py-0.5 text-[8px] font-bold text-blue-400 focus:outline-none cursor-pointer w-full"
+                              >
+                                <option value="">Unassigned</option>
+                                {users.filter(usr => usr.role === 'assessor' && usr.assessorType === 'GTO').map(a => (
+                                  <option key={a.id} value={a.id}>{a.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[8px] font-black text-app-text-muted uppercase tracking-wider shrink-0 w-16">IO:</span>
+                              <select
+                                value={u.assignedIO || ''}
+                                onChange={(e) => assignSpecializedAssessor(u.id, 'assignedIO', e.target.value)}
+                                className="bg-app-card border border-app-border rounded px-2 py-0.5 text-[8px] font-bold text-amber-400 focus:outline-none cursor-pointer w-full"
+                              >
+                                <option value="">Unassigned</option>
+                                {users.filter(usr => usr.role === 'assessor' && usr.assessorType === 'IO').map(a => (
+                                  <option key={a.id} value={a.id}>{a.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[8px] font-black text-app-text-muted uppercase tracking-wider shrink-0 w-16">TO:</span>
+                              <select
+                                value={u.assignedTO || ''}
+                                onChange={(e) => assignSpecializedAssessor(u.id, 'assignedTO', e.target.value)}
+                                className="bg-app-card border border-app-border rounded px-2 py-0.5 text-[8px] font-bold text-teal-400 focus:outline-none cursor-pointer w-full"
+                              >
+                                <option value="">Unassigned</option>
+                                {users.filter(usr => usr.role === 'assessor' && usr.assessorType === 'TO').map(a => (
+                                  <option key={a.id} value={a.id}>{a.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        ) : u.role === 'assessor' ? (
+                          <div className="space-y-1 max-w-[200px]">
+                            <div className="text-[8px] font-black text-app-text-muted uppercase tracking-widest mb-1">Specialization</div>
+                            <select 
+                              value={u.assessorType || ''}
+                              onChange={(e) => updateAssessorSpecialization(u.id, e.target.value)}
+                              className="bg-app-card border border-app-border rounded px-3 py-1.5 text-[9px] font-black text-app-accent uppercase focus:outline-none cursor-pointer w-full"
+                            >
+                              <option value="">General Assessor</option>
+                              <option value="Psych">Psychologist</option>
+                              <option value="GTO">GTO Officer</option>
+                              <option value="IO">Interview Officer</option>
+                              <option value="TO">Technical Officer</option>
+                            </select>
+                          </div>
+                        ) : (
+                           <div className="text-[9px] font-black text-app-text-muted uppercase tracking-widest text-center">N/A (Admin)</div>
+                        )}
+                     </td>
                     <td className="p-6 text-right">
                        <button className="p-2 text-app-text-muted hover:text-red-400 transition-colors">
                           <Trash2 size={16} />

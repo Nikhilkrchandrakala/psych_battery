@@ -23,8 +23,12 @@ const Layout: React.FC = () => {
     localStorage.removeItem('role');
     localStorage.removeItem('permissions');
     localStorage.removeItem('name');
-    const dest = (profile?.role === 'assessor' || profile?.role === 'admin')
-      ? adminPanelUrl
+    
+    const isAssessorOrAdmin = profile?.role === 'assessor' || profile?.role === 'admin';
+    const dest = isAssessorOrAdmin
+      ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:8080/Profile.html'
+        : 'https://ssbwithisv.in/admin/Profile.html')
       : `${mainSiteUrl}/ProfileDashboard`;
     window.location.href = dest;
   };
@@ -55,14 +59,17 @@ const Layout: React.FC = () => {
           </div>
 
           <nav className="space-y-1">
-            {/* Back to Main Site / Admin Panel */}
+            {/* Back to Profile / Back to Admin Panel */}
             <a
-              href={profile?.role === 'assessor' || profile?.role === 'admin' ? adminPanelUrl : `${mainSiteUrl}/ProfileDashboard`}
+              href={profile?.role === 'assessor' || profile?.role === 'admin'
+                ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080/Profile.html' : 'https://ssbwithisv.in/admin/Profile.html')
+                : `${mainSiteUrl}/ProfileDashboard`
+              }
               onClick={handleBackToAdmin}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group font-medium text-sm text-app-text-muted hover:text-app-accent hover:bg-app-accent/5 mb-4"
             >
               <ArrowLeft size={18} className="group-hover:text-app-accent transition-colors" />
-              <span>{profile?.role === 'assessor' || profile?.role === 'admin' ? 'Back to Admin Panel' : 'Back to Main Site'}</span>
+              <span>{profile?.role === 'assessor' || profile?.role === 'admin' ? 'Back to Admin Panel' : 'Return to Profile'}</span>
               <ExternalLink size={12} className="ml-auto opacity-40" />
             </a>
 
@@ -182,12 +189,15 @@ const Layout: React.FC = () => {
               ))}
               <div className="pt-4 mt-4 border-t border-app-border space-y-4">
                 <a
-                  href={profile?.role === 'assessor' || profile?.role === 'admin' ? adminPanelUrl : `${mainSiteUrl}/ProfileDashboard`}
+                  href={profile?.role === 'assessor' || profile?.role === 'admin'
+                    ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080/Profile.html' : 'https://ssbwithisv.in/admin/Profile.html')
+                    : `${mainSiteUrl}/ProfileDashboard`
+                  }
                   className="flex items-center gap-4 text-app-accent font-medium text-lg"
                   onClick={handleBackToAdmin}
                 >
                   <ArrowLeft size={24} />
-                  {profile?.role === 'assessor' || profile?.role === 'admin' ? 'Back to Admin' : 'Back to Main Site'}
+                  {profile?.role === 'assessor' || profile?.role === 'admin' ? 'Back to Admin Panel' : 'Return to Profile'}
                 </a>
                  <button
                   onClick={handleLogout}

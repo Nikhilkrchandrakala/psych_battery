@@ -30,6 +30,29 @@ const AssessorDashboard: React.FC = () => {
   const [submissions, setSubmissions] = useState<(AssessmentSubmission & { student?: UserProfile })[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeAssessorType, setActiveAssessorType] = useState<'Psych' | 'GTO' | 'TO' | 'IO'>('Psych');
+
+  useEffect(() => {
+    if (profile?.assessorType) {
+      setActiveAssessorType(profile.assessorType);
+    }
+  }, [profile]);
+
+  const showRoleToggle = !profile?.assessorType;
+
+  const headerTitle = 
+    activeAssessorType === 'Psych' ? 'Psychologist Terminal' :
+    activeAssessorType === 'GTO' ? 'GTO Assessment Desk' :
+    activeAssessorType === 'IO' ? 'Interviewing Officer Terminal' :
+    activeAssessorType === 'TO' ? 'Technical Officer Terminal' :
+    'Assessor Terminal';
+
+  const headerDesc = 
+    activeAssessorType === 'Psych' ? 'Monitor candidate timed batteries, TAT/WAT/SRT/SDT responses, and evaluate the 15 Officer Like Qualities (OLQs).' :
+    activeAssessorType === 'GTO' ? 'Assess group dynamics, physical coordination, cooperation, and practical intellect of your allotted candidates.' :
+    activeAssessorType === 'IO' ? 'Conduct comprehensive personal interviews, grade verbal expression, and schedule/record feedback sessions.' :
+    activeAssessorType === 'TO' ? 'Evaluate practical technical problem solving, analytical ability, and technical comprehension.' :
+    'Monitor candidate progress, review psychological dossiers, and conduct professional evaluations.';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,14 +90,35 @@ const AssessorDashboard: React.FC = () => {
 
   return (
     <div className="space-y-10">
-      <div className="space-y-4">
-        <div className="flex items-end gap-3 mb-2">
-          <h1 className="text-5xl font-black tracking-tighter text-app-text-bright">Assessor Terminal</h1>
-          <span className="w-3 h-3 bg-app-accent rounded-full mb-3 shadow-[0_0_10px_#C5A028]"></span>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-4">
+          <div className="flex items-end gap-3 mb-2">
+            <h1 className="text-5xl font-black tracking-tighter text-app-text-bright">{headerTitle}</h1>
+            <span className="w-3 h-3 bg-app-accent rounded-full mb-3 shadow-[0_0_10px_#C5A028]"></span>
+          </div>
+          <p className="text-app-text-muted text-xl font-serif italic max-w-2xl leading-relaxed">
+            {headerDesc}
+          </p>
         </div>
-        <p className="text-app-text-muted text-xl font-serif italic max-w-2xl leading-relaxed">
-          Monitor candidate progress, review psychological dossiers, and conduct professional evaluations.
-        </p>
+
+        {showRoleToggle && (
+          <div className="flex gap-2 p-1 bg-app-sidebar border border-app-border rounded-2xl w-fit self-start shrink-0 shadow-lg">
+            {(['Psych', 'GTO', 'IO', 'TO'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setActiveAssessorType(t)}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-black tracking-widest uppercase transition-all",
+                  activeAssessorType === t 
+                    ? "bg-app-accent text-black shadow-md shadow-app-accent/20" 
+                    : "text-app-text-muted hover:text-app-text-bright hover:bg-white/5"
+                )}
+              >
+                {t === 'Psych' ? 'Psychologist' : t === 'GTO' ? 'GTO' : t === 'IO' ? 'Interview' : 'Technical'}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -179,6 +223,8 @@ const AssessorDashboard: React.FC = () => {
                      <tr className="border-b border-app-border bg-black/20">
                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Candidate Identity</th>
                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Lifecycle Status</th>
+                       <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Clinical Stage</th>
+                       <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Allotted Assessors</th>
                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Session Date</th>
                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted text-right">Cadence</th>
                      </tr>
@@ -213,6 +259,30 @@ const AssessorDashboard: React.FC = () => {
                             </span>
                          </td>
                          <td className="p-6">
+                            <span className="px-2.5 py-1 rounded bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-[0.15em] text-app-text-bright">
+                              {sub.student?.clinicalStage || 'Screening'}
+                            </span>
+                         </td>
+                         <td className="p-6">
+                           <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                             {sub.student?.assignedPsych && (
+                               <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded text-[9px] font-black uppercase tracking-wider">Psych</span>
+                             )}
+                             {sub.student?.assignedGTO && (
+                               <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded text-[9px] font-black uppercase tracking-wider">GTO</span>
+                             )}
+                             {sub.student?.assignedIO && (
+                               <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[9px] font-black uppercase tracking-wider">IO</span>
+                             )}
+                             {sub.student?.assignedTO && (
+                               <span className="px-1.5 py-0.5 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded text-[9px] font-black uppercase tracking-wider">TO</span>
+                             )}
+                             {!sub.student?.assignedPsych && !sub.student?.assignedGTO && !sub.student?.assignedIO && !sub.student?.assignedTO && (
+                               <span className="text-[10px] italic text-app-text-muted">None Allotted</span>
+                             )}
+                           </div>
+                         </td>
+                         <td className="p-6">
                            <div className="text-[11px] font-black text-app-text-bright">
                              {sub.startedAt ? new Date(sub.startedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
                            </div>
@@ -235,19 +305,6 @@ const AssessorDashboard: React.FC = () => {
           </div>
         </div>
       </div>
-
-       <div className="bg-app-sidebar border border-app-border rounded-[2.5rem] p-12 text-center relative overflow-hidden shadow-2xl">
-          <div className="relative z-10 space-y-6 max-w-xl mx-auto">
-             <div className="w-16 h-16 bg-app-card rounded-3xl border border-app-border flex items-center justify-center mx-auto mb-6 text-app-accent shadow-inner">
-               <Shield size={32} />
-             </div>
-             <h2 className="text-3xl font-black tracking-tight text-app-text-bright">Ethics & Integrity Protocols</h2>
-             <p className="text-app-text-muted text-lg font-serif italic italic leading-relaxed">
-               As an assessor, you hold clinical accountability for candidate evaluation. Ensure all remarks remain professional, objective, and evidence-based following SSA guidelines.
-             </p>
-          </div>
-          <div className="absolute top-0 left-0 w-64 h-64 bg-app-accent/5 rounded-full blur-[100px] -ml-32 -mt-32" />
-       </div>
     </div>
   );
 };

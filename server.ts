@@ -80,7 +80,7 @@ const authenticate = async (req: any, res: any, next: any) => {
                    (token && token.trim().startsWith('mock-'));
 
   if (isBypass) {
-    let mockUser = {
+    let mockUser: any = {
       _id: 'mock-user-123456789012',
       id: 'mock-user-123456789012',
       name: 'Preview Student',
@@ -102,18 +102,19 @@ const authenticate = async (req: any, res: any, next: any) => {
           };
         } else if (role === 'assessor') {
           mockUser = {
-            _id: 'mock-assessor-123456789012',
-            id: 'mock-assessor-123456789012',
-            name: 'Preview Assessor',
-            email: 'assessor@ssb.com',
-            role: 'assessor'
+            _id: '6a114eac60e4edbacc3aff6b',
+            id: '6a114eac60e4edbacc3aff6b',
+            name: 'Demo Psych Assessor',
+            email: 'psych@demo.com',
+            role: 'assessor',
+            assessorType: 'Psych'
           };
         } else if (role === 'student') {
           mockUser = {
-            _id: 'mock-user-123456789012',
-            id: 'mock-user-123456789012',
-            name: 'Preview Student',
-            email: 'student@ssb.com',
+            _id: '69e3e26cd170a82246f74d18',
+            id: '69e3e26cd170a82246f74d18',
+            name: 'Abhishek Singh',
+            email: 'abhs2418@gmail.com',
             role: 'student'
           };
         }
@@ -130,11 +131,12 @@ const authenticate = async (req: any, res: any, next: any) => {
             };
           } else if (decoded.role === 'assessor') {
             mockUser = {
-              _id: 'mock-assessor-123456789012',
-              id: 'mock-assessor-123456789012',
-              name: 'Preview Assessor',
-              email: 'assessor@ssb.com',
-              role: 'assessor'
+              _id: '6a114eac60e4edbacc3aff6b',
+              id: '6a114eac60e4edbacc3aff6b',
+              name: 'Demo Psych Assessor',
+              email: 'psych@demo.com',
+              role: 'assessor',
+              assessorType: 'Psych'
             };
           }
         } catch (e) {
@@ -164,7 +166,11 @@ const authenticate = async (req: any, res: any, next: any) => {
 
     // Fallback/Standard lookup in User (students / main site UserDetails)
     if (!foundUser) {
-      const user = await User.findById(decoded.id);
+      const user = await User.findById(decoded.id)
+        .populate('assignedPsych', 'name email')
+        .populate('assignedGTO', 'name email')
+        .populate('assignedIO', 'name email')
+        .populate('assignedTO', 'name email');
       if (user) {
         foundUser = user.toObject ? user.toObject() : user;
         if (!foundUser.role) {
@@ -557,11 +563,44 @@ async function startServer() {
 
     try {
       let query: any = {};
-      if (req.user.role === 'student') query.userId = req.user._id;
-      if (req.user.role === 'assessor') query.assessorId = req.user._id;
+      if (req.user.role === 'student') {
+        query.userId = req.user._id;
+      } else if (req.user.role === 'assessor') {
+        const assessor = await User.findById(req.user._id);
+        if (assessor && assessor.assessorType) {
+          const type = assessor.assessorType;
+          let candidateQuery: any = {};
+          if (type === 'GTO') candidateQuery.assignedGTO = assessor._id;
+          else if (type === 'TO') candidateQuery.assignedTO = assessor._id;
+          else if (type === 'Psych') candidateQuery.assignedPsych = assessor._id;
+          else if (type === 'IO') candidateQuery.assignedIO = assessor._id;
+          
+          const candidates = await User.find(candidateQuery).select('_id');
+          const candidateIds = candidates.map(c => c._id);
+          
+          query = {
+            $or: [
+              { assessorId: assessor._id },
+              { userId: { $in: candidateIds } }
+            ]
+          };
+        } else {
+          query.assessorId = req.user._id;
+        }
+      }
       
-      const submissions = await Submission.find(query).populate('userId', 'name email').populate('assessmentId', 'title');
-      res.json(submissions);
+      const submissions = await Submission.find(query)
+        .populate('userId', 'name email assignedGTO assignedTO assignedPsych assignedIO clinicalStage profileImage')
+        .populate('assessmentId', 'title type');
+      
+      const mappedSubmissions = submissions.map(sub => {
+        const subJSON = sub.toJSON ? sub.toJSON() : sub;
+        return {
+          ...subJSON,
+          student: subJSON.userId, // Map populated userId to student for frontend
+        };
+      });
+      res.json(mappedSubmissions);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -576,7 +615,9 @@ async function startServer() {
     }
 
     try {
-      const submission = await Submission.findById(req.params.id).populate('userId', 'name email').populate('assessmentId', 'title');
+      const submission = await Submission.findById(req.params.id)
+        .populate('userId', 'name email profileImage')
+        .populate('assessmentId', 'title');
       res.json(submission);
     } catch (error: any) {
       res.status(404).json({ message: 'Submission not found' });

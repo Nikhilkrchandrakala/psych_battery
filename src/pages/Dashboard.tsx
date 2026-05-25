@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { Assessment, AssessmentSubmission } from '../types';
 import { useAuth } from '../components/AuthProvider';
-import { Clock, CheckCircle2, BookOpen, Layers, ArrowRight, FileText } from 'lucide-react';
+import { Clock, CheckCircle2, BookOpen, Layers, ArrowRight, FileText, Users, MessageSquare, Cpu, Video, Check } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const Dashboard: React.FC = () => {
@@ -68,26 +68,154 @@ const Dashboard: React.FC = () => {
         </p>
       </section>
 
-      {/* Stats/Status Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-app-card border border-app-border p-6 rounded-2xl shadow-sm">
-          <div className="text-app-text-muted text-[10px] font-black uppercase tracking-[0.2em] mb-2">Active Tests</div>
-          <div className="text-3xl font-black text-app-text-bright">{assessments.length}</div>
+      {/* 4-Stage Progression Stepper */}
+      <section className="bg-app-sidebar border border-app-border rounded-[2.5rem] p-8 md:p-10 shadow-2xl space-y-8 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-64 h-64 bg-app-accent/5 rounded-full blur-[100px] -ml-32 -mt-32" />
+        
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-app-border pb-6 relative z-10 gap-4">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-black text-app-text-bright tracking-tight uppercase">Clinical Evaluation Pathway</h2>
+            <p className="text-xs text-app-text-muted italic font-serif">Track your live status through the four official assessment gates.</p>
+          </div>
+          <span className="px-3.5 py-1.5 rounded-xl bg-black/40 border border-app-border text-[10px] font-black uppercase tracking-[0.2em] text-app-text-bright">
+            Current Stage: {profile?.clinicalStage || 'Screening'}
+          </span>
         </div>
-        <div className="bg-app-card border border-app-border p-6 rounded-2xl shadow-sm">
-          <div className="text-app-text-muted text-[10px] font-black uppercase tracking-[0.2em] mb-2">My Submissions</div>
-          <div className="text-3xl font-black text-app-text-bright">{submissions.length}</div>
+
+        {/* Stepper Grid */}
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-4 gap-6 pt-4">
+          {[
+            {
+              id: 'psych',
+              name: 'Psychology Evaluation',
+              icon: Layers,
+              assessor: (profile as any)?.assignedPsych?.name || null,
+              desc: 'Timed cognitive & handwriting battery',
+            },
+            {
+              id: 'gto',
+              name: 'GTO Outdoor Battery',
+              icon: Users,
+              assessor: (profile as any)?.assignedGTO?.name || null,
+              desc: 'Group performance & cooperation drills',
+            },
+            {
+              id: 'io',
+              name: 'Personal Interview',
+              icon: MessageSquare,
+              assessor: (profile as any)?.assignedIO?.name || null,
+              desc: 'One-on-one interviewing evaluation',
+            },
+            {
+              id: 'to',
+              name: 'Technical Board',
+              icon: Cpu,
+              assessor: (profile as any)?.assignedTO?.name || null,
+              desc: 'Technical aptitude & problem solving',
+            }
+          ].map((stage, i) => {
+            const getStageIndex = (stageName: string) => {
+              switch (stageName) {
+                case 'Screening': return 0;
+                case 'Psychology': return 1;
+                case 'GTO': return 2;
+                case 'Interview': return 3;
+                case 'Conference':
+                case 'Completed': return 4;
+                default: return 0;
+              }
+            };
+            const currentStageIndex = getStageIndex(profile?.clinicalStage || 'Screening');
+            const isCompleted = i < currentStageIndex;
+            const isActive = i === currentStageIndex;
+            const StageIcon = stage.icon;
+
+            return (
+              <div 
+                key={stage.id} 
+                className={cn(
+                  "relative p-6 rounded-3xl border transition-all flex flex-col justify-between h-44 shadow-lg",
+                  isActive ? "bg-gradient-to-br from-app-card to-app-sidebar border-app-accent shadow-app-accent/5 scale-[1.02]" :
+                  isCompleted ? "bg-app-card/40 border-green-500/20 opacity-90" :
+                  "bg-app-card/10 border-app-border opacity-40 select-none"
+                )}
+              >
+                {/* Connecting Line */}
+                {i < 3 && (
+                  <div className="hidden md:block absolute top-1/2 left-[calc(100%+0.5rem)] w-4 h-[2px] bg-app-border -translate-y-1/2" />
+                )}
+
+                <div className="flex justify-between items-start">
+                  <div className={cn(
+                    "p-3 rounded-2xl border shadow-inner",
+                    isActive ? "bg-app-accent/10 border-app-accent text-app-accent" :
+                    isCompleted ? "bg-green-500/10 border-green-500/20 text-green-400" :
+                    "bg-black/20 border-app-border text-app-text-muted"
+                  )}>
+                    {isCompleted ? <Check size={18} className="stroke-[3px]" /> : <StageIcon size={18} />}
+                  </div>
+                  <span className={cn(
+                    "text-[8px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-md",
+                    isActive ? "bg-app-accent text-black animate-pulse" :
+                    isCompleted ? "bg-green-500/10 text-green-400 border border-green-500/20" :
+                    "bg-black/30 text-app-text-muted"
+                  )}>
+                    {isCompleted ? 'Completed' : isActive ? 'Active Gate' : 'Pending'}
+                  </span>
+                </div>
+
+                <div className="space-y-1 pt-4">
+                  <h4 className="text-sm font-black text-app-text-bright tracking-tight leading-tight">{stage.name}</h4>
+                  <p className="text-[10px] text-app-text-muted leading-relaxed font-serif italic">{stage.desc}</p>
+                </div>
+
+                <div className="pt-2 mt-2 border-t border-app-border/40 flex items-center justify-between">
+                  <span className="text-[9px] font-black text-app-text-muted uppercase tracking-widest">Assessor</span>
+                  <span className={cn(
+                    "text-[10px] font-bold truncate max-w-[120px]",
+                    stage.assessor ? "text-app-text-bright" : "text-app-text-muted italic"
+                  )}>
+                    {stage.assessor || 'Not Allotted'}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
-        <div className="bg-app-card border border-app-border p-6 rounded-2xl shadow-sm">
-          <div className="text-app-text-muted text-[10px] font-black uppercase tracking-[0.2em] mb-2">Evaluations</div>
-          <div className="text-3xl font-black text-app-text-bright">{submissions.filter(s => s.status === 'COMPLETED').length}</div>
-        </div>
-      </div>
+      </section>
+
+      {/* Dynamic Meeting Conference Call-To-Action */}
+      {submissions.find(s => s.meetingLink && s.meetingDate) && (() => {
+        const schedSub = submissions.find(s => s.meetingLink && s.meetingDate)!;
+        return (
+          <section className="bg-gradient-to-br from-app-accent/10 to-transparent border border-app-accent/30 rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg shadow-app-accent/5 animate-pulse">
+            <div className="flex items-center gap-6">
+              <div className="bg-app-card p-4 rounded-2xl border border-app-accent/20">
+                <Video className="text-app-accent animate-bounce" size={32} />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-xl font-bold text-app-text-bright">Join Scheduled Conference</h3>
+                <p className="text-xs text-app-text-muted font-medium max-w-sm">
+                  Your official feedback and guidance conference is scheduled for <span className="text-app-accent font-semibold">{new Date(schedSub.meetingDate).toLocaleString()}</span>. Please click to join punctually.
+                </p>
+              </div>
+            </div>
+            <a 
+              href={schedSub.meetingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-app-accent text-black px-8 py-4 rounded-xl font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg active:scale-95 whitespace-nowrap shadow-app-accent/20"
+            >
+              Join Meet Call
+            </a>
+          </section>
+        );
+      })()}
 
       {/* PIQ Download Section */}
-      <section className="bg-gradient-to-br from-app-accent/10 to-transparent border border-app-accent/30 rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg shadow-app-accent/5">
+      <section className="bg-gradient-to-br from-app-card/60 to-transparent border border-app-border rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg">
         <div className="flex items-center gap-6">
-          <div className="bg-app-card p-4 rounded-2xl border border-app-accent/20">
+          <div className="bg-app-card p-4 rounded-2xl border border-app-border shadow-inner">
             <FileText className="text-app-accent" size={32} />
           </div>
           <div className="space-y-1">
@@ -102,7 +230,7 @@ const Dashboard: React.FC = () => {
           href="https://www.ssbcrack.com/wp-content/uploads/2013/11/PIQ-form-SSB.pdf" 
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-app-card border border-app-accent/50 text-app-accent px-8 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-app-accent hover:text-white transition-all shadow-lg active:scale-95 whitespace-nowrap shadow-app-accent/10"
+          className="bg-app-card border border-app-border text-app-text-bright px-8 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-app-accent hover:text-white transition-all shadow-lg active:scale-95 whitespace-nowrap"
         >
           Download PDF Template
         </a>

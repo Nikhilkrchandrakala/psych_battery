@@ -25,9 +25,123 @@ const PIQ_STATUS_STYLES: Record<string, string> = {
   FAILED:     'bg-red-500/10 text-red-400 border-red-500/20',
 };
 
+const SPECIALIZED_TRAITS = {
+  Psych: {
+    'Factor I: Planning & Organizing': {
+      effective_intelligence: 'Effective Intelligence',
+      reasoning_ability: 'Reasoning Ability',
+      organizing_ability: 'Organizing Ability',
+      power_of_expression: 'Power of Expression'
+    },
+    'Factor II: Social Adjustment': {
+      social_adaptability: 'Social Adaptability',
+      cooperation: 'Cooperation',
+      sense_of_responsibility: 'Sense of Responsibility'
+    },
+    'Factor III: Social Effectiveness': {
+      initiative: 'Initiative',
+      self_confidence: 'Self Confidence',
+      speed_of_decision: 'Speed of Decision',
+      ability_to_influence_the_group: 'Influence the Group',
+      liveliness: 'Liveliness'
+    },
+    'Factor IV: Dynamic': {
+      determination: 'Determination',
+      courage: 'Courage',
+      stamina: 'Stamina'
+    }
+  },
+  GTO: {
+    'GTO Battery Evaluation': {
+      group_dynamics: 'Group Dynamics',
+      physical_coordination: 'Physical Coordination',
+      practical_intellect: 'Practical Intellect',
+      cooperation: 'Cooperation'
+    }
+  },
+  IO: {
+    'Interviewing Evaluation': {
+      verbal_expression: 'Verbal Expression',
+      general_awareness: 'General Awareness',
+      emotional_tolerance: 'Emotional Tolerance',
+      motivation: 'Motivation'
+    }
+  },
+  TO: {
+    'Technical Evaluation': {
+      technical_comprehension: 'Technical Comprehension',
+      analytical_ability: 'Analytical Ability',
+      practical_problem_solving: 'Practical Problem Solving'
+    }
+  }
+};
+
+const ASSESSOR_GRID_CONFIG = {
+  Psych: {
+    factors: [
+      { label: 'Factor I: Planning & Organizing', colSpan: 4 },
+      { label: 'Factor II: Social Adjustment', colSpan: 3 },
+      { label: 'Factor III: Social Effectiveness', colSpan: 5 },
+      { label: 'Factor IV: Dynamic', colSpan: 3 }
+    ],
+    traits: [
+      { id: 'effective_intelligence', code: 'EI', num: 1, name: 'Effective Intelligence', factor: 'Factor I' },
+      { id: 'reasoning_ability', code: 'RA', num: 2, name: 'Reasoning Ability', factor: 'Factor I' },
+      { id: 'organizing_ability', code: 'OA', num: 3, name: 'Organizing Ability', factor: 'Factor I' },
+      { id: 'power_of_expression', code: 'POE', num: 4, name: 'Power of Expression', factor: 'Factor I' },
+      
+      { id: 'social_adaptability', code: 'SA', num: 5, name: 'Social Adaptability', factor: 'Factor II' },
+      { id: 'cooperation', code: 'COOP', num: 6, name: 'Cooperation', factor: 'Factor II' },
+      { id: 'sense_of_responsibility', code: 'SOR', num: 7, name: 'Sense of Responsibility', factor: 'Factor II' },
+      
+      { id: 'initiative', code: 'INIT', num: 8, name: 'Initiative', factor: 'Factor III' },
+      { id: 'self_confidence', code: 'SC', num: 9, name: 'Self Confidence', factor: 'Factor III' },
+      { id: 'speed_of_decision', code: 'SOD', num: 10, name: 'Speed of Decision', factor: 'Factor III' },
+      { id: 'ability_to_influence_the_group', code: 'AIG', num: 11, name: 'Influence Group', factor: 'Factor III' },
+      { id: 'liveliness', code: 'LIV', num: 12, name: 'Liveliness', factor: 'Factor III' },
+      
+      { id: 'determination', code: 'D', num: 13, name: 'Determination', factor: 'Factor IV' },
+      { id: 'courage', code: 'C', num: 14, name: 'Courage', factor: 'Factor IV' },
+      { id: 'stamina', code: 'S', num: 15, name: 'Stamina', factor: 'Factor IV' }
+    ]
+  },
+  GTO: {
+    factors: [
+      { label: 'GTO Battery Evaluation', colSpan: 4 }
+    ],
+    traits: [
+      { id: 'group_dynamics', code: 'GD', num: 1, name: 'Group Dynamics', factor: 'GTO Battery' },
+      { id: 'physical_coordination', code: 'PC', num: 2, name: 'Physical Coordination', factor: 'GTO Battery' },
+      { id: 'practical_intellect', code: 'PI', num: 3, name: 'Practical Intellect', factor: 'GTO Battery' },
+      { id: 'cooperation', code: 'COOP', num: 4, name: 'Cooperation', factor: 'GTO Battery' }
+    ]
+  },
+  IO: {
+    factors: [
+      { label: 'Interviewing Evaluation', colSpan: 4 }
+    ],
+    traits: [
+      { id: 'verbal_expression', code: 'VE', num: 1, name: 'Verbal Expression', factor: 'Interview' },
+      { id: 'general_awareness', code: 'GA', num: 2, name: 'General Awareness', factor: 'Interview' },
+      { id: 'emotional_tolerance', code: 'ET', num: 3, name: 'Emotional Tolerance', factor: 'Interview' },
+      { id: 'motivation', code: 'MOT', num: 4, name: 'Motivation', factor: 'Interview' }
+    ]
+  },
+  TO: {
+    factors: [
+      { label: 'Technical Evaluation', colSpan: 3 }
+    ],
+    traits: [
+      { id: 'technical_comprehension', code: 'TC', num: 1, name: 'Technical Comprehension', factor: 'Technical' },
+      { id: 'analytical_ability', code: 'AA', num: 2, name: 'Analytical Ability', factor: 'Technical' },
+      { id: 'practical_problem_solving', code: 'PPS', num: 3, name: 'Practical Problem Solving', factor: 'Technical' }
+    ]
+  }
+};
+
 const SubmissionReview: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { isAdminUser } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
 
   const [submission, setSubmission] = useState<AssessmentSubmission | null>(null);
@@ -36,6 +150,12 @@ const SubmissionReview: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'dossier' | 'evaluation' | 'meeting'>('dossier');
+  const [showEthicsModal, setShowEthicsModal] = useState(true);
+  
+  // Attempted Psych Battery details state
+  const [slides, setSlides] = useState<any[]>([]);
+  const [loadingSlides, setLoadingSlides] = useState(false);
+  const [showBatteryDetails, setShowBatteryDetails] = useState(false);
 
   // Dossier viewer state
   const [activePiqIndex, setActivePiqIndex] = useState(0);
@@ -43,9 +163,37 @@ const SubmissionReview: React.FC = () => {
 
   // Form states
   const [remarks, setRemarks] = useState('');
-  const [scores, setScores] = useState<Record<string, number>>({ personality: 0, resilience: 0, social: 0 });
+  const [scores, setScores] = useState<Record<string, number>>({});
   const [meetingDate, setMeetingDate] = useState('');
   const [meetingLink, setMeetingLink] = useState('');
+
+  const [activeAssessorType, setActiveAssessorType] = useState<'Psych' | 'GTO' | 'TO' | 'IO'>('Psych');
+
+  useEffect(() => {
+    if (profile?.assessorType) {
+      setActiveAssessorType(profile.assessorType);
+    }
+  }, [profile]);
+
+  // Tab and index redirection based on assessor role
+  useEffect(() => {
+    if (activeAssessorType === 'GTO') {
+      setActiveTab('evaluation');
+    } else {
+      setActiveTab('dossier');
+    }
+  }, [activeAssessorType]);
+
+  useEffect(() => {
+    const piqCount = submission?.piqFiles?.length || 0;
+    if (activeAssessorType === 'IO' && piqCount > 1) {
+      setActivePiqIndex(1); // Default exclusively to PIQ document
+    } else {
+      setActivePiqIndex(0); // Default to Dossier
+    }
+  }, [activeAssessorType, submission?.piqFiles?.length]);
+
+  const showRoleToggle = !profile?.assessorType;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -71,7 +219,19 @@ const SubmissionReview: React.FC = () => {
 
         setSubmission(normalizedSub);
         setRemarks(subData.assessorRemarks || '');
-        if (subData.scores) setScores(subData.scores);
+        if (subData.scores && Object.keys(subData.scores).length > 0) {
+          setScores(subData.scores);
+        } else {
+          const initialScores: Record<string, number> = {};
+          Object.values(SPECIALIZED_TRAITS).forEach(groups => {
+            Object.values(groups).forEach(traits => {
+              Object.keys(traits).forEach(k => {
+                initialScores[k] = 0;
+              });
+            });
+          });
+          setScores(initialScores);
+        }
         if (subData.meetingDate) {
           const date = new Date(subData.meetingDate);
           setMeetingDate(date.toISOString().slice(0, 16));
@@ -84,6 +244,15 @@ const SubmissionReview: React.FC = () => {
         }
         if (populatedAssessment) {
           setAssessment(populatedAssessment);
+          try {
+            setLoadingSlides(true);
+            const slidesData = await api.assessments.slides(populatedAssessment._id || populatedAssessment.id);
+            setSlides(slidesData || []);
+          } catch (slideErr) {
+            console.error('Failed to fetch assessment slides:', slideErr);
+          } finally {
+            setLoadingSlides(false);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch review data:', error);
@@ -97,6 +266,23 @@ const SubmissionReview: React.FC = () => {
 
   const handleUpdate = async (status: AssessmentSubmission['status']) => {
     if (!id) return;
+    
+    // Strict completeness check for finalizing evaluations
+    if (status === 'COMPLETED') {
+      const gridConfig = ASSESSOR_GRID_CONFIG.Psych;
+      const unfilledTraits = gridConfig.traits.filter(t => !scores[t.id] || scores[t.id] === 0);
+      const unfilledMarks = !scores.marks || scores.marks === 0;
+      
+      if (unfilledTraits.length > 0 || unfilledMarks) {
+        alert(
+          `Verification Failed:\n\nPlease assign grades to all traits and fill in the Overall Marks before finalizing the evaluation.\n\n` +
+          `• Unassigned traits: ${unfilledTraits.map(t => t.code).join(', ') || 'None'}\n` +
+          `• Overall Marks: ${unfilledMarks ? 'Missing' : 'Filled'}`
+        );
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       const updateData: any = {
@@ -189,32 +375,51 @@ const SubmissionReview: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => handleUpdate('UNDER_REVIEW')}
-            disabled={saving}
-            className="px-6 py-3 bg-app-card border border-app-border rounded-2xl text-xs font-black text-app-text-bright hover:bg-white/5 transition-all shadow-lg active:scale-95 disabled:opacity-50"
-          >
-            Save Preliminary
-          </button>
-          <button
-            onClick={() => handleUpdate('COMPLETED')}
-            disabled={saving}
-            className="px-6 py-3 bg-gradient-to-br from-[#C5A028] to-[#8C6A0F] text-white rounded-2xl text-xs font-black hover:opacity-90 transition-all shadow-lg shadow-app-accent/30 active:scale-95 flex items-center gap-2 disabled:opacity-50"
-          >
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-            Finalize Evaluation
-          </button>
+        <div className="flex flex-col items-end gap-2 text-right">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handleUpdate('UNDER_REVIEW')}
+              disabled={saving}
+              className="px-6 py-3 bg-app-card border border-app-border rounded-2xl text-xs font-black text-app-text-bright hover:bg-white/5 transition-all shadow-lg active:scale-95 disabled:opacity-50 cursor-pointer"
+            >
+              Save Preliminary
+            </button>
+            <button
+              onClick={() => handleUpdate('COMPLETED')}
+              disabled={saving}
+              className="px-6 py-3 bg-gradient-to-br from-[#C5A028] to-[#8C6A0F] text-white rounded-2xl text-xs font-black hover:opacity-90 transition-all shadow-lg shadow-app-accent/30 active:scale-95 flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+            >
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+              Finalize Evaluation
+            </button>
+          </div>
+          
+          {/* Temporal Markers */}
+          <div className="flex items-center gap-4 text-[10px] font-black text-app-text-muted uppercase tracking-wider px-1">
+            <div className="flex items-center gap-1.5">
+              <Clock size={12} className="text-app-text-muted/65" />
+              <span>Started: {submission?.startedAt ? new Date(submission.startedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
+            </div>
+            {submission?.completedAt && (
+              <div className="flex items-center gap-1.5 text-app-accent">
+                <ShieldCheck size={12} className="text-app-accent" />
+                <span>Sealed: {new Date(submission.completedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-app-sidebar/50 p-1 rounded-2xl border border-app-border w-fit shadow-inner">
         {[
-          { id: 'dossier', label: 'Dossier Viewer', icon: FileSearch },
-          { id: 'evaluation', label: 'Clinical Remarks', icon: MessageSquare },
-          { id: 'meeting', label: 'Intervention Plan', icon: Calendar }
-        ].map(tab => (
+          { id: 'dossier', label: 'Document Viewer', icon: FileSearch },
+          { id: 'evaluation', label: 'Assessment', icon: MessageSquare },
+          { id: 'meeting', label: 'Feedback Scheduler', icon: Calendar }
+        ].filter(tab => {
+          if (activeAssessorType === 'GTO' && tab.id === 'dossier') return false;
+          return true;
+        }).map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
@@ -246,42 +451,47 @@ const SubmissionReview: React.FC = () => {
             {piqFiles.length > 0 ? (
               <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 items-start">
                 {/* Left: PDF / Image Viewer */}
-                <div className="xl:col-span-3 space-y-3">
+                <div className={cn(
+                  activeAssessorType === 'IO' ? "xl:col-span-5" : "xl:col-span-3",
+                  "space-y-3"
+                )}>
                   <div className="flex items-center justify-between text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2">
-                    <span>File {activePiqIndex + 1} of {piqFiles.length}</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setActivePiqIndex(i => Math.max(0, i - 1))}
-                        disabled={activePiqIndex === 0}
-                        className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent/50 disabled:opacity-30 transition-all"
-                      >
-                        <ChevronLeft size={12} />
-                      </button>
-                      <button
-                        onClick={() => setActivePiqIndex(i => Math.min(piqFiles.length - 1, i + 1))}
-                        disabled={activePiqIndex === piqFiles.length - 1}
-                        className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent/50 disabled:opacity-30 transition-all"
-                      >
-                        <ChevronRight size={12} />
-                      </button>
-                      <a
-                        href={buildFileUrl(piqFiles[activePiqIndex])}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent text-app-text-muted hover:text-app-accent transition-all"
-                        title="Open full screen"
-                      >
-                        <Maximize2 size={12} />
-                      </a>
-                    </div>
+                    <span>{activeAssessorType === 'IO' ? 'Personal Information Questionnaire (PIQ)' : `File ${activePiqIndex + 1} of ${piqFiles.length}`}</span>
+                    {activeAssessorType !== 'IO' && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setActivePiqIndex(i => Math.max(0, i - 1))}
+                          disabled={activePiqIndex === 0}
+                          className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent/50 disabled:opacity-30 transition-all"
+                        >
+                          <ChevronLeft size={12} />
+                        </button>
+                        <button
+                          onClick={() => setActivePiqIndex(i => Math.min(piqFiles.length - 1, i + 1))}
+                          disabled={activePiqIndex === piqFiles.length - 1}
+                          className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent/50 disabled:opacity-30 transition-all"
+                        >
+                          <ChevronRight size={12} />
+                        </button>
+                        <a
+                          href={buildFileUrl(piqFiles[activePiqIndex])}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent text-app-text-muted hover:text-app-accent transition-all"
+                          title="Open full screen"
+                        >
+                          <Maximize2 size={12} />
+                        </a>
+                      </div>
+                    )}
                   </div>
 
                   <div className="bg-app-card rounded-3xl border border-app-border overflow-hidden shadow-2xl" style={{ height: '680px' }}>
                     {isPdf(piqFiles[activePiqIndex]) ? (
                       <iframe
                         key={activePiqIndex}
-                        src={buildFileUrl(piqFiles[activePiqIndex])}
-                        className="w-full h-full"
+                        src={`${buildFileUrl(piqFiles[activePiqIndex])}#toolbar=0&navpanes=0`}
+                        className="w-full h-full border-0"
                         title={`PIQ Document ${activePiqIndex + 1}`}
                       />
                     ) : (
@@ -295,7 +505,7 @@ const SubmissionReview: React.FC = () => {
                   </div>
 
                   {/* File tabs if multiple */}
-                  {piqFiles.length > 1 && (
+                  {piqFiles.length > 1 && activeAssessorType !== 'IO' && (
                     <div className="flex gap-2 flex-wrap">
                       {piqFiles.map((_, i) => (
                         <button
@@ -308,46 +518,140 @@ const SubmissionReview: React.FC = () => {
                               : 'bg-app-card text-app-text-muted border-app-border hover:border-app-accent/50'
                           )}
                         >
-                          File {i + 1}
+                          {i === 0 ? 'Dossier' : i === 1 ? 'PIQ' : `File ${i + 1}`}
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
 
-                {/* Right: OCR Transcript */}
-                <div className="xl:col-span-2 space-y-4">
-                  <div className="flex items-center gap-2 text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2">
-                    <Sparkles size={12} className="text-app-accent" />
-                    <span>Gemini OCR Transcript</span>
+                {/* Right: OCR Transcript / Psych Battery details */}
+                {activeAssessorType !== 'IO' && (
+                  <div className="xl:col-span-2 space-y-4">
+                    <div className="flex items-center justify-between px-2 text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em]">
+                      <div className="flex items-center gap-2">
+                        <Sparkles size={12} className="text-app-accent animate-pulse" />
+                        <span>{showBatteryDetails ? 'Attempted Psych Battery' : 'Gemini OCR Transcript'}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowBatteryDetails(!showBatteryDetails)}
+                        className={cn(
+                          "px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer",
+                          showBatteryDetails 
+                            ? "bg-app-accent text-white border-app-accent shadow-sm" 
+                            : "bg-app-card text-app-text-muted border-app-border hover:border-app-accent/50 hover:text-app-text-bright"
+                        )}
+                      >
+                        {showBatteryDetails ? 'Show Transcript' : 'Show Attempted Test'}
+                      </button>
+                    </div>
+                  
+                  <div className="bg-app-card/60 border border-app-border rounded-3xl p-6 shadow-inner overflow-y-auto leading-relaxed" style={{ height: '680px' }}>
+                    {showBatteryDetails ? (
+                      <div className="space-y-6 animate-in fade-in duration-300">
+                        {/* Title & Desc */}
+                        <div className="space-y-2">
+                          <h3 className="text-sm font-black text-app-text-bright tracking-tight uppercase">
+                            {assessmentTitle}
+                          </h3>
+                          {assessment?.description && (
+                            <p className="text-xs text-app-text-muted font-serif italic leading-relaxed">
+                              {assessment.description}
+                            </p>
+                          )}
+                          <div className="flex gap-2 pt-1">
+                            <span className="px-2 py-0.5 rounded bg-black/30 border border-app-border text-[9px] font-black text-app-text-bright uppercase tracking-widest leading-none">
+                              Duration: {assessmentDuration} Min
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-black/30 border border-app-border text-[9px] font-black text-app-text-bright uppercase tracking-widest leading-none">
+                              Slides: {slides.length} Items
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Slides List/Grid */}
+                        <div className="space-y-4 pt-4 border-t border-app-border">
+                          <div className="text-[9px] font-black text-app-accent uppercase tracking-widest">
+                            Slides in this Series
+                          </div>
+                          
+                          {loadingSlides ? (
+                            <div className="flex flex-col items-center justify-center py-10 gap-3 opacity-60">
+                              <Loader2 size={24} className="animate-spin text-app-accent" />
+                              <p className="text-[10px] font-serif italic">Loading slide sequence...</p>
+                            </div>
+                          ) : slides.length === 0 ? (
+                            <p className="text-xs text-app-text-muted italic font-serif">
+                              No visual slides configured for this test battery.
+                            </p>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {slides.map((slide, index) => (
+                                <div key={slide.id || index} className="bg-app-card/80 rounded-2xl border border-app-border overflow-hidden p-3 space-y-3 group hover:border-app-accent/30 transition-all">
+                                  <div className="flex justify-between items-center text-[9px] font-black text-app-text-muted uppercase tracking-widest">
+                                    <span>Slide {slide.order || index + 1}</span>
+                                    <span className="text-app-accent">{slide.displayTime || slide.duration || 30}s</span>
+                                  </div>
+                                  
+                                  {slide.imageUrl ? (
+                                    <div className="bg-black/40 rounded-xl overflow-hidden border border-app-border aspect-video flex items-center justify-center">
+                                      <img 
+                                        src={slide.imageUrl} 
+                                        alt={`Slide ${slide.order || index + 1}`} 
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        onError={(e) => {
+                                          (e.target as HTMLElement).style.display = 'none';
+                                        }}
+                                      />
+                                    </div>
+                                  ) : slide.content ? (
+                                    <div className="bg-black/30 rounded-xl p-4 border border-app-border font-serif italic text-center text-xs text-app-text-bright leading-relaxed min-h-[80px] flex items-center justify-center">
+                                      "{slide.content}"
+                                    </div>
+                                  ) : (
+                                    <div className="bg-black/30 rounded-xl p-4 border border-app-border font-serif italic text-center text-[10px] text-app-text-muted leading-relaxed">
+                                      Blank Slide / Break
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      // Original OCR transcript block
+                      <div className="font-mono text-[11px] text-app-text-muted leading-relaxed whitespace-pre-wrap">
+                        {piqStatus === 'PROCESSING' && (
+                          <div className="flex flex-col items-center justify-center h-full gap-4 opacity-60">
+                            <Loader2 size={32} className="animate-spin text-app-accent" />
+                            <p className="text-xs font-serif italic">OCR processing in progress…</p>
+                          </div>
+                        )}
+                        {piqStatus === 'PENDING' && (
+                          <div className="flex flex-col items-center justify-center h-full gap-3 opacity-40">
+                            <FileSearch size={40} />
+                            <p className="text-xs font-serif italic text-center">PIQ uploaded. OCR pipeline will process shortly.</p>
+                          </div>
+                        )}
+                        {piqStatus === 'FAILED' && (
+                          <div className="flex flex-col items-center justify-center h-full gap-3 text-red-400/60">
+                            <AlertCircle size={40} />
+                            <p className="text-xs font-serif italic text-center">OCR processing failed. Review the original document manually.</p>
+                          </div>
+                        )}
+                        {piqStatus === 'PARSED' && ocrTranscript && (
+                          <span className="text-app-text-main">{ocrTranscript}</span>
+                        )}
+                        {piqStatus === 'PARSED' && !ocrTranscript && (
+                          <span className="opacity-40 italic font-serif">Transcript parsed but no text returned.</span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div className="bg-app-card/60 border border-app-border rounded-3xl p-6 shadow-inner overflow-y-auto font-mono text-[11px] text-app-text-muted leading-relaxed whitespace-pre-wrap" style={{ height: '680px' }}>
-                    {piqStatus === 'PROCESSING' && (
-                      <div className="flex flex-col items-center justify-center h-full gap-4 opacity-60">
-                        <Loader2 size={32} className="animate-spin text-app-accent" />
-                        <p className="text-xs font-serif italic">OCR processing in progress…</p>
-                      </div>
-                    )}
-                    {piqStatus === 'PENDING' && (
-                      <div className="flex flex-col items-center justify-center h-full gap-3 opacity-40">
-                        <FileSearch size={40} />
-                        <p className="text-xs font-serif italic text-center">PIQ uploaded. OCR pipeline will process shortly.</p>
-                      </div>
-                    )}
-                    {piqStatus === 'FAILED' && (
-                      <div className="flex flex-col items-center justify-center h-full gap-3 text-red-400/60">
-                        <AlertCircle size={40} />
-                        <p className="text-xs font-serif italic text-center">OCR processing failed. Review the original document manually.</p>
-                      </div>
-                    )}
-                    {piqStatus === 'PARSED' && ocrTranscript && (
-                      <span className="text-app-text-main">{ocrTranscript}</span>
-                    )}
-                    {piqStatus === 'PARSED' && !ocrTranscript && (
-                      <span className="opacity-40 italic font-serif">Transcript parsed but no text returned.</span>
-                    )}
                   </div>
-                </div>
+                )}
               </div>
             ) : (
               <div className="bg-app-sidebar border border-app-border border-dashed rounded-[3rem] p-20 text-center opacity-50 space-y-4">
@@ -356,202 +660,179 @@ const SubmissionReview: React.FC = () => {
               </div>
             )}
           </div>
-
-          {/* Handwritten Answer Sheets Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 border-b border-app-border pb-3">
-              <Layers className="text-app-accent" size={20} />
-              <h2 className="text-sm font-black text-app-text-bright uppercase tracking-widest">Handwritten Answer Sheets</h2>
-              <span className="ml-auto text-[10px] font-black text-app-text-muted uppercase tracking-widest">
-                {answerFiles.length} {answerFiles.length === 1 ? 'file' : 'files'}
-              </span>
-            </div>
-
-            {answerFiles.length > 0 ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2">
-                  <span>Page {activeAnswerIndex + 1} of {answerFiles.length}</span>
-                  <div className="ml-auto flex items-center gap-2">
-                    <button
-                      onClick={() => setActiveAnswerIndex(i => Math.max(0, i - 1))}
-                      disabled={activeAnswerIndex === 0}
-                      className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent/50 disabled:opacity-30 transition-all"
-                    >
-                      <ChevronLeft size={12} />
-                    </button>
-                    <button
-                      onClick={() => setActiveAnswerIndex(i => Math.min(answerFiles.length - 1, i + 1))}
-                      disabled={activeAnswerIndex === answerFiles.length - 1}
-                      className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent/50 disabled:opacity-30 transition-all"
-                    >
-                      <ChevronRight size={12} />
-                    </button>
-                    <a
-                      href={buildFileUrl(answerFiles[activeAnswerIndex])}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent text-app-text-muted hover:text-app-accent transition-all"
-                    >
-                      <Maximize2 size={12} />
-                    </a>
-                  </div>
-                </div>
-
-                <div className="bg-app-card rounded-3xl border border-app-border overflow-hidden shadow-2xl" style={{ height: '600px' }}>
-                  {isPdf(answerFiles[activeAnswerIndex]) ? (
-                    <iframe
-                      key={activeAnswerIndex}
-                      src={buildFileUrl(answerFiles[activeAnswerIndex])}
-                      className="w-full h-full"
-                      title={`Answer Sheet ${activeAnswerIndex + 1}`}
-                    />
-                  ) : (
-                    <img
-                      key={activeAnswerIndex}
-                      src={buildFileUrl(answerFiles[activeAnswerIndex])}
-                      alt={`Handwritten Page ${activeAnswerIndex + 1}`}
-                      className="w-full h-full object-contain"
-                    />
-                  )}
-                </div>
-
-                {answerFiles.length > 1 && (
-                  <div className="flex gap-2 flex-wrap">
-                    {answerFiles.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setActiveAnswerIndex(i)}
-                        className={cn(
-                          'px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all',
-                          i === activeAnswerIndex
-                            ? 'bg-app-accent text-white border-app-accent'
-                            : 'bg-app-card text-app-text-muted border-app-border hover:border-app-accent/50'
-                        )}
-                      >
-                        Page {i + 1}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="bg-app-sidebar border border-app-border border-dashed rounded-[3rem] p-20 text-center opacity-50 space-y-4">
-                <AlertCircle size={48} className="mx-auto text-app-border" />
-                <p className="text-app-text-muted font-serif italic text-xl">Handwritten answers pending student transmission.</p>
-              </div>
-            )}
-          </div>
         </div>
       )}
 
       {/* ── CLINICAL REMARKS TAB ─────────────────────────────────────── */}
-      {activeTab === 'evaluation' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="lg:col-span-2">
-            <div className="bg-app-sidebar border border-app-border rounded-[3rem] p-12 shadow-2xl space-y-10">
+      {activeTab === 'evaluation' && (() => {
+        const gridConfig = ASSESSOR_GRID_CONFIG.Psych;
+        return (
+          <div className="w-full flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Main Evaluation Card */}
+            <div className="bg-app-sidebar border border-app-border rounded-[3rem] p-12 shadow-2xl space-y-8 w-full">
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-app-accent">
                   <Sparkles size={24} className="fill-current" />
-                  <h3 className="text-2xl font-black text-app-text-bright tracking-tight">Clinical Assessment & Remarks</h3>
+                  <h3 className="text-2xl font-black text-app-text-bright tracking-tight">
+                    {activeAssessorType === 'Psych' ? 'Psychologist Evaluation Suite' :
+                     activeAssessorType === 'GTO' ? 'GTO Case Scorecard' :
+                     activeAssessorType === 'IO' ? 'Interview Assessment Dossier' :
+                     'Technical Aptitude Evaluation'}
+                  </h3>
                 </div>
                 <p className="text-app-text-muted text-sm font-serif italic leading-relaxed">
-                  Review the OCR transcript in the Dossier Viewer tab, then record your detailed psychological interpretation below.
+                  Record your detailed observations and clinical/professional grades for the allotted candidate below.
                 </p>
               </div>
 
-              <div className="space-y-6">
+              {showRoleToggle && (
+                <div className="space-y-2">
+                  <div className="text-[9px] font-black text-app-text-muted uppercase tracking-widest px-1">Testing Role Selector (Preview Mode)</div>
+                  <div className="flex gap-2 p-1 bg-app-card border border-app-border rounded-xl w-fit">
+                    {(['Psych', 'GTO', 'IO', 'TO'] as const).map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setActiveAssessorType(t)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-[9px] font-black tracking-wider uppercase transition-all",
+                          activeAssessorType === t 
+                            ? "bg-app-accent text-black shadow-sm" 
+                            : "text-app-text-muted hover:text-app-text-bright"
+                        )}
+                      >
+                        {t === 'Psych' ? 'Psychologist' : t === 'GTO' ? 'GTO Assessor' : t === 'IO' ? 'Interviewing Officer' : 'Technical Officer'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-8">
+                {/* Remarks Textarea */}
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 block">Comprehensive Assessment</label>
+                  <label className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 block">Comprehensive Remarks & Dossier Analysis</label>
                   <textarea
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
-                    placeholder="Enter detailed psychological profile…"
-                    rows={12}
+                    placeholder={
+                      activeAssessorType === 'Psych' ? 'Enter comprehensive psychological profile and timeline analysis...' :
+                      activeAssessorType === 'GTO' ? 'Enter GTO group dynamic behavior and outdoor performance marks...' :
+                      activeAssessorType === 'IO' ? 'Enter comprehensive personal interview assessment and motivations...' :
+                      'Enter technical aptitude, analytical comprehension, and structural thinking...'
+                    }
+                    rows={6}
                     className="w-full bg-app-card border border-app-border rounded-3xl p-6 text-app-text-bright font-serif text-lg italic focus:outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent/20 transition-all placeholder:text-app-text-muted/30"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  {Object.keys(scores).map(trait => (
-                    <div key={trait} className="space-y-3">
-                      <label className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 block">{trait} Factor</label>
-                      <select
-                        value={scores[trait]}
-                        onChange={(e) => setScores(prev => ({ ...prev, [trait]: parseInt(e.target.value) }))}
-                        className="w-full bg-app-card border border-app-border rounded-2xl py-3 px-4 text-xs font-black text-app-text-bright focus:outline-none focus:border-app-accent transition-all appearance-none cursor-pointer"
-                      >
-                        <option value="0">Unassigned</option>
-                        {[1,2,3,4,5,6,7,8,9,10].map(v => (
-                          <option key={v} value={v}>Level {v}</option>
-                        ))}
-                      </select>
+                {/* Scoring Table Row */}
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-app-accent uppercase tracking-[0.2em] px-2 block">
+                    TICKS and MARKS
+                  </label>
+
+                  <div className="w-full bg-app-card border border-app-border rounded-3xl overflow-hidden shadow-xl">
+                    <div className="w-full overflow-hidden">
+                      {(() => {
+                        const traineeWidth = 'w-[13%]';
+                        const marksWidth = 'w-[9%]';
+                        const traitWidth = 'w-[5.2%]';
+                        
+                        return (
+                          <table className="w-full border-collapse text-left table-fixed">
+                            <colgroup>
+                              <col className={traineeWidth} />
+                              {gridConfig.traits.map((t) => (
+                                <col key={t.id} className={traitWidth} />
+                              ))}
+                              <col className={marksWidth} />
+                            </colgroup>
+                            <thead>
+                              {/* Factor Headers Row */}
+                              <tr className="bg-black/30 border-b border-app-border divide-x divide-app-border/40 text-[9px] font-black text-app-accent uppercase tracking-widest text-center">
+                                <th className="px-2 py-3 text-left overflow-hidden text-ellipsis whitespace-nowrap">Trainee / Chest No</th>
+                                {gridConfig.factors.map((f, i) => (
+                                  <th key={i} colSpan={f.colSpan} className="px-1 py-3 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    {f.label}
+                                  </th>
+                                ))}
+                                <th className="px-1 py-3 text-center text-app-text-bright bg-app-accent/10 overflow-hidden text-ellipsis whitespace-nowrap">
+                                  Final Rating
+                                </th>
+                              </tr>
+                              {/* OLQ Codes Row */}
+                              <tr className="bg-black/10 border-b border-app-border divide-x divide-app-border/40 text-[10px] font-black text-app-text-bright uppercase tracking-wider text-center">
+                                <td className="px-2 py-2 text-left text-app-text-muted text-[8px] overflow-hidden text-ellipsis whitespace-nowrap">Code</td>
+                                {gridConfig.traits.map((t) => (
+                                  <td key={t.id} className="px-1 py-2 font-mono text-[9px] hover:bg-black/20 group relative cursor-help overflow-hidden text-ellipsis whitespace-nowrap">
+                                    <span className="underline decoration-dotted decoration-app-text-muted/50">{t.code}</span>
+                                    {/* Tooltip for description */}
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-black border border-app-border text-white text-[9px] font-bold py-1.5 px-3 rounded-lg shadow-2xl whitespace-nowrap z-50">
+                                      {t.name}
+                                    </div>
+                                  </td>
+                                ))}
+                                <td className="px-1 py-2 font-mono font-bold text-center text-app-accent bg-app-accent/5 overflow-hidden text-ellipsis whitespace-nowrap">
+                                  MARKS
+                                </td>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {/* Trainee Row */}
+                              <tr className="divide-x divide-app-border/40 hover:bg-black/10 transition-colors">
+                                <td className="px-2 py-3">
+                                  <div className="flex flex-col overflow-hidden">
+                                    <span className="text-[11px] font-black text-app-text-bright uppercase tracking-wide leading-tight truncate">
+                                      {student?.name || 'Trainee'}
+                                    </span>
+                                    <span className="text-[8px] font-bold text-app-text-muted mt-0.5 truncate">
+                                      Chest: {submission?.piqFiles?.length ? '12' : '--'}
+                                    </span>
+                                  </div>
+                                </td>
+                                {gridConfig.traits.map((t) => (
+                                  <td key={t.id} className="p-0.5 text-center">
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      max={10}
+                                      value={scores[t.id] ?? ''}
+                                      onChange={(e) => {
+                                        const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                                        setScores((prev) => ({ ...prev, [t.id]: val }));
+                                      }}
+                                      placeholder="--"
+                                      className="w-full bg-transparent border-0 text-center text-xs font-black text-app-text-bright focus:outline-none focus:ring-1 focus:ring-app-accent/50 focus:bg-black/30 rounded py-2 px-0.5 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    />
+                                  </td>
+                                ))}
+                                <td className="p-0.5 text-center bg-app-accent/5">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    value={scores['marks'] ?? ''}
+                                    onChange={(e) => {
+                                      const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                                      setScores((prev) => ({ ...prev, marks: val }));
+                                    }}
+                                    placeholder="--"
+                                    className="w-full bg-app-accent/15 border-0 text-center text-xs font-black text-app-accent focus:outline-none focus:ring-1 focus:ring-app-accent/80 focus:bg-app-accent/20 rounded py-2 px-1 transition-all font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  />
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        );
+                      })()}
                     </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar Info */}
-          <div className="space-y-6">
-            <div className="bg-app-sidebar border border-app-border rounded-[2rem] p-8 shadow-2xl space-y-8">
-              <div className="space-y-1">
-                <h3 className="text-xs font-black text-app-text-muted uppercase tracking-[0.2em] px-1">Evaluation Ledger</h3>
-                <div className="h-px bg-app-border" />
-              </div>
-
-              <div className="space-y-6">
-                <div>
-                  <div className="text-[10px] font-black text-app-text-muted uppercase tracking-widest mb-2 opacity-50">Subject Identity</div>
-                  <div className="text-sm font-black text-app-text-bright">{student.name}</div>
-                  <div className="text-[10px] font-bold text-app-text-muted mt-0.5">{student.email}</div>
-                </div>
-
-                <div>
-                  <div className="text-[10px] font-black text-app-text-muted uppercase tracking-widest mb-2 opacity-50">Protocol Sequence</div>
-                  <div className="text-sm font-black text-app-text-bright">{assessment.title}</div>
-                  <div className="text-[10px] font-bold text-app-text-muted mt-0.5">{assessment.duration} Minute Cadence</div>
-                </div>
-
-                <div>
-                  <div className="text-[10px] font-black text-app-text-muted uppercase tracking-widest mb-2 opacity-50">Temporal Markers</div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Clock size={12} className="text-app-text-muted" />
-                    <span className="text-[11px] font-bold text-app-text-main">
-                      Started: {submission.startedAt ? new Date(submission.startedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
-                    </span>
                   </div>
-                  {submission.completedAt && (
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck size={12} className="text-app-accent" />
-                      <span className="text-[11px] font-bold text-app-text-main">
-                        Sealed: {new Date(submission.completedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
-
-              <div className="pt-4 border-t border-app-border">
-                <div className="bg-app-card p-4 rounded-2xl border border-app-border shadow-inner">
-                  <div className="text-[9px] font-black text-app-accent uppercase tracking-widest mb-1.5">Internal Note</div>
-                  <p className="text-[10px] text-app-text-muted leading-relaxed font-serif italic">
-                    Remarks are saved when you click "Save Preliminary". Finalizing will release the report.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-app-accent text-white rounded-[2rem] p-8 space-y-4 shadow-xl shadow-app-accent/20 relative overflow-hidden group">
-              <h4 className="text-lg font-black uppercase tracking-tighter leading-none italic relative z-10">Assessor Mandate</h4>
-              <p className="text-xs font-medium text-white/70 leading-relaxed relative z-10">
-                You are entering the "Finalize" phase of clinical interpretation. This will release the preliminary report to the candidate's dashboard.
-              </p>
-              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform" />
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── INTERVENTION PLAN TAB ──────────────────────────────────────── */}
       {activeTab === 'meeting' && (
@@ -561,10 +842,10 @@ const SubmissionReview: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-app-accent">
                   <Calendar size={24} />
-                  <h3 className="text-2xl font-black text-app-text-bright tracking-tight">Intervention Scheduler</h3>
+                  <h3 className="text-2xl font-black text-app-text-bright tracking-tight">Feedback Scheduler</h3>
                 </div>
                 <p className="text-app-text-muted text-sm font-serif italic leading-relaxed">
-                  Schedule a follow-up interview or deep-dive session with the candidate to clarify psychological markers.
+                  Schedule a follow-up feedback session or review with the candidate to discuss their performance.
                 </p>
               </div>
 
@@ -599,6 +880,55 @@ const SubmissionReview: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ethics & Integrity Consent Modal */}
+      {showEthicsModal && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-app-sidebar border border-app-border rounded-[2.5rem] p-8 md:p-12 max-w-lg w-full text-center relative overflow-hidden shadow-2xl space-y-8 animate-in scale-in-95 duration-300">
+            <div className="relative z-10 space-y-6">
+              <div className="w-16 h-16 bg-app-card rounded-3xl border border-app-border flex items-center justify-center mx-auto mb-6 text-app-accent shadow-inner">
+                <ShieldCheck size={32} />
+              </div>
+              
+              <h2 className="text-3xl font-black tracking-tight text-app-text-bright uppercase">
+                Ethics & Integrity Protocols
+              </h2>
+              
+              <p className="text-app-text-muted text-sm font-serif italic leading-relaxed">
+                As an authorized assessor, you hold absolute professional accountability for candidate evaluation. Please review and agree to the following protocols to initialize review:
+              </p>
+
+              <div className="space-y-4 pt-4 text-left">
+                <div className="flex gap-4 p-4 bg-app-card rounded-2xl border border-app-border/40 hover:border-app-accent/30 transition-all">
+                  <div className="w-2.5 h-2.5 bg-app-accent rounded-full mt-1.5 shrink-0 shadow-[0_0_8px_#C5A028]"></div>
+                  <div>
+                    <h4 className="text-xs font-black text-app-text-bright uppercase tracking-widest mb-1">Confidentiality Mandate</h4>
+                    <p className="text-xs text-app-text-muted leading-relaxed">All student info and data under review must be kept strictly confidential.</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 p-4 bg-app-card rounded-2xl border border-app-border/40 hover:border-app-accent/30 transition-all">
+                  <div className="w-2.5 h-2.5 bg-red-500 rounded-full mt-1.5 shrink-0 shadow-[0_0_8px_#EF4444]"></div>
+                  <div>
+                    <h4 className="text-xs font-black text-app-text-bright uppercase tracking-widest mb-1">Recording Prohibition</h4>
+                    <p className="text-xs text-app-text-muted leading-relaxed">Recording, photographing, or taking screenshots of any candidate material or answers is strictly illegal.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  onClick={() => setShowEthicsModal(false)}
+                  className="w-full py-4 bg-gradient-to-br from-[#C5A028] to-[#8C6A0F] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-app-accent/30 active:scale-95 cursor-pointer"
+                >
+                  I Agree & Continue
+                </button>
+              </div>
+            </div>
+            <div className="absolute top-0 left-0 w-64 h-64 bg-app-accent/5 rounded-full blur-[100px] -ml-32 -mt-32" />
           </div>
         </div>
       )}
