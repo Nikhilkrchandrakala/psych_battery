@@ -173,9 +173,7 @@ const authenticate = async (req: any, res: any, next: any) => {
         .populate('assignedTO', 'name email');
       if (user) {
         foundUser = user.toObject ? user.toObject() : user;
-        if (!foundUser.role) {
-          foundUser.role = 'student';
-        }
+        foundUser.role = decoded.role || foundUser.role || 'student';
       }
     }
 
