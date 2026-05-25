@@ -258,6 +258,10 @@ async function startServer() {
       secretPrefix: envSecret,
       secretLength,
       secretHash,
+      dbConnected: mongoose.connection.readyState === 1,
+      dbName: mongoose.connection.db ? mongoose.connection.db.databaseName : 'NONE',
+      userCount: await User.countDocuments().catch(() => -1),
+      adminCount: await AdminUser.countDocuments().catch(() => -1),
       decoded,
       error
     });
