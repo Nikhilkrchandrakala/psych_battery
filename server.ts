@@ -156,11 +156,11 @@ const authenticate = async (req: any, res: any, next: any) => {
     let foundUser = null;
 
     // Check role from decoded payload
-    if (decoded.role === 'admin' || decoded.role === 'franchise') {
+    if (decoded.role === 'admin' || decoded.role === 'franchise' || decoded.role === 'assessor') {
       const admin = await AdminUser.findById(decoded.id);
       if (admin) {
         foundUser = admin.toObject ? admin.toObject() : admin;
-        foundUser.role = 'admin';
+        foundUser.role = decoded.role;
       }
     }
 
