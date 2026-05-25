@@ -218,7 +218,7 @@ async function startServer() {
     res.json(req.user);
   });
 
-  app.get('/api/debug-auth', (req: any, res: any) => {
+  app.get('/api/debug-auth', async (req: any, res: any) => {
     const authHeader = req.headers.authorization || '';
     let token = '';
     if (authHeader && authHeader.startsWith('Bearer ')) {
