@@ -76,7 +76,6 @@ const authenticate = async (req: any, res: any, next: any) => {
   }
 
   const isBypass = process.env.BYPASS_AUTH === 'true' || 
-                   mongoose.connection.readyState !== 1 || 
                    (token && token.trim().startsWith('mock-'));
 
   if (isBypass) {
@@ -221,7 +220,7 @@ async function startServer() {
 
   // --- ASSESSMENT ROUTES ---
   app.get('/api/assessments', authenticate, async (req, res) => {
-    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    const isBypass = process.env.BYPASS_AUTH === 'true';
     if (isBypass) {
       return res.json(MOCK_ASSESSMENTS);
     }
@@ -235,7 +234,7 @@ async function startServer() {
   });
 
   app.get('/api/assessments/:id', authenticate, async (req, res) => {
-    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    const isBypass = process.env.BYPASS_AUTH === 'true';
     if (isBypass) {
       const assessment = MOCK_ASSESSMENTS.find(a => a._id === req.params.id);
       if (!assessment) return res.status(404).json({ message: 'Not found' });
@@ -281,7 +280,7 @@ async function startServer() {
   });
 
   app.get('/api/assessments/:id/slides', authenticate, async (req, res) => {
-    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    const isBypass = process.env.BYPASS_AUTH === 'true';
     if (isBypass) {
       const slides = MOCK_SLIDES[req.params.id] || [];
       return res.json(slides);
@@ -548,7 +547,7 @@ async function startServer() {
 
   // --- SUBMISSION ROUTES ---
   app.get('/api/submissions', authenticate, async (req: any, res) => {
-    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    const isBypass = process.env.BYPASS_AUTH === 'true';
     if (isBypass) {
       let filtered = mockSubmissions;
       if (req.user.role === 'student') {
@@ -605,7 +604,7 @@ async function startServer() {
   });
 
   app.get('/api/submissions/:id', authenticate, async (req, res) => {
-    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    const isBypass = process.env.BYPASS_AUTH === 'true';
     if (isBypass) {
       const submission = mockSubmissions.find(s => s._id === req.params.id);
       if (!submission) return res.status(404).json({ message: 'Submission not found' });
@@ -623,7 +622,7 @@ async function startServer() {
   });
 
   app.post('/api/submissions', authenticate, async (req: any, res) => {
-    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    const isBypass = process.env.BYPASS_AUTH === 'true';
     if (isBypass) {
       const newSub = {
         ...req.body,
@@ -648,7 +647,7 @@ async function startServer() {
   });
 
   app.put('/api/submissions/:id', authenticate, async (req, res) => {
-    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    const isBypass = process.env.BYPASS_AUTH === 'true';
     if (isBypass) {
       const idx = mockSubmissions.findIndex(s => s._id === req.params.id);
       if (idx !== -1) {
@@ -668,7 +667,7 @@ async function startServer() {
 
   // --- USER MANAGEMENT ---
   app.get('/api/users', authenticate, isAdmin, async (req, res) => {
-    const isBypass = process.env.BYPASS_AUTH === 'true' || mongoose.connection.readyState !== 1;
+    const isBypass = process.env.BYPASS_AUTH === 'true';
     if (isBypass) {
       return res.json([
         { _id: 'mock-user-123456789012', name: 'Preview Student', email: 'student@ssb.com', role: 'student' },
