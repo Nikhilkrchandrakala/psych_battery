@@ -21,7 +21,7 @@ const Layout: React.FC = () => {
     const dest = isAssessorOrAdmin
       ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:8080/Profile.html'
-        : 'https://api.ssbwithisv.in/admin/Profile.html')
+        : 'https://www.ssbwithisv.in/admin/Profile.html')
       : `${mainSiteUrl}/ProfileDashboard`;
     window.location.href = dest;
   };
@@ -55,7 +55,7 @@ const Layout: React.FC = () => {
             {/* Back to Profile / Back to Admin Panel */}
             <a
               href={profile?.role === 'assessor' || profile?.role === 'admin'
-                ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080/Profile.html' : 'https://api.ssbwithisv.in/admin/Profile.html')
+                ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080/Profile.html' : 'https://www.ssbwithisv.in/admin/Profile.html')
                 : `${mainSiteUrl}/ProfileDashboard`
               }
               onClick={handleBackToAdmin}
@@ -183,7 +183,7 @@ const Layout: React.FC = () => {
               <div className="pt-4 mt-4 border-t border-app-border space-y-4">
                 <a
                   href={profile?.role === 'assessor' || profile?.role === 'admin'
-                    ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080/Profile.html' : 'https://api.ssbwithisv.in/admin/Profile.html')
+                    ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080/Profile.html' : 'https://www.ssbwithisv.in/admin/Profile.html')
                     : `${mainSiteUrl}/ProfileDashboard`
                   }
                   className="flex items-center gap-4 text-app-accent font-medium text-lg"
