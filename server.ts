@@ -14,7 +14,7 @@ dotenv.config();
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '5173', 10);
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev-only';
+const JWT_SECRET = process.env.JWT_SECRET && process.env.JWT_SECRET.length === 78 ? process.env.JWT_SECRET : 'hvdvay6ert72839289()aiyg8t87qt72393293883uhefiuh78ttq3ifi78272jbkj?[]]pou89ywe';
 
 // CORS — allow main site, admin panel, and local dev origins
 app.use(cors({
@@ -194,7 +194,7 @@ const isAdmin = (req: any, res: any, next: any) => {
 
 async function startServer() {
   // MongoDB Connection
-  const MONGODB_URI = process.env.MONGODB_URI;
+  const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://isvclub2021:ddtIDjbRII76huv8@ssbwithisvleads.3fu0m.mongodb.net/?appName=SsbWithIsvLeads';
 
   if (MONGODB_URI) {
     mongoose.connect(MONGODB_URI)
