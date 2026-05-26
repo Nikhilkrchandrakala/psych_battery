@@ -189,8 +189,15 @@ const AdminDashboard: React.FC = () => {
                            {u.profileImage ? <img src={u.profileImage} alt={u.name} className="w-full h-full object-cover" /> : <Users size={20} className="text-app-text-muted" />}
                          </div>
                          <div>
-                            <div className="text-sm font-black text-app-text-bright">{u.name}</div>
-                            <div className="text-[10px] font-medium text-app-text-muted">{u.email}</div>
+                             <div className="text-sm font-black text-app-text-bright flex items-center gap-2">
+                               {u.name}
+                               {u.chestNo && (
+                                 <span className="px-1.5 py-0.5 bg-app-accent/20 border border-app-accent/30 text-[8px] font-black text-app-accent rounded uppercase tracking-wider">
+                                   Chest {u.chestNo}
+                                 </span>
+                               )}
+                             </div>
+                             <div className="text-[10px] font-medium text-app-text-muted">{u.email}</div>
                          </div>
                       </div>
                     </td>
@@ -209,14 +216,20 @@ const AdminDashboard: React.FC = () => {
                         {u.role === 'student' ? (
                           <div className="space-y-2 max-w-[280px]">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-[8px] font-black text-app-text-muted uppercase tracking-wider shrink-0 w-16">Stage:</span>
+                              <span className="text-[8px] font-black text-app-text-muted uppercase tracking-wider shrink-0 w-16">Course:</span>
                               <select
-                                value={u.clinicalStage || 'Screening'}
+                                value={u.clinicalStage || 'full_course'}
                                 onChange={(e) => updateStudentClinicalStage(u.id, e.target.value)}
                                 className="bg-app-card border border-app-border rounded px-2 py-0.5 text-[8px] font-bold text-app-text-bright focus:outline-none cursor-pointer w-full"
                               >
-                                {['Screening', 'Psychology', 'GTO', 'Interview', 'Conference', 'Completed'].map(st => (
-                                  <option key={st} value={st}>{st}</option>
+                                {[
+                                  { value: 'full_course', label: 'Full Course (10-Day Hackathon)' },
+                                  { value: 'ssb_ppdt', label: 'Intro to SSB & PPDT' },
+                                  { value: 'psych', label: 'Psychology Prep Program' },
+                                  { value: 'interview', label: 'Interview & Mock Course' },
+                                  { value: 'group_testing', label: 'GTO Course on VTX' }
+                                ].map(c => (
+                                  <option key={c.value} value={c.value}>{c.label}</option>
                                 ))}
                               </select>
                             </div>

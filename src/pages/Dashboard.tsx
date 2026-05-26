@@ -74,12 +74,31 @@ const Dashboard: React.FC = () => {
         
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-app-border pb-6 relative z-10 gap-4">
           <div className="space-y-1">
-            <h2 className="text-2xl font-black text-app-text-bright tracking-tight uppercase">Clinical Evaluation Pathway</h2>
-            <p className="text-xs text-app-text-muted italic font-serif">Track your live status through the four official assessment gates.</p>
+            <h2 className="text-2xl font-black text-app-text-bright tracking-tight uppercase">Course Progress Pathway</h2>
+            <p className="text-xs text-app-text-muted italic font-serif">Track your live status through the official course modules.</p>
           </div>
-          <span className="px-3.5 py-1.5 rounded-xl bg-black/40 border border-app-border text-[10px] font-black uppercase tracking-[0.2em] text-app-text-bright">
-            Current Stage: {profile?.clinicalStage || 'Screening'}
-          </span>
+          <div className="flex gap-2">
+            {profile?.chestNo && (
+              <span className="px-3.5 py-1.5 rounded-xl bg-app-accent/20 border border-app-accent text-[10px] font-black uppercase tracking-[0.2em] text-app-accent">
+                Chest No: {profile.chestNo}
+              </span>
+            )}
+            <span className="px-3.5 py-1.5 rounded-xl bg-black/40 border border-app-border text-[10px] font-black uppercase tracking-[0.2em] text-app-text-bright">
+              Enrolled Course: {
+                (() => {
+                  const stages = (profile?.clinicalStage || 'full_course').split(',').map(st => st.trim()).filter(Boolean);
+                  const stageTitles: Record<string, string> = {
+                    'full_course': 'Full Course',
+                    'ssb_ppdt': 'Intro & PPDT',
+                    'psych': 'Psychology',
+                    'interview': 'Interview',
+                    'group_testing': 'GTO Tasks'
+                  };
+                  return stages.map(st => stageTitles[st] || st).join(', ');
+                })()
+              }
+            </span>
+          </div>
         </div>
 
         {/* Stepper Grid */}
@@ -114,20 +133,15 @@ const Dashboard: React.FC = () => {
               desc: 'Technical aptitude & problem solving',
             }
           ].map((stage, i) => {
-            const getStageIndex = (stageName: string) => {
-              switch (stageName) {
-                case 'Screening': return 0;
-                case 'Psychology': return 1;
-                case 'GTO': return 2;
-                case 'Interview': return 3;
-                case 'Conference':
-                case 'Completed': return 4;
-                default: return 0;
-              }
-            };
-            const currentStageIndex = getStageIndex(profile?.clinicalStage || 'Screening');
-            const isCompleted = i < currentStageIndex;
-            const isActive = i === currentStageIndex;
+            const activeStages = (profile?.clinicalStage || 'full_course').split(',').map(st => st.trim()).filter(Boolean);
+            const isEnrolled = activeStages.includes('full_course') || 
+                               (stage.id === 'psych' && activeStages.includes('psych')) ||
+                               (stage.id === 'gto' && activeStages.includes('group_testing')) ||
+                               (stage.id === 'io' && activeStages.includes('interview')) ||
+                               (stage.id === 'to' && (activeStages.includes('full_course') || activeStages.includes('interview')));
+
+            const isCompleted = isEnrolled;
+            const isActive = isEnrolled;
             const StageIcon = stage.icon;
 
             return (

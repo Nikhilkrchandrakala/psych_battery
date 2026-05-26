@@ -223,7 +223,7 @@ const AssessorDashboard: React.FC = () => {
                      <tr className="border-b border-app-border bg-black/20">
                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Candidate Identity</th>
                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Lifecycle Status</th>
-                       <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Clinical Stage</th>
+                       <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Course</th>
                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Allotted Assessors</th>
                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Session Date</th>
                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted text-right">Cadence</th>
@@ -260,7 +260,13 @@ const AssessorDashboard: React.FC = () => {
                          </td>
                          <td className="p-6">
                             <span className="px-2.5 py-1 rounded bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-[0.15em] text-app-text-bright">
-                              {sub.student?.clinicalStage || 'Screening'}
+                              {
+                                sub.student?.clinicalStage === 'full_course' ? 'Full Course' :
+                                sub.student?.clinicalStage === 'ssb_ppdt' ? 'Intro & PPDT' :
+                                sub.student?.clinicalStage === 'psych' ? 'Psychology' :
+                                sub.student?.clinicalStage === 'interview' ? 'Interview' :
+                                sub.student?.clinicalStage === 'group_testing' ? 'GTO Tasks' : 'Full Course'
+                              }
                             </span>
                          </td>
                          <td className="p-6">

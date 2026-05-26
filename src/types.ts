@@ -9,7 +9,8 @@ export interface UserProfile {
   piqUrl?: string;
   assignedAssessor?: string;
   assessorType?: 'GTO' | 'TO' | 'Psych' | 'IO' | null;
-  clinicalStage?: 'Screening' | 'Psychology' | 'GTO' | 'Interview' | 'Conference' | 'Completed';
+  clinicalStage?: string;
+  chestNo?: string;
   assignedGTO?: string | null;
   assignedTO?: string | null;
   assignedPsych?: string | null;

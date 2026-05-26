@@ -27,8 +27,8 @@ async function main() {
     abhishek.set('assignedTO', new mongoose.Types.ObjectId(toAssessorId));
     abhishek.set('assignedIO', new mongoose.Types.ObjectId(ioAssessorId));
     
-    // Also let's set clinicalStage to 'Psychology' (Stage 2) so he shows up as active in the psychology terminal
-    abhishek.set('clinicalStage', 'Psychology');
+    // Also let's set clinicalStage to 'psych' (Stage 2) so he shows up as active in the psychology terminal
+    abhishek.set('clinicalStage', 'psych');
     
     await abhishek.save();
     console.log('Successfully updated Abhishek Singh user doc:', JSON.stringify(abhishek, null, 2));

@@ -9,7 +9,7 @@ const MAIN_SITE_URL = window.location.hostname === 'localhost' || window.locatio
 
 const ADMIN_PANEL_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8080'
-    : 'https://api.ssbwithisv.in/admin-login';
+    : 'https://admin.ssbwithisv.in';
 
 interface AuthContextType {
   user: any | null;
