@@ -287,14 +287,23 @@ async function startServer() {
   });
 
   // --- ASSESSMENT ROUTES ---
-  app.get('/api/assessments', authenticate, async (req, res) => {
+  app.get('/api/assessments', authenticate, async (req: any, res) => {
     const isBypass = process.env.BYPASS_AUTH === 'true';
     if (isBypass) {
       return res.json(MOCK_ASSESSMENTS);
     }
 
     try {
-      const assessments = await Assessment.find();
+      let query: any = {};
+      if (req.user.role === 'student') {
+        const studentUser = await User.findById(req.user._id);
+        if (studentUser && (studentUser as any).assignedAssessments && (studentUser as any).assignedAssessments.length > 0) {
+          query = { _id: { $in: (studentUser as any).assignedAssessments } };
+        } else {
+          return res.json([]); // Return empty list if no assessments are assigned yet
+        }
+      }
+      const assessments = await Assessment.find(query);
       res.json(assessments);
     } catch (error: any) {
       res.status(500).json({ message: error.message });

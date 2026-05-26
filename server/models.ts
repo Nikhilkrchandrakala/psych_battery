@@ -15,6 +15,7 @@ const UserSchema = new mongoose.Schema({
   assignedTO: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   assignedPsych: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   assignedIO: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  assignedAssessments: { type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Assessment' }], default: [] },
 }, { timestamps: true });
 
 UserSchema.set('toJSON', {
