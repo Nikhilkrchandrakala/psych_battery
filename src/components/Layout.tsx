@@ -18,10 +18,12 @@ const Layout: React.FC = () => {
     e.preventDefault();
     
     const isAssessorOrAdmin = profile?.role === 'assessor' || profile?.role === 'admin';
+    const activeToken = localStorage.getItem('auth_token') || '';
+    
     const dest = isAssessorOrAdmin
       ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-        ? 'http://localhost:8080/Profile.html'
-        : 'https://www.ssbwithisv.in/admin/Profile.html')
+        ? `http://localhost:8080/Profile.html?token=${activeToken}`
+        : `https://www.ssbwithisv.in/admin/Profile.html?token=${activeToken}`)
       : `${mainSiteUrl}/ProfileDashboard`;
     window.location.href = dest;
   };
