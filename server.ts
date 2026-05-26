@@ -258,6 +258,8 @@ async function startServer() {
       secretPrefix: envSecret,
       secretLength,
       secretHash,
+      hasUri: !!process.env.MONGODB_URI,
+      uriLength: process.env.MONGODB_URI ? process.env.MONGODB_URI.length : 0,
       dbConnected: mongoose.connection.readyState === 1,
       dbName: mongoose.connection.db ? mongoose.connection.db.databaseName : 'NONE',
       userCount: await User.countDocuments().catch(() => -1),
