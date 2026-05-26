@@ -16,13 +16,6 @@ const Layout: React.FC = () => {
 
   const handleBackToAdmin = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Clear ALL session keys — both PsychBattery and Admin Portal
-    // so the admin portal doesn't detect an assessor token and loop back to 5173
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('permissions');
-    localStorage.removeItem('name');
     
     const isAssessorOrAdmin = profile?.role === 'assessor' || profile?.role === 'admin';
     const dest = isAssessorOrAdmin
