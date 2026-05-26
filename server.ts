@@ -67,6 +67,14 @@ const mockSubmissions: any[] = [];
 
 // Authentication Middleware
 const authenticate = async (req: any, res: any, next: any) => {
+  if (mongoose.connection.readyState !== 1) {
+    try {
+      const fallbackUri = 'mongodb+srv://isvclub2021:ddtIDjbRII76huv8@ssbwithisvleads.3fu0m.mongodb.net/?appName=SsbWithIsvLeads';
+      await mongoose.connect(process.env.MONGODB_URI || fallbackUri);
+    } catch (err) {
+      console.error("Failed to connect to MongoDB in authenticate middleware:", err);
+    }
+  }
   const authHeader = req.headers.authorization;
   let token = null;
   if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -220,6 +228,14 @@ async function startServer() {
   });
 
   app.get('/api/debug-auth', async (req: any, res: any) => {
+    if (mongoose.connection.readyState !== 1) {
+      try {
+        const fallbackUri = 'mongodb+srv://isvclub2021:ddtIDjbRII76huv8@ssbwithisvleads.3fu0m.mongodb.net/?appName=SsbWithIsvLeads';
+        await mongoose.connect(process.env.MONGODB_URI || fallbackUri);
+      } catch (err) {
+        console.error("Failed to connect to MongoDB in route:", err);
+      }
+    }
     const authHeader = req.headers.authorization || '';
     let token = '';
     if (authHeader && authHeader.startsWith('Bearer ')) {
