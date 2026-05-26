@@ -197,12 +197,13 @@ async function startServer() {
   const MONGODB_URI = process.env.MONGODB_URI;
 
   if (MONGODB_URI) {
-    try {
-      await mongoose.connect(MONGODB_URI);
-      console.log('Connected to MongoDB');
-    } catch (err) {
-      console.error('MongoDB connection error:', err);
-    }
+    mongoose.connect(MONGODB_URI)
+      .then(() => {
+        console.log('Connected to MongoDB');
+      })
+      .catch((err) => {
+        console.error('MongoDB connection error:', err);
+      });
   } else {
     console.warn('MONGODB_URI not found in environment. Database features will fail.');
   }
