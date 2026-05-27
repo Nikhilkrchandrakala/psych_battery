@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { LogOut, User, Menu, X, Shield, BookOpen, ClipboardList, Calendar, Users, LayoutDashboard, ArrowLeft, ExternalLink } from 'lucide-react';
+import { LogOut, User, Menu, X, Shield, BookOpen, ClipboardList, Calendar, Users, LayoutDashboard, ArrowLeft, ExternalLink, Layers } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { cn } from '../lib/utils';
 
@@ -31,13 +31,23 @@ const Layout: React.FC = () => {
   const navItems = [
     // Student-only: test dashboard
     { label: 'My Dashboard', path: '/', icon: LayoutDashboard, show: profile?.role === 'student' },
-    // Assessors + Admins: candidate dossier list
-    { label: 'Candidate Dossiers', path: '/assessor', icon: Users, show: profile?.role === 'assessor' || isAdminUser },
+    // Assessors only: candidate dossier list
+    { label: 'Candidate Dossiers', path: '/assessor', icon: Users, show: profile?.role === 'assessor' },
     // Admin only: admin hub
-    { label: 'Admin Hub', path: '/admin', icon: Shield, show: isAdminUser },
+    { label: 'Admin Hub', path: '/admin?tab=progress', icon: Shield, show: isAdminUser },
+    // Admin only: assessment catalogue
+    { label: 'Assessment Catalogue', path: '/admin?tab=catalogue', icon: Layers, show: isAdminUser },
   ];
 
-  const activeItem = navItems.find(item => item.path === location.pathname);
+  const getIsActive = (path: string) => {
+    if (path.includes('?')) {
+      const [basePath, search] = path.split('?');
+      return location.pathname === basePath && location.search === `?${search}`;
+    }
+    return location.pathname === path;
+  };
+
+  const activeItem = navItems.find(item => getIsActive(item.path));
 
   return (
     <div className="min-h-screen bg-app-bg text-app-text-main flex overflow-hidden font-sans">
@@ -73,7 +83,7 @@ const Layout: React.FC = () => {
             </div>
             {navItems.filter(item => item.show).map(item => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+              const isActive = getIsActive(item.path);
               return (
                 <Link
                   key={item.path}
@@ -94,7 +104,7 @@ const Layout: React.FC = () => {
         </div>
 
         <div className="mt-auto p-4 border-t border-app-border bg-black/20">
-          {user && (
+          {user && profile?.role !== 'assessor' && profile?.role !== 'admin' && (
             <div className="flex items-center gap-3 p-2">
               <div className="w-10 h-10 rounded-full bg-app-card border border-app-border flex items-center justify-center shrink-0 overflow-hidden">
                 {profile?.profileImage ? (
@@ -137,9 +147,27 @@ const Layout: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4 text-xs font-bold text-app-text-muted">
-            <span className="hidden sm:inline bg-app-card px-3 py-1 rounded-full border border-app-border shadow-inner">
-              SESSION: 2026 Q2
-            </span>
+            {profile?.role === 'assessor' || profile?.role === 'admin' ? (
+              <div className="flex items-center gap-3 py-1 px-3 bg-app-card rounded-2xl border border-app-border shadow-inner">
+                <div className="text-right">
+                  <div className="text-xs font-bold text-app-text-bright leading-tight">{profile?.name}</div>
+                  <div className="text-[9px] text-[#8fa0b5] font-black uppercase tracking-widest leading-none mt-1">
+                    {profile?.assessorType ? `${profile.assessorType} Assessor` : (profile?.role === 'admin' ? 'Admin' : 'Assessor')}
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-app-sidebar border border-app-border flex items-center justify-center overflow-hidden shrink-0">
+                  {profile?.profileImage ? (
+                    <img src={profile.profileImage} alt={profile.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={16} className="text-app-text-muted" />
+                  )}
+                </div>
+              </div>
+            ) : (
+              <span className="hidden sm:inline bg-app-card px-3 py-1 rounded-full border border-app-border shadow-inner">
+                SESSION: 2026 Q2
+              </span>
+            )}
           </div>
         </header>
 
@@ -171,17 +199,23 @@ const Layout: React.FC = () => {
             </div>
             
             <nav className="space-y-4">
-              {navItems.filter(item => item.show).map(item => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className="flex items-center gap-4 text-app-text-bright font-medium text-lg"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <item.icon size={24} className="text-app-accent" />
-                  {item.label}
-                </Link>
-              ))}
+              {navItems.filter(item => item.show).map(item => {
+                const isActive = getIsActive(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={cn(
+                      "flex items-center gap-4 font-medium text-lg transition-all",
+                      isActive ? "text-app-accent" : "text-app-text-bright"
+                    )}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <item.icon size={24} className={isActive ? "text-app-accent" : "text-app-text-muted"} />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
               <div className="pt-4 mt-4 border-t border-app-border space-y-4">
                 <a
                   href={profile?.role === 'assessor' || profile?.role === 'admin'

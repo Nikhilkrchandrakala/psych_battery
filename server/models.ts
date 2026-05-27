@@ -84,6 +84,29 @@ const SubmissionSchema = new mongoose.Schema({
   meetingLink: String,
   finalReport: String,
   reviewedAt: Date,
+  
+  // Isolated Assessor Tracking Fields
+  psychRemarks: { type: String, default: '' },
+  psychStatus: { type: String, enum: ['PENDING', 'UNDER_REVIEW', 'COMPLETED'], default: 'PENDING' },
+  gtoRemarks: { type: String, default: '' },
+  gtoStatus: { type: String, enum: ['PENDING', 'UNDER_REVIEW', 'COMPLETED', 'NOT_REQUIRED'], default: 'PENDING' },
+  ioRemarks: { type: String, default: '' },
+  ioStatus: { type: String, enum: ['PENDING', 'UNDER_REVIEW', 'COMPLETED', 'NOT_REQUIRED'], default: 'PENDING' },
+  toRemarks: { type: String, default: '' },
+  toStatus: { type: String, enum: ['PENDING', 'UNDER_REVIEW', 'COMPLETED', 'NOT_REQUIRED'], default: 'PENDING' },
+
+  workflowStage: { type: String, default: 'PIQ_PENDING' },
+  reportVisibility: {
+    psych: { type: Boolean, default: false },
+    io: { type: Boolean, default: false },
+    gto: { type: Boolean, default: false },
+    to: { type: Boolean, default: false }
+  },
+  adminApproval: {
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    approvedAt: Date,
+    remarks: String
+  }
 }, { timestamps: true });
 
 SubmissionSchema.set('toJSON', {

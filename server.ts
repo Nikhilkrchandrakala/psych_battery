@@ -14,7 +14,7 @@ dotenv.config();
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '5173', 10);
-const JWT_SECRET = process.env.JWT_SECRET && process.env.JWT_SECRET.length === 78 ? process.env.JWT_SECRET : 'hvdvay6ert72839289()aiyg8t87qt72393293883uhefiuh78ttq3ifi78272jbkj?[]]pou89ywe';
+const JWT_SECRET = (process.env.JWT_SECRET || 'hdvay6ert72839289()aiyg8t87qt72393293883uhefiuh78ttq3ifi78272jbkj2[]pou89ywe').trim();
 
 // CORS — allow main site, admin panel, and local dev origins
 app.use(cors({
@@ -156,10 +156,14 @@ const authenticate = async (req: any, res: any, next: any) => {
     return next();
   }
 
-  if (!token) return res.status(401).json({ message: 'No token provided' });
+  if (!token) {
+    console.error("[AUTH] Authentication failed: No token provided");
+    return res.status(401).json({ message: 'No token provided' });
+  }
 
   try {
     const decoded = jwt.verify(token.trim(), JWT_SECRET) as any;
+    console.log("[AUTH] Decoded token successfully:", decoded);
     let foundUser = null;
 
     // Check role from decoded payload
@@ -168,11 +172,13 @@ const authenticate = async (req: any, res: any, next: any) => {
       if (admin) {
         foundUser = admin.toObject ? admin.toObject() : admin;
         foundUser.role = decoded.role;
+        console.log("[AUTH] Found AdminUser:", foundUser.email);
       }
     }
 
     // Fallback/Standard lookup in User (students / main site UserDetails)
     if (!foundUser) {
+      console.log("[AUTH] Querying User model in MongoDB for decoded.id:", decoded.id);
       const user = await User.findById(decoded.id)
         .populate('assignedPsych', 'name email')
         .populate('assignedGTO', 'name email')
@@ -181,14 +187,21 @@ const authenticate = async (req: any, res: any, next: any) => {
       if (user) {
         foundUser = user.toObject ? user.toObject() : user;
         foundUser.role = decoded.role || foundUser.role || 'student';
+        console.log("[AUTH] Found User model match:", foundUser.email, "Role:", foundUser.role);
+      } else {
+        console.log("[AUTH] User model match not found for decoded.id:", decoded.id);
       }
     }
 
-    if (!foundUser) return res.status(401).json({ message: 'User not found' });
+    if (!foundUser) {
+      console.error("[AUTH] Authentication failed: User not found in DB for id:", decoded.id);
+      return res.status(401).json({ message: 'User not found' });
+    }
     req.user = foundUser;
     next();
-  } catch (err) {
-    res.status(401).json({ message: 'Invalid token' });
+  } catch (err: any) {
+    console.error("[AUTH] Authentication failed with error:", err.message);
+    res.status(401).json({ message: 'Invalid token', error: err.message });
   }
 };
 
@@ -405,7 +418,7 @@ async function startServer() {
       destination: (req, file, cb) => cb(null, uploadDir),
       filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.]/g, '')}`)
   });
-  const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB per file
+  const upload = multer({ storage, limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB per file to support high-res scans
 
   app.post('/api/submissions/:id/upload', authenticate, upload.array('files', 20), async (req: any, res: any) => {
     try {
@@ -715,7 +728,28 @@ async function startServer() {
     }
 
     try {
-      const submission = new Submission({ ...req.body, userId: req.user._id });
+      // Pre-populate assessor statuses based on candidate allotments
+      const candidateUser = await User.findById(req.user._id);
+      let gtoStatus = 'NOT_REQUIRED';
+      let ioStatus = 'NOT_REQUIRED';
+      let toStatus = 'NOT_REQUIRED';
+      let psychStatus = 'PENDING'; // Always required if this psychological battery is assigned
+
+      if (candidateUser) {
+        if (candidateUser.assignedGTO) gtoStatus = 'PENDING';
+        if (candidateUser.assignedIO) ioStatus = 'PENDING';
+        if (candidateUser.assignedTO) toStatus = 'PENDING';
+        if (candidateUser.assignedPsych) psychStatus = 'PENDING';
+      }
+
+      const submission = new Submission({ 
+        ...req.body, 
+        userId: req.user._id,
+        psychStatus,
+        gtoStatus,
+        ioStatus,
+        toStatus
+      });
       await submission.save();
       res.status(201).json(submission);
     } catch (error: any) {
@@ -739,6 +773,66 @@ async function startServer() {
       res.json(submission);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
+    }
+  });
+
+  // --- SUPER ADMIN AUDITING & BROADCAST ENDPOINTS ---
+  app.post('/api/submissions/:id/broadcast', authenticate, async (req: any, res) => {
+    try {
+      // Security: Only admins can broadcast reports
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'Access Denied: Administrative privileges required' });
+      }
+
+      const submission = await Submission.findById(req.params.id);
+      if (!submission) return res.status(404).json({ message: 'Submission not found' });
+
+      submission.status = 'REPORT_RELEASED';
+      submission.reportVisibility = {
+        psych: true,
+        io: true,
+        gto: true,
+        to: true
+      };
+
+      await submission.save();
+      res.json({ message: 'Results successfully broadcasted to student', submission });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/submissions/:id/audit', authenticate, async (req: any, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'Access Denied: Administrative privileges required' });
+      }
+
+      const submission = await Submission.findById(req.params.id);
+      if (!submission) return res.status(404).json({ message: 'Submission not found' });
+
+      const { assessorType, action, remarks } = req.body;
+      if (!assessorType || !action) {
+        return res.status(400).json({ message: 'Assessor type and action are required' });
+      }
+
+      const statusField = `${assessorType.toLowerCase()}Status`;
+      const remarksField = `${assessorType.toLowerCase()}Remarks`;
+
+      if (action === 'APPROVE') {
+        submission.set(statusField, 'COMPLETED');
+      } else if (action === 'REJECT') {
+        submission.set(statusField, 'UNDER_REVIEW');
+        if (remarks) {
+          const currentRemarks = submission.get(remarksField) || '';
+          submission.set(remarksField, `${currentRemarks}\n\n[ADMIN REVISION REQUEST]: ${remarks}`);
+        }
+      }
+
+      await submission.save();
+      res.json({ message: `Successfully updated ${assessorType} status to ${action}`, submission });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 

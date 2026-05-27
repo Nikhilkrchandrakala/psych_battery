@@ -20,6 +20,31 @@ const SubmissionUpload: React.FC = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [downloadUrl, setDownloadUrl] = useState<string>("https://api.ssbwithisv.in/assets/Blank_PIQ_Form.pdf");
+
+  useEffect(() => {
+    const fetchPiqTemplate = async () => {
+      try {
+        const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+        const baseApiUrl = isLocal ? "http://localhost:5001/api" : "https://api.ssbwithisv.in/api";
+        const response = await fetch(`${baseApiUrl}/allMagazinePdfs`);
+        if (response.ok) {
+          const magazines = await response.json();
+          const piqDoc = magazines?.find((m: any) => 
+            m?.pdfTitle?.toLowerCase().includes("personal information questionnaire") ||
+            m?.pdfTitle?.toLowerCase().includes("piq")
+          );
+          if (piqDoc) {
+            setDownloadUrl(isLocal ? `http://localhost:5001/${piqDoc.pdfFilePath}` : `https://api.ssbwithisv.in/${piqDoc.pdfFilePath}`);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch PIQ template URL:', error);
+      }
+    };
+
+    fetchPiqTemplate();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -208,12 +233,12 @@ const SubmissionUpload: React.FC = () => {
                 <div className="flex items-center justify-center gap-4 pt-2">
                   <span className="text-[10px] font-black text-app-text-muted uppercase">Missing form?</span>
                   <a 
-                    href="https://www.ssbcrack.com/wp-content/uploads/2013/11/PIQ-form-SSB.pdf" 
+                    href={downloadUrl} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-[10px] font-black text-app-accent uppercase tracking-widest hover:underline"
                   >
-                    Download Template
+                    Download PIQ Form
                   </a>
                 </div>
               </div>

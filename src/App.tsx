@@ -49,8 +49,11 @@ export default function App() {
           <Route path="/upload/:id" element={<SubmissionUpload />} />
         </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={['assessor', 'admin']} />}>
+        <Route element={<ProtectedRoute allowedRoles={['assessor']} />}>
           <Route path="/assessor" element={<AssessorDashboard />} />
+        </Route>
+
+        <Route element={<ProtectedRoute allowedRoles={['assessor', 'admin']} />}>
           <Route path="/review/:id" element={<SubmissionReview />} />
         </Route>
 

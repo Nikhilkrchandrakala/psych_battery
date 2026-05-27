@@ -38,6 +38,8 @@ export const api = {
     get: (id: string) => fetchWithAuth(`/submissions/${id}`),
     create: (data: any) => fetchWithAuth('/submissions', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) => fetchWithAuth(`/submissions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    broadcast: (id: string) => fetchWithAuth(`/submissions/${id}/broadcast`, { method: 'POST' }),
+    audit: (id: string, data: any) => fetchWithAuth(`/submissions/${id}/audit`, { method: 'POST', body: JSON.stringify(data) }),
   },
   users: {
     list: () => fetchWithAuth('/users'),

@@ -264,13 +264,28 @@ const SubmissionReview: React.FC = () => {
     fetchData();
   }, [id]);
 
+  useEffect(() => {
+    if (!submission) return;
+    if (activeAssessorType === 'Psych') {
+      setRemarks(submission.psychRemarks || submission.assessorRemarks || '');
+    } else if (activeAssessorType === 'GTO') {
+      setRemarks((submission as any).gtoRemarks || '');
+    } else if (activeAssessorType === 'IO') {
+      setRemarks((submission as any).ioRemarks || '');
+    } else if (activeAssessorType === 'TO') {
+      setRemarks((submission as any).toRemarks || '');
+    }
+  }, [activeAssessorType, submission]);
+
   const handleUpdate = async (status: AssessmentSubmission['status']) => {
     if (!id) return;
     
     // Strict completeness check for finalizing evaluations
-    if (status === 'COMPLETED') {
-      const gridConfig = ASSESSOR_GRID_CONFIG.Psych;
-      const unfilledTraits = gridConfig.traits.filter(t => !scores[t.id] || scores[t.id] === 0);
+    const currentGridConfig = ASSESSOR_GRID_CONFIG[activeAssessorType] || ASSESSOR_GRID_CONFIG.Psych;
+    const isCompleted = status === 'COMPLETED';
+
+    if (isCompleted) {
+      const unfilledTraits = currentGridConfig.traits.filter(t => !scores[t.id] || scores[t.id] === 0);
       const unfilledMarks = !scores.marks || scores.marks === 0;
       
       if (unfilledTraits.length > 0 || unfilledMarks) {
@@ -286,18 +301,47 @@ const SubmissionReview: React.FC = () => {
     setSaving(true);
     try {
       const updateData: any = {
-        status,
-        assessorRemarks: remarks,
         scores,
       };
+
+      // Isolated status and remarks routing
+      if (activeAssessorType === 'Psych') {
+        updateData.psychRemarks = remarks;
+        updateData.psychStatus = isCompleted ? 'COMPLETED' : 'UNDER_REVIEW';
+        updateData.assessorRemarks = remarks; // Sync compatibility
+      } else if (activeAssessorType === 'GTO') {
+        updateData.gtoRemarks = remarks;
+        updateData.gtoStatus = isCompleted ? 'COMPLETED' : 'UNDER_REVIEW';
+      } else if (activeAssessorType === 'IO') {
+        updateData.ioRemarks = remarks;
+        updateData.ioStatus = isCompleted ? 'COMPLETED' : 'UNDER_REVIEW';
+      } else if (activeAssessorType === 'TO') {
+        updateData.toRemarks = remarks;
+        updateData.toStatus = isCompleted ? 'COMPLETED' : 'UNDER_REVIEW';
+      }
+
+      // Calculate main submission status transition intelligently
+      let allFinished = true;
+      if (student) {
+        if (student.assignedPsych && activeAssessorType !== 'Psych' && submission?.psychStatus !== 'COMPLETED') allFinished = false;
+        if (student.assignedGTO && activeAssessorType !== 'GTO' && (submission as any)?.gtoStatus !== 'COMPLETED') allFinished = false;
+        if (student.assignedIO && activeAssessorType !== 'IO' && (submission as any)?.ioStatus !== 'COMPLETED') allFinished = false;
+        if (student.assignedTO && activeAssessorType !== 'TO' && (submission as any)?.toStatus !== 'COMPLETED') allFinished = false;
+      }
+
+      if (isCompleted && allFinished) {
+        updateData.status = 'COMPLETED';
+      } else {
+        updateData.status = 'REVIEW_PENDING';
+      }
 
       if (meetingDate) updateData.meetingDate = new Date(meetingDate).toISOString();
       if (meetingLink) updateData.meetingLink = meetingLink;
 
       await api.submissions.update(id, updateData);
-      setSubmission(prev => prev ? { ...prev, ...updateData, status } : null);
+      setSubmission(prev => prev ? { ...prev, ...updateData } : null);
 
-      if (status === 'COMPLETED') {
+      if (isCompleted) {
         navigate('/assessor');
       }
     } catch (error) {
@@ -665,7 +709,7 @@ const SubmissionReview: React.FC = () => {
 
       {/* ── CLINICAL REMARKS TAB ─────────────────────────────────────── */}
       {activeTab === 'evaluation' && (() => {
-        const gridConfig = ASSESSOR_GRID_CONFIG.Psych;
+        const gridConfig = ASSESSOR_GRID_CONFIG[activeAssessorType] || ASSESSOR_GRID_CONFIG.Psych;
         return (
           <div className="w-full flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Main Evaluation Card */}
