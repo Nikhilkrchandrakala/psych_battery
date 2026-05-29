@@ -62,22 +62,31 @@ async function seed() {
       console.log('Old records deleted.');
     }
 
-    // 2. Create the Assessment
+    // 2. Create the Assessment with modules config
     const newAssessment = new Assessment({
       title: bat.title,
       description: bat.description,
       type: 'GENERAL',
       duration: 120, // 2 hours approx
       active: true,
+      modules: new Map([
+        ['INTRO',   { timingMode: 'per-slide', globalDuration: 0, navigable: false }],
+        ['TAT',     { timingMode: 'per-slide', globalDuration: 0, navigable: false }],
+        ['WAT',     { timingMode: 'per-slide', globalDuration: 0, navigable: false }],
+        ['SRT',     { timingMode: 'global',    globalDuration: 1800, navigable: true }],
+        ['SDT',     { timingMode: 'per-slide', globalDuration: 0, navigable: false }],
+        ['CLOSING', { timingMode: 'per-slide', globalDuration: 0, navigable: false }],
+      ]),
     });
 
     const savedAssessment = await newAssessment.save();
     console.log(`Created new Assessment with ID: ${savedAssessment._id}`);
 
-    // 3. Import slides in sequence
+    // 3. Import slides in sequence (includes module tag from JSON)
     const slidesToInsert = slidesData.map((slide: any) => ({
       assessmentId: savedAssessment._id,
       slideType: slide.slideType,
+      module: slide.module || 'INTRO',
       imageUrl: slide.imageUrl || undefined,
       content: slide.content || undefined,
       displayTime: slide.displayTime,

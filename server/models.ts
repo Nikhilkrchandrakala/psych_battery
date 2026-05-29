@@ -28,6 +28,12 @@ UserSchema.set('toJSON', {
   }
 });
 
+const ModuleConfigSchema = new mongoose.Schema({
+  timingMode: { type: String, enum: ['per-slide', 'global'], default: 'per-slide' },
+  globalDuration: { type: Number, default: 0 },
+  navigable: { type: Boolean, default: false },
+}, { _id: false });
+
 const AssessmentSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: String,
@@ -36,6 +42,18 @@ const AssessmentSchema = new mongoose.Schema({
   duration: Number,
   active: { type: Boolean, default: false },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  modules: {
+    type: Map,
+    of: ModuleConfigSchema,
+    default: () => new Map([
+      ['INTRO',   { timingMode: 'per-slide', globalDuration: 0, navigable: false }],
+      ['TAT',     { timingMode: 'per-slide', globalDuration: 0, navigable: false }],
+      ['WAT',     { timingMode: 'per-slide', globalDuration: 0, navigable: false }],
+      ['SRT',     { timingMode: 'global',    globalDuration: 1800, navigable: true }],
+      ['SDT',     { timingMode: 'per-slide', globalDuration: 0, navigable: false }],
+      ['CLOSING', { timingMode: 'per-slide', globalDuration: 0, navigable: false }],
+    ])
+  }
 }, { timestamps: true });
 
 AssessmentSchema.set('toJSON', {
@@ -43,6 +61,12 @@ AssessmentSchema.set('toJSON', {
     ret.id = ret._id;
     delete ret._id;
     delete ret.__v;
+    // Convert modules Map to plain object for JSON
+    if (ret.modules instanceof Map) {
+      const obj: any = {};
+      ret.modules.forEach((val: any, key: string) => { obj[key] = val; });
+      ret.modules = obj;
+    }
     return ret;
   }
 });
@@ -50,6 +74,11 @@ AssessmentSchema.set('toJSON', {
 const SlideSchema = new mongoose.Schema({
   assessmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Assessment', required: true },
   slideType: { type: String, required: true },
+  module: {
+    type: String,
+    enum: ['INTRO', 'TAT', 'WAT', 'SRT', 'SDT', 'CLOSING'],
+    default: 'INTRO'
+  },
   imageUrl: String,
   content: String,
   displayTime: { type: Number, default: 5 },

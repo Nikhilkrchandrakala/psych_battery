@@ -20,6 +20,14 @@ export interface UserProfile {
 
 export type SlideType = 'IMAGE' | 'WORD' | 'SITUATION' | 'BLACKOUT' | 'BREAK' | 'INSTRUCTIONS';
 
+export type ModuleId = 'INTRO' | 'TAT' | 'WAT' | 'SRT' | 'SDT' | 'CLOSING';
+
+export interface ModuleConfig {
+  timingMode: 'per-slide' | 'global';
+  globalDuration: number; // seconds, only used when timingMode='global'
+  navigable: boolean;
+}
+
 export interface Assessment {
   id: string;
   title: string;
@@ -30,11 +38,13 @@ export interface Assessment {
   active: boolean;
   createdBy: string;
   createdAt: any;
+  modules?: Record<ModuleId, ModuleConfig>;
 }
 
 export interface AssessmentSlide {
   id: string;
   assessmentId: string;
+  module: ModuleId;
   slideType: SlideType;
   imageUrl?: string;
   content?: string; // Used for words, situations, or instructions

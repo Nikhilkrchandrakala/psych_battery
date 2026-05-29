@@ -386,7 +386,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/assessments/:id/slides', authenticate, async (req, res) => {
+  app.get('/api/assessments/:id/slides', authenticate, async (req: any, res) => {
     const isBypass = process.env.BYPASS_AUTH === 'true';
     if (isBypass) {
       const slides = MOCK_SLIDES[req.params.id] || [];
@@ -394,7 +394,11 @@ async function startServer() {
     }
 
     try {
-      const slides = await Slide.find({ assessmentId: req.params.id }).sort('order');
+      const query: any = { assessmentId: req.params.id };
+      if (req.query.module) {
+        query.module = req.query.module;
+      }
+      const slides = await Slide.find(query).sort('module order');
       res.json(slides);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
