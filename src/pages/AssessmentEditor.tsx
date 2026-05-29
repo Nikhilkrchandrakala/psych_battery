@@ -71,6 +71,7 @@ const AssessmentEditor: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [activeModule, setActiveModule] = useState<ModuleId>('INTRO');
   const [activeSlideId, setActiveSlideId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -140,9 +141,24 @@ const AssessmentEditor: React.FC = () => {
       content: activeModule === 'SRT' ? 'New situation...' :
                activeModule === 'WAT' ? 'WORD' : 'New Slide Content',
       displayTime: activeModule === 'WAT' ? 15 : activeModule === 'TAT' ? 30 : 5,
-      order: moduleSlides.length,
+      order: 0, // Will be reassigned
     };
-    setAllSlides(prev => [...prev, newSlide]);
+
+    const currentModuleSlides = allSlides
+      .filter(s => s.module === activeModule)
+      .sort((a, b) => a.order - b.order);
+
+    const activeIndex = activeSlideId 
+      ? currentModuleSlides.findIndex(s => s.id === activeSlideId)
+      : currentModuleSlides.length - 1;
+
+    const insertIndex = activeIndex >= 0 ? activeIndex + 1 : currentModuleSlides.length;
+    
+    currentModuleSlides.splice(insertIndex, 0, newSlide);
+    const withNewOrders = currentModuleSlides.map((s, i) => ({ ...s, order: i }));
+
+    const otherSlides = allSlides.filter(s => s.module !== activeModule);
+    setAllSlides([...otherSlides, ...withNewOrders]);
     setActiveSlideId(newSlide.id);
   };
 
@@ -197,10 +213,12 @@ const AssessmentEditor: React.FC = () => {
       const updatedSlides = await api.assessments.saveSlidesBatch(id, allSlides);
       setAllSlides(updatedSlides);
       
-      alert('Assessment saved successfully.');
+      setToast({ message: 'The Presentation has been saved.', type: 'success' });
+      setTimeout(() => setToast(null), 3000);
     } catch (error) {
       console.error('Failed to save changes:', error);
-      alert('Failed to save. Check console for details.');
+      setToast({ message: 'Failed to save. Check console for details.', type: 'error' });
+      setTimeout(() => setToast(null), 4000);
     } finally {
       setSaving(false);
     }
@@ -213,7 +231,25 @@ const AssessmentEditor: React.FC = () => {
   );
 
   return (
-    <div className="h-screen flex flex-col bg-app-bg text-app-text-main overflow-hidden font-sans">
+    <div className="h-screen flex flex-col bg-app-bg text-app-text-main overflow-hidden font-sans relative">
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className={cn(
+              "absolute top-6 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-full flex items-center gap-3 shadow-2xl border backdrop-blur-md",
+              toast.type === 'success' ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400" : "bg-red-500/20 border-red-500/30 text-red-400"
+            )}
+          >
+            {toast.type === 'success' ? <Save size={16} /> : <Trash2 size={16} />}
+            <span className="text-sm font-black tracking-wide">{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Top Navigation Bar */}
       <header className="h-16 border-b border-app-border bg-app-sidebar flex items-center justify-between px-6 shrink-0 z-50">
         <div className="flex items-center gap-4">
@@ -236,10 +272,16 @@ const AssessmentEditor: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <button 
+            onClick={() => navigate(`/assessment/${id}?module=${activeModule}`)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-app-card border border-app-border text-xs font-black text-app-text-bright hover:bg-white/5 transition-all"
+          >
+            <Eye size={16} /> Preview Module
+          </button>
+          <button 
             onClick={() => navigate(`/assessment/${id}`)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-app-card border border-app-border text-xs font-black text-app-text-bright hover:bg-white/5 transition-all"
           >
-            <Eye size={16} /> Preview
+            <Eye size={16} /> Preview All
           </button>
           <button 
             onClick={saveChanges}

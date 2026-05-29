@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { Assessment, AssessmentSlide, ModuleId, ModuleConfig } from '../types';
 import { useAuth } from '../components/AuthProvider';
@@ -14,6 +14,8 @@ const AssessmentEngine: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user, profile, mainSiteUrl } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const previewModule = searchParams.get('module');
 
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [allSlides, setAllSlides] = useState<AssessmentSlide[]>([]);
@@ -47,16 +49,28 @@ const AssessmentEngine: React.FC = () => {
   }, [allSlides]);
 
   // Only modules that have slides
-  const activeModules = useMemo(() => 
-    MODULE_ORDER.filter(m => moduleSlideMap[m].length > 0),
-    [moduleSlideMap]
-  );
+  const activeModules = useMemo(() => {
+    const modules = MODULE_ORDER.filter(m => moduleSlideMap[m].length > 0);
+    if (previewModule && modules.includes(previewModule as ModuleId)) {
+      return [previewModule as ModuleId];
+    }
+    return modules;
+  }, [moduleSlideMap, previewModule]);
 
   // Current state derived values
   const currentModule = activeModules[currentModuleIndex] || 'INTRO';
   const currentModuleSlides = moduleSlideMap[currentModule] || [];
+
+  const isAdminPreview = profile?.role === 'admin';
+  const currentModuleConfig: ModuleConfig = useMemo(() => {
+    const base = assessment?.modules?.[currentModule] || DEFAULT_MODULE_CONFIG;
+    if (isAdminPreview) {
+      return { ...base, navigable: true };
+    }
+    return base;
+  }, [assessment, currentModule, isAdminPreview]);
+  
   const currentSlide = currentModuleSlides[currentSlideInModule];
-  const currentModuleConfig: ModuleConfig = assessment?.modules?.[currentModule] || DEFAULT_MODULE_CONFIG;
 
   // Flattened total slide count and current global index (for progress bar)
   const totalSlides = allSlides.length;
@@ -78,6 +92,10 @@ const AssessmentEngine: React.FC = () => {
         
         const slidesList = await api.assessments.slides(id);
         setAllSlides(slidesList);
+        
+        if (profile?.role === 'admin') {
+          setIsStarted(true);
+        }
       } catch (error) {
         console.error('Failed to fetch assessment:', error);
       } finally {
@@ -232,10 +250,25 @@ const AssessmentEngine: React.FC = () => {
     }
   };
 
+  const exitPreview = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(e => console.log(e));
+    }
+    navigate(`/admin/assessment/${id}`);
+  };
+
   const completeAssessment = async () => {
     if (timerRef.current) clearInterval(timerRef.current);
     setIsCompleted(true);
     setIsStarted(false);
+    
+    if (isAdminPreview) {
+      setTimeout(() => {
+        exitPreview();
+      }, 2500);
+      return;
+    }
     
     if (submissionId) {
       try {
@@ -416,6 +449,14 @@ const AssessmentEngine: React.FC = () => {
               {String(Math.floor(timeLeft / 60)).padStart(2, '0')}:{String(timeLeft % 60).padStart(2, '0')}
             </span>
           </div>
+          {isAdminPreview && (
+            <button 
+              onClick={exitPreview}
+              className="px-4 py-2 bg-red-500/10 text-red-400 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-500/20"
+            >
+              Exit Preview
+            </button>
+          )}
         </div>
       </div>
 
