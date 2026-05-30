@@ -291,13 +291,19 @@ const AssessorDashboard: React.FC = () => {
                          </div>
                        </td>
                        <td className="p-6 text-right">
-                          <Link 
-                            to={`/review/${sub.id}`}
-                            className="inline-flex items-center gap-2 text-[10px] font-black text-app-accent hover:text-white transition-all uppercase tracking-widest group/btn"
-                          >
-                            Initialize Review 
-                            <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
-                          </Link>
+                          {sub.status === 'PENDING' ? (
+                            <span className="inline-flex items-center gap-2 text-[10px] font-black text-app-text-muted uppercase tracking-widest cursor-not-allowed opacity-50" title="Candidate has not started their assessment yet">
+                              Awaiting Action
+                            </span>
+                          ) : (
+                            <Link 
+                              to={`/review/${sub.id}`}
+                              className="inline-flex items-center gap-2 text-[10px] font-black text-app-accent hover:text-white transition-all uppercase tracking-widest group/btn"
+                            >
+                              Initialize Review 
+                              <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                            </Link>
+                          )}
                        </td>
                      </tr>
                    ))}

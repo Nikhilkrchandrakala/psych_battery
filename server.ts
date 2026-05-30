@@ -708,6 +708,36 @@ async function startServer() {
           student: subJSON.userId, // Map populated userId to student for frontend
         };
       });
+
+      if (req.user.role === 'assessor') {
+        const assessor = await User.findById(req.user._id);
+        if (assessor && assessor.assessorType) {
+          const type = assessor.assessorType;
+          let candidateQuery: any = {};
+          if (type === 'GTO') candidateQuery.assignedGTO = assessor._id;
+          else if (type === 'TO') candidateQuery.assignedTO = assessor._id;
+          else if (type === 'Psych') candidateQuery.assignedPsych = assessor._id;
+          else if (type === 'IO') candidateQuery.assignedIO = assessor._id;
+          
+          const candidates = await User.find(candidateQuery).select('_id name email assignedGTO assignedTO assignedPsych assignedIO clinicalStage profileImage');
+          const usersWithSubmissions = new Set(submissions.map((s: any) => s.userId && s.userId._id ? s.userId._id.toString() : ''));
+          
+          for (const candidate of candidates) {
+              if (!usersWithSubmissions.has(candidate._id.toString())) {
+                  mappedSubmissions.push({
+                      id: `pending-${candidate._id}`,
+                      _id: `pending-${candidate._id}`,
+                      userId: candidate._id,
+                      status: 'PENDING',
+                      student: candidate.toObject ? candidate.toObject() : candidate,
+                      assessmentId: null,
+                      startedAt: null
+                  });
+              }
+          }
+        }
+      }
+
       res.json(mappedSubmissions);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
