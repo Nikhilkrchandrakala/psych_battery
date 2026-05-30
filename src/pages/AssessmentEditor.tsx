@@ -45,56 +45,87 @@ const EditableContent: React.FC<{
   );
 };
 
+const PRESET_COLORS = ['#FFFFFF', '#000000', '#EF4444', '#3B82F6', '#10B981', '#F59E0B'];
+
 const TextFormattingToolbar: React.FC = () => {
+  const [showLineHeight, setShowLineHeight] = useState(false);
+
   const applyCommand = (command: string, value?: string) => {
     document.execCommand(command, false, value);
   };
 
+  const handleFontSize = (direction: 'up' | 'down') => {
+    // get current font size (default is 3 if not set)
+    let currentSize = parseInt(document.queryCommandValue('fontSize') || '3');
+    if (isNaN(currentSize)) currentSize = 3;
+    const newSize = direction === 'up' ? Math.min(7, currentSize + 1) : Math.max(1, currentSize - 1);
+    applyCommand('fontSize', newSize.toString());
+  };
+
+  const handleLineHeight = (val: string) => {
+    // Wrap selection in a div with line-height
+    // It's tricky to apply line-height to just text node natively, so we apply it to a block wrapper.
+    // Easiest cross-browser way: insert HTML wrapping the selection
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    const html = `<div style="line-height: ${val};">${selection.toString()}</div>`;
+    applyCommand('insertHTML', html);
+    setShowLineHeight(false);
+  };
+
   return (
-    <div className="flex items-center gap-1 bg-app-sidebar border border-app-border rounded-xl p-1 shadow-xl">
-      <button
-        onMouseDown={(e) => { e.preventDefault(); applyCommand('bold'); }}
-        className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors"
-        title="Bold"
-      >
-        <Bold size={16} />
-      </button>
-      <button
-        onMouseDown={(e) => { e.preventDefault(); applyCommand('italic'); }}
-        className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors"
-        title="Italic"
-      >
-        <Italic size={16} />
-      </button>
+    <div className="flex items-center gap-1 bg-app-sidebar border border-app-border rounded-xl p-1 shadow-xl relative">
+      <button onMouseDown={(e) => { e.preventDefault(); applyCommand('bold'); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors" title="Bold"><Bold size={16} /></button>
+      <button onMouseDown={(e) => { e.preventDefault(); applyCommand('italic'); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors" title="Italic"><Italic size={16} /></button>
+      
       <div className="w-px h-4 bg-app-border mx-1" />
-      <button
-        onMouseDown={(e) => { e.preventDefault(); applyCommand('insertUnorderedList'); }}
-        className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors"
-        title="Bullet List"
-      >
-        <List size={16} />
+      
+      {/* Font Size */}
+      <button onMouseDown={(e) => { e.preventDefault(); handleFontSize('up'); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors flex items-center gap-1" title="Increase Font Size">
+        <Type size={16} /><ChevronUp size={12} />
       </button>
-      <button
-        onMouseDown={(e) => { e.preventDefault(); applyCommand('insertOrderedList'); }}
-        className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors"
-        title="Numbered List"
-      >
-        <ListOrdered size={16} />
+      <button onMouseDown={(e) => { e.preventDefault(); handleFontSize('down'); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors flex items-center gap-1" title="Decrease Font Size">
+        <Type size={14} /><ChevronDown size={12} />
       </button>
+
       <div className="w-px h-4 bg-app-border mx-1" />
-      <label
-        className="flex items-center justify-center p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
-        title="Text Color"
-        onMouseDown={(e) => e.preventDefault()}
-      >
-        <Palette size={16} />
-        <input
-          type="color"
-          className="sr-only"
-          onMouseDown={(e) => e.stopPropagation()} // Allow click to open picker
-          onChange={(e) => applyCommand('foreColor', e.target.value)}
-        />
-      </label>
+      
+      <button onMouseDown={(e) => { e.preventDefault(); applyCommand('insertUnorderedList'); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors" title="Bullet List"><List size={16} /></button>
+      <button onMouseDown={(e) => { e.preventDefault(); applyCommand('insertOrderedList'); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors" title="Numbered List"><ListOrdered size={16} /></button>
+      
+      <div className="w-px h-4 bg-app-border mx-1" />
+
+      {/* Line Height Toggle */}
+      <div className="relative">
+        <button onMouseDown={(e) => { e.preventDefault(); setShowLineHeight(!showLineHeight); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors flex items-center gap-1" title="Line Spacing">
+          <Layout size={16} />
+        </button>
+        {showLineHeight && (
+          <div className="absolute top-full left-0 mt-1 bg-app-card border border-app-border rounded-lg shadow-xl p-1 z-50 flex flex-col min-w-[80px]">
+            {[1.0, 1.5, 2.0].map(lh => (
+              <button key={lh} onMouseDown={(e) => { e.preventDefault(); handleLineHeight(lh.toString()); }} className="text-xs text-app-text-muted hover:text-app-text-bright hover:bg-white/5 p-2 rounded text-left transition-colors">
+                {lh}x
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="w-px h-4 bg-app-border mx-1" />
+
+      {/* Color Swatches */}
+      <div className="flex items-center gap-1 p-1">
+        <Palette size={14} className="text-app-text-muted mr-1" />
+        {PRESET_COLORS.map(color => (
+          <button
+            key={color}
+            onMouseDown={(e) => { e.preventDefault(); applyCommand('foreColor', color); }}
+            className="w-4 h-4 rounded-full border border-white/20 hover:scale-110 transition-transform shadow-sm"
+            style={{ backgroundColor: color }}
+            title={color}
+          />
+        ))}
+      </div>
     </div>
   );
 };
@@ -187,7 +218,7 @@ const AssessmentEditor: React.FC = () => {
       id: `new-${Date.now()}`,
       assessmentId: id!,
       module: activeModule,
-      slideType: activeModule === 'SRT' ? 'SITUATION' : 
+      slideType: activeModule === 'SRT' ? 'INSTRUCTIONS' : 
                  activeModule === 'WAT' ? 'WORD' :
                  activeModule === 'TAT' ? 'IMAGE' : 'INSTRUCTIONS',
       content: activeModule === 'SRT' ? 'New situation...' :
@@ -643,7 +674,7 @@ const AssessmentEditor: React.FC = () => {
                   <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Slide Type</label>
                   <div className="grid grid-cols-3 gap-1.5">
                      {[
-                      { id: 'INSTRUCTIONS', label: 'Text', icon: Type },
+                      { id: 'INSTRUCTIONS', label: 'Instructions', icon: Type },
                       { id: 'IMAGE', label: 'Image', icon: ImageIcon },
                       { id: 'WORD', label: 'Slide Title', icon: MessageSquare },
                       { id: 'BREAK', label: 'Break', icon: Clock },
