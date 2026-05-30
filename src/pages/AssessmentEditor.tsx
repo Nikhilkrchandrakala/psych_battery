@@ -37,17 +37,7 @@ const EditableContent: React.FC<{
   );
 };
 
-const TextFormatToolbar: React.FC = () => {
-  return (
-    <div className="absolute top-16 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-app-sidebar border border-app-border rounded-xl p-1.5 shadow-[0_15px_40px_rgba(0,0,0,0.8)] z-50">
-      <button onClick={(e) => { e.preventDefault(); document.execCommand('bold'); }} className="w-10 h-10 hover:bg-white/10 rounded-lg text-app-text-bright transition-colors font-serif font-bold text-lg" title="Bold">B</button>
-      <button onClick={(e) => { e.preventDefault(); document.execCommand('italic'); }} className="w-10 h-10 hover:bg-white/10 rounded-lg text-app-text-bright transition-colors font-serif italic text-lg" title="Italic">I</button>
-      <div className="w-px h-6 bg-app-border mx-2" />
-      <button onClick={(e) => { e.preventDefault(); document.execCommand('fontSize', false, '7'); }} className="px-3 py-1.5 hover:bg-white/10 rounded-lg text-app-text-bright transition-colors font-black text-sm" title="Large Text">A+</button>
-      <button onClick={(e) => { e.preventDefault(); document.execCommand('fontSize', false, '3'); }} className="px-3 py-1.5 hover:bg-white/10 rounded-lg text-app-text-bright transition-colors font-black text-xs" title="Normal Text">A-</button>
-    </div>
-  );
-};
+
 
 const MODULE_ORDER: ModuleId[] = ['INTRO', 'TAT', 'WAT', 'SRT', 'SDT', 'CLOSING'];
 
@@ -435,9 +425,8 @@ const AssessmentEditor: React.FC = () => {
                    </div>
                  )}
 
-                 {(activeSlide.slideType === 'WORD' || activeSlide.slideType === 'SITUATION' || activeSlide.slideType === 'INSTRUCTIONS') && (
+                  {(activeSlide.slideType === 'WORD' || activeSlide.slideType === 'SITUATION' || activeSlide.slideType === 'INSTRUCTIONS') && (
                     <>
-                      <TextFormatToolbar />
                       <EditableContent 
                         value={activeSlide.content || ''}
                         onChange={(val) => updateSlide(activeSlide.id, { content: val })}

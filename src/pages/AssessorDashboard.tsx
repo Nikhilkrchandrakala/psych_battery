@@ -31,6 +31,7 @@ const AssessorDashboard: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeAssessorType, setActiveAssessorType] = useState<'Psych' | 'GTO' | 'TO' | 'IO'>('Psych');
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     if (profile?.assessorType) {
@@ -138,6 +139,50 @@ const AssessorDashboard: React.FC = () => {
               ))}
             </div>
           )}
+
+          {/* Notifications Toggle */}
+          <div className="relative shrink-0 z-50">
+            <button 
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative p-3 bg-app-card border border-app-border rounded-xl hover:bg-white/5 transition-all text-app-text-muted hover:text-app-text-bright"
+            >
+              <Bell size={20} />
+              {notifications.filter(n => !n.isRead).length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-app-sidebar">
+                  {notifications.filter(n => !n.isRead).length}
+                </span>
+              )}
+            </button>
+            
+            {/* Notifications Dropdown */}
+            {showNotifications && (
+              <div className="absolute top-full mt-2 right-0 w-80 bg-app-sidebar border border-app-border rounded-2xl shadow-2xl z-50 overflow-hidden">
+                <div className="p-4 border-b border-app-border flex justify-between items-center bg-black/20">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-app-text-bright">Notifications</h3>
+                </div>
+                <div className="max-h-80 overflow-y-auto custom-scrollbar bg-app-card">
+                  {notifications.length === 0 ? (
+                    <div className="p-6 text-center text-app-text-muted text-xs italic">No notifications</div>
+                  ) : (
+                    notifications.map(n => (
+                      <div key={n.id} className={cn("p-4 border-b border-app-border last:border-0 hover:bg-white/5 transition-colors", !n.isRead ? "bg-app-accent/5" : "")}>
+                        <div className="flex justify-between items-start gap-2 mb-1">
+                          <h4 className={cn("text-[11px] font-bold", !n.isRead ? "text-app-text-bright" : "text-app-text-muted")}>{n.title}</h4>
+                          {!n.isRead && (
+                            <button onClick={() => handleMarkAsRead(n.id)} className="text-app-accent hover:text-white" title="Mark as read">
+                              <Check size={14} />
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-app-text-muted leading-relaxed">{n.message}</p>
+                        <span className="text-[8px] text-app-text-muted/50 mt-2 block">{new Date(n.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
