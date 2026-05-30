@@ -614,6 +614,13 @@ async function startServer() {
               recipientIds.push(adminId);
             }
           });
+          const superAdmins = await AdminUser.find({});
+          superAdmins.forEach(sa => {
+            const adminId = sa._id.toString();
+            if (!recipientIds.includes(adminId)) {
+              recipientIds.push(adminId);
+            }
+          });
 
           const candidateName = student ? student.name : 'Candidate';
           for (const recipientId of recipientIds) {
