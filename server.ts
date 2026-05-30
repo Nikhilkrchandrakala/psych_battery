@@ -717,41 +717,69 @@ async function startServer() {
         .populate('userId', 'name email assignedGTO assignedTO assignedPsych assignedIO clinicalStage profileImage')
         .populate('assessmentId', 'title type');
       
-      const mappedSubmissions = submissions.map(sub => {
+      let mappedSubmissions: any[] = submissions.map(sub => {
         const subJSON = sub.toJSON ? sub.toJSON() : sub;
         return {
           ...subJSON,
           student: subJSON.userId, // Map populated userId to student for frontend
         };
-      });
+      }).filter((sub: any) => sub.student); // Remove junk submissions where student doesn't exist
 
-      if (req.user.role === 'assessor') {
-        const assessor = await User.findById(req.user._id);
-        if (assessor && assessor.assessorType) {
-          const type = assessor.assessorType;
-          let candidateQuery: any = {};
-          if (type === 'GTO') candidateQuery.assignedGTO = assessor._id;
-          else if (type === 'TO') candidateQuery.assignedTO = assessor._id;
-          else if (type === 'Psych') candidateQuery.assignedPsych = assessor._id;
-          else if (type === 'IO') candidateQuery.assignedIO = assessor._id;
-          
-          const candidates = await User.find(candidateQuery).select('_id name email assignedGTO assignedTO assignedPsych assignedIO clinicalStage profileImage');
-          const usersWithSubmissions = new Set(submissions.map((s: any) => s.userId && s.userId._id ? s.userId._id.toString() : ''));
-          
-          for (const candidate of candidates) {
-              if (!usersWithSubmissions.has(candidate._id.toString())) {
-                  mappedSubmissions.push({
-                      id: `pending-${candidate._id}`,
-                      _id: `pending-${candidate._id}`,
-                      userId: candidate._id,
-                      status: 'PENDING',
-                      student: candidate.toObject ? candidate.toObject() : candidate,
-                      assessmentId: null,
-                      startedAt: null
-                  });
-              }
-          }
+      // Append pending submissions for students that are allotted but haven't uploaded anything
+      if (req.user.role === 'assessor' || req.user.role === 'admin') {
+        let candidateQuery: any = {};
+        
+        if (req.user.role === 'assessor') {
+            const assessor = await User.findById(req.user._id);
+            if (assessor && assessor.assessorType) {
+              const type = assessor.assessorType;
+              if (type === 'GTO') candidateQuery.assignedGTO = assessor._id;
+              else if (type === 'TO') candidateQuery.assignedTO = assessor._id;
+              else if (type === 'Psych') candidateQuery.assignedPsych = assessor._id;
+              else if (type === 'IO') candidateQuery.assignedIO = assessor._id;
+            } else {
+              // Assessor has no type, don't query candidates
+              candidateQuery = null; 
+            }
+        } else if (req.user.role === 'admin') {
+            // Admins should see ALL candidates that have AT LEAST ONE assessor assigned
+            candidateQuery = {
+              $or: [
+                  { assignedPsych: { $exists: true, $ne: null } },
+                  { assignedGTO: { $exists: true, $ne: null } },
+                  { assignedIO: { $exists: true, $ne: null } },
+                  { assignedTO: { $exists: true, $ne: null } }
+              ]
+            };
         }
+
+        if (candidateQuery) {
+            const candidates = await User.find(candidateQuery).select('_id name email assignedGTO assignedTO assignedPsych assignedIO clinicalStage profileImage');
+            const usersWithSubmissions = new Set(submissions.map((s: any) => s.userId && s.userId._id ? s.userId._id.toString() : ''));
+            
+            for (const candidate of candidates) {
+                if (!usersWithSubmissions.has(candidate._id.toString())) {
+                    mappedSubmissions.push({
+                        id: `pending-${candidate._id}`,
+                        _id: `pending-${candidate._id}`,
+                        userId: candidate._id,
+                        status: 'PENDING',
+                        student: candidate.toObject ? candidate.toObject() : candidate,
+                        assessmentId: null,
+                        startedAt: null
+                    });
+                }
+            }
+        }
+      }
+
+      // For admin, ensure they ONLY see students that have at least one assigned assessor
+      if (req.user.role === 'admin') {
+          mappedSubmissions = mappedSubmissions.filter(sub => {
+              const st = sub.student;
+              if (!st) return false;
+              return st.assignedPsych || st.assignedGTO || st.assignedIO || st.assignedTO;
+          });
       }
 
       res.json(mappedSubmissions);
