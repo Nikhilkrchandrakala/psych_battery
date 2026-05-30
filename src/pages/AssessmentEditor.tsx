@@ -251,9 +251,13 @@ const AssessmentEditor: React.FC = () => {
           </button>
           <div className="h-8 w-px bg-app-border mx-1" />
           <div>
-            <h1 className="text-sm font-black text-app-text-bright uppercase tracking-widest leading-none mb-1">
-              {assessment?.title || 'Untitled Assessment'}
-            </h1>
+            <input
+              type="text"
+              value={assessment?.title || ''}
+              onChange={(e) => setAssessment(prev => prev ? { ...prev, title: e.target.value } : null)}
+              placeholder="UNTITLED ASSESSMENT"
+              className="text-sm font-black text-app-text-bright uppercase tracking-widest leading-none mb-1 bg-transparent border-b border-transparent hover:border-app-border focus:border-app-accent outline-none focus:ring-0 p-1 -ml-1 w-64 lg:w-96 placeholder-app-text-muted/50 transition-colors rounded-none"
+            />
             <div className="text-[10px] font-bold text-app-text-muted uppercase tracking-tighter">
               Assessment Editor — {allSlides.length} slides total
             </div>
