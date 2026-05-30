@@ -606,6 +606,15 @@ async function startServer() {
             assessors.forEach(a => recipientIds.push(a._id.toString()));
           }
 
+          // Ensure super admins also get notified
+          const admins = await User.find({ role: 'admin' });
+          admins.forEach(a => {
+            const adminId = a._id.toString();
+            if (!recipientIds.includes(adminId)) {
+              recipientIds.push(adminId);
+            }
+          });
+
           const candidateName = student ? student.name : 'Candidate';
           for (const recipientId of recipientIds) {
             const notification = new Notification({
