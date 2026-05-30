@@ -120,6 +120,17 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const deleteAssessment = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this assessment? This action cannot be undone.')) return;
+    try {
+      await api.assessments.delete(id);
+      setAssessments(prev => prev.filter(a => a.id !== id));
+    } catch (error) {
+      console.error('Failed to delete assessment:', error);
+      alert('Failed to delete assessment.');
+    }
+  };
+
   if (loading) return (
     <div className="flex justify-center items-center h-96">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-app-accent"></div>
@@ -187,7 +198,7 @@ const AdminDashboard: React.FC = () => {
                          <Link to={`/assessment/${a.id}`} className="p-2 text-app-accent hover:text-amber-500 transition-colors" title="Test Protocol">
                            <Play size={16} />
                          </Link>
-                         <button className="p-2 text-app-text-muted hover:text-red-400 transition-colors" title="Delete Protocol"><Trash2 size={16} /></button>
+                         <button onClick={() => deleteAssessment(a.id)} className="p-2 text-app-text-muted hover:text-red-400 transition-colors" title="Delete Protocol"><Trash2 size={16} /></button>
                       </div>
                    </div>
                 </div>
