@@ -6,7 +6,8 @@ import {
   Save, Plus, Trash2, ChevronUp, ChevronDown, 
   Image as ImageIcon, Type, MessageSquare, 
   Clock, Play, Settings, ArrowLeft, Loader2,
-  Layout, Eye, Shield, Timer, Navigation
+  Layout, Eye, Shield, Timer, Navigation,
+  Bold, Italic, List, ListOrdered, Palette
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -25,15 +26,76 @@ const EditableContent: React.FC<{
     }
   }, [value]);
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+    document.execCommand('insertText', false, text);
+  };
+
   return (
     <div
       ref={ref}
       contentEditable
       onInput={(e) => onChange(e.currentTarget.innerHTML)}
+      onPaste={handlePaste}
       className={className}
       data-placeholder={placeholder}
       style={{ minHeight: '1em' }}
     />
+  );
+};
+
+const TextFormattingToolbar: React.FC = () => {
+  const applyCommand = (command: string, value?: string) => {
+    document.execCommand(command, false, value);
+  };
+
+  return (
+    <div className="flex items-center gap-1 bg-app-sidebar border border-app-border rounded-xl p-1 shadow-xl">
+      <button
+        onMouseDown={(e) => { e.preventDefault(); applyCommand('bold'); }}
+        className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors"
+        title="Bold"
+      >
+        <Bold size={16} />
+      </button>
+      <button
+        onMouseDown={(e) => { e.preventDefault(); applyCommand('italic'); }}
+        className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors"
+        title="Italic"
+      >
+        <Italic size={16} />
+      </button>
+      <div className="w-px h-4 bg-app-border mx-1" />
+      <button
+        onMouseDown={(e) => { e.preventDefault(); applyCommand('insertUnorderedList'); }}
+        className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors"
+        title="Bullet List"
+      >
+        <List size={16} />
+      </button>
+      <button
+        onMouseDown={(e) => { e.preventDefault(); applyCommand('insertOrderedList'); }}
+        className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors"
+        title="Numbered List"
+      >
+        <ListOrdered size={16} />
+      </button>
+      <div className="w-px h-4 bg-app-border mx-1" />
+      <label
+        className="flex items-center justify-center p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+        title="Text Color"
+        onMouseDown={(e) => e.preventDefault()}
+      >
+        <Palette size={16} />
+        <input
+          type="color"
+          className="sr-only"
+          onMouseDown={(e) => e.stopPropagation()} // Allow click to open picker
+          onChange={(e) => applyCommand('foreColor', e.target.value)}
+        />
+      </label>
+    </div>
   );
 };
 
@@ -407,13 +469,17 @@ const AssessmentEditor: React.FC = () => {
 
         {/* Center — Workspace Canvas */}
         <main className="flex-1 bg-black/30 p-8 overflow-y-auto flex items-center justify-center relative">
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-6 text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em]">
-             <span className={MODULE_LABELS[activeModule].color}>{MODULE_LABELS[activeModule].label} Module</span>
-             <div className="h-px w-16 bg-app-border" />
-             <span>Canvas Preview</span>
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-10">
+            <div className="flex items-center gap-6 text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em]">
+               <span className={MODULE_LABELS[activeModule].color}>{MODULE_LABELS[activeModule].label} Module</span>
+               <div className="h-px w-16 bg-app-border" />
+               <span>Canvas Preview</span>
+            </div>
+            
+            <TextFormattingToolbar />
           </div>
 
-          <div className="w-full max-w-4xl aspect-video bg-app-sidebar border border-app-border rounded-[2rem] shadow-[0_30px_80px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col items-center justify-center p-16 text-center relative group">
+          <div className="w-full max-w-4xl mt-16 aspect-video bg-app-sidebar border border-app-border rounded-[2rem] shadow-[0_30px_80px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col items-center justify-center p-16 text-center relative group">
              {activeSlide ? (
                <>
                  {activeSlide.slideType === 'IMAGE' && (
