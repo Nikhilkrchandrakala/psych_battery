@@ -645,8 +645,7 @@ const AssessmentEditor: React.FC = () => {
                      {[
                       { id: 'INSTRUCTIONS', label: 'Text', icon: Type },
                       { id: 'IMAGE', label: 'Image', icon: ImageIcon },
-                      { id: 'WORD', label: 'Word', icon: MessageSquare },
-                      { id: 'SITUATION', label: 'Situation', icon: Layout },
+                      { id: 'WORD', label: 'Slide Title', icon: MessageSquare },
                       { id: 'BREAK', label: 'Break', icon: Clock },
                       { id: 'BLACKOUT', label: 'Blackout', icon: Shield }
                      ].map(type => (
@@ -672,15 +671,42 @@ const AssessmentEditor: React.FC = () => {
 
 
                   {activeSlide.slideType === 'IMAGE' && (
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Image URL</label>
-                      <input 
-                        type="text"
-                        value={activeSlide.imageUrl || ''}
-                        onChange={(e) => updateSlide(activeSlide.id, { imageUrl: e.target.value })}
-                        className="w-full bg-app-card border border-app-border rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-app-accent transition-all text-app-text-bright"
-                        placeholder="https://..."
-                      />
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Upload Image</label>
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              setToast({ message: 'Uploading image...', type: 'success' });
+                              const { url } = await api.upload.file(file);
+                              updateSlide(activeSlide.id, { imageUrl: url });
+                              setToast({ message: 'Image uploaded successfully!', type: 'success' });
+                            } catch (err) {
+                              setToast({ message: 'Upload failed', type: 'error' });
+                            }
+                          }}
+                          className="w-full text-xs text-app-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-app-accent file:text-white hover:file:bg-amber-600 transition-all cursor-pointer"
+                        />
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1 h-px bg-app-border"></div>
+                        <span className="text-[10px] font-bold text-app-text-muted uppercase tracking-widest">OR</span>
+                        <div className="flex-1 h-px bg-app-border"></div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Image URL</label>
+                        <input 
+                          type="text"
+                          value={activeSlide.imageUrl || ''}
+                          onChange={(e) => updateSlide(activeSlide.id, { imageUrl: e.target.value })}
+                          className="w-full bg-app-card border border-app-border rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-app-accent transition-all text-app-text-bright"
+                          placeholder="https://..."
+                        />
+                      </div>
                     </div>
                   )}
 

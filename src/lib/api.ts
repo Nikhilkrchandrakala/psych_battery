@@ -49,5 +49,22 @@ export const api = {
   notifications: {
     list: () => fetchWithAuth('/notifications'),
     markAsRead: (id: string) => fetchWithAuth(`/notifications/${id}/read`, { method: 'PUT' }),
+  },
+  upload: {
+    file: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${API_BASE}/upload`, {
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Upload failed');
+      }
+      return response.json();
+    }
   }
 };

@@ -548,6 +548,18 @@ async function startServer() {
     }
   });
 
+  app.post('/api/upload', authenticate, isAdmin, upload.single('file'), (req: any, res: any) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+      const filePath = `/uploads/assessments/${req.file.filename}`;
+      res.json({ url: filePath });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   async function runPiqOCR(submissionId: string, filePaths: string[]) {
     if (!process.env.GEMINI_API_KEY) {
       console.warn("Skipping PIQ OCR: No GEMINI_API_KEY found");
