@@ -213,7 +213,7 @@ const authenticate = async (req: any, res: any, next: any) => {
     next();
   } catch (err: any) {
     console.error("[AUTH] Authentication failed with error:", err.message);
-    res.status(401).json({ message: 'Invalid token', error: err.message });
+    res.status(401).json({ message: `Invalid token: ${err.message}`, error: err.message });
   }
 };
 
