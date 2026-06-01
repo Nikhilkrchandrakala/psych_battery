@@ -111,6 +111,12 @@ const SubmissionSchema = new mongoose.Schema({
   score: Number,
   meetingDate: Date,
   meetingLink: String,
+  psychMeetingDate: Date,
+  psychMeetingLink: String,
+  ioMeetingDate: Date,
+  ioMeetingLink: String,
+  gtoMeetingDate: Date,
+  gtoMeetingLink: String,
   finalReport: String,
   reviewedAt: Date,
   

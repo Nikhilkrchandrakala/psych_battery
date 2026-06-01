@@ -199,30 +199,45 @@ const Dashboard: React.FC = () => {
       </section>
 
       {/* Dynamic Meeting Conference Call-To-Action */}
-      {submissions.find(s => s.meetingLink && s.meetingDate) && (() => {
-        const schedSub = submissions.find(s => s.meetingLink && s.meetingDate)!;
+      {(() => {
+        const meetings: Array<{ role: string, date: string, link: string }> = [];
+        
+        submissions.forEach(s => {
+          if (s.psychMeetingLink && s.psychMeetingDate) meetings.push({ role: 'Psychologist', date: s.psychMeetingDate, link: s.psychMeetingLink });
+          if (s.ioMeetingLink && s.ioMeetingDate) meetings.push({ role: 'Interviewing Officer', date: s.ioMeetingDate, link: s.ioMeetingLink });
+          if (s.gtoMeetingLink && s.gtoMeetingDate) meetings.push({ role: 'Group Testing Officer', date: s.gtoMeetingDate, link: s.gtoMeetingLink });
+          // Fallback legacy link if no specific ones are set
+          if (meetings.length === 0 && s.meetingLink && s.meetingDate) meetings.push({ role: 'Assessor', date: s.meetingDate, link: s.meetingLink });
+        });
+
+        if (meetings.length === 0) return null;
+
         return (
-          <section className="bg-gradient-to-br from-app-accent/10 to-transparent border border-app-accent/30 rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg shadow-app-accent/5 animate-pulse">
-            <div className="flex items-center gap-6">
-              <div className="bg-app-card p-4 rounded-2xl border border-app-accent/20">
-                <Video className="text-app-accent animate-bounce" size={32} />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-xl font-bold text-app-text-bright">Join Scheduled Conference</h3>
-                <p className="text-xs text-app-text-muted font-medium max-w-sm">
-                  Your official feedback and guidance conference is scheduled for <span className="text-app-accent font-semibold">{new Date(schedSub.meetingDate).toLocaleString()}</span>. Please click to join punctually.
-                </p>
-              </div>
-            </div>
-            <a 
-              href={schedSub.meetingLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-app-accent text-black px-8 py-4 rounded-xl font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg active:scale-95 whitespace-nowrap shadow-app-accent/20"
-            >
-              Join Meet Call
-            </a>
-          </section>
+          <div className="space-y-4">
+            {meetings.map((m, idx) => (
+              <section key={idx} className="bg-gradient-to-br from-app-accent/10 to-transparent border border-app-accent/30 rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg shadow-app-accent/5 animate-pulse">
+                <div className="flex items-center gap-6">
+                  <div className="bg-app-card p-4 rounded-2xl border border-app-accent/20">
+                    <Video className="text-app-accent animate-bounce" size={32} />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-bold text-app-text-bright">{m.role} Conference</h3>
+                    <p className="text-xs text-app-text-muted font-medium max-w-sm">
+                      Your official feedback and guidance conference is scheduled for <span className="text-app-accent font-semibold">{new Date(m.date).toLocaleString()}</span>. Please click to join punctually.
+                    </p>
+                  </div>
+                </div>
+                <a 
+                  href={m.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-app-accent text-black px-8 py-4 rounded-xl font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg active:scale-95 whitespace-nowrap shadow-app-accent/20"
+                >
+                  Join Meet Call
+                </a>
+              </section>
+            ))}
+          </div>
         );
       })()}
 

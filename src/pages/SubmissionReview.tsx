@@ -187,12 +187,6 @@ const SubmissionReview: React.FC = () => {
           });
           setScores(initialScores);
         }
-        if (subData.meetingDate) {
-          const date = new Date(subData.meetingDate);
-          setMeetingDate(date.toISOString().slice(0, 16));
-        }
-        if (subData.meetingLink) setMeetingLink(subData.meetingLink);
-
         // Use populated data directly — avoids permission errors and wrong ID lookups
         if (populatedStudent) {
           setStudent(populatedStudent);
@@ -230,6 +224,20 @@ const SubmissionReview: React.FC = () => {
     } else if (activeAssessorType === 'TO') {
       setRemarks((submission as any).toRemarks || '');
     }
+
+    // Role-based meeting link logic
+    const prefix = activeAssessorType.toLowerCase();
+    const sub = submission as any;
+    const dateField = sub[`${prefix}MeetingDate`];
+    const linkField = sub[`${prefix}MeetingLink`];
+
+    if (dateField) {
+      const date = new Date(dateField);
+      setMeetingDate(date.toISOString().slice(0, 16));
+    } else {
+      setMeetingDate('');
+    }
+    setMeetingLink(linkField || '');
   }, [activeAssessorType, submission]);
 
   const handleUpdate = async (status: AssessmentSubmission['status']) => {
@@ -290,8 +298,9 @@ const SubmissionReview: React.FC = () => {
         updateData.status = 'REVIEW_PENDING';
       }
 
-      if (meetingDate) updateData.meetingDate = new Date(meetingDate).toISOString();
-      if (meetingLink) updateData.meetingLink = meetingLink;
+      const prefix = activeAssessorType.toLowerCase();
+      if (meetingDate) updateData[`${prefix}MeetingDate`] = new Date(meetingDate).toISOString();
+      if (meetingLink) updateData[`${prefix}MeetingLink`] = meetingLink;
 
       await api.submissions.update(id, updateData);
       setSubmission(prev => prev ? { ...prev, ...updateData } : null);
@@ -426,6 +435,7 @@ const SubmissionReview: React.FC = () => {
           ...(submission.status === 'REPORT_RELEASED' ? [{ id: 'feedback', label: 'All Assessor Feedback', icon: Users }] : [])
         ].filter(tab => {
           if (activeAssessorType === 'GTO' && tab.id === 'dossier') return false;
+          if (tab.id === 'meeting' && !['Psych', 'IO', 'GTO', 'TO'].includes(activeAssessorType)) return false;
           return true;
         }).map(tab => (
           <button
@@ -854,10 +864,10 @@ const SubmissionReview: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-app-accent">
                   <Calendar size={24} />
-                  <h3 className="text-2xl font-black text-app-text-bright tracking-tight">Feedback Scheduler</h3>
+                  <h3 className="text-2xl font-black text-app-text-bright tracking-tight">{activeAssessorType} Feedback Scheduler</h3>
                 </div>
                 <p className="text-app-text-muted text-sm font-serif italic leading-relaxed">
-                  Schedule a follow-up feedback session or review with the candidate to discuss their performance.
+                  Schedule a follow-up feedback session or review with the candidate to discuss their performance from the {activeAssessorType} perspective.
                 </p>
               </div>
 

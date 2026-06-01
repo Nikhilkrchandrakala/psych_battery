@@ -78,6 +78,12 @@ export interface AssessmentSubmission {
   score?: number;
   meetingDate?: any;
   meetingLink?: string;
+  psychMeetingDate?: any;
+  psychMeetingLink?: string;
+  ioMeetingDate?: any;
+  ioMeetingLink?: string;
+  gtoMeetingDate?: any;
+  gtoMeetingLink?: string;
   finalReport?: string;
   reviewedAt?: any;
 }
