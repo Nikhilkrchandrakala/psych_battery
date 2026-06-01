@@ -231,17 +231,25 @@ const AssessorDashboard: React.FC = () => {
                      <tr key={sub.id} className="border-b border-app-border hover:bg-white/5 transition-colors group">
                        <td className="p-6">
                          <div className="flex items-center gap-4">
-                           <div className="w-12 h-12 rounded-2xl bg-app-card border border-app-border overflow-hidden flex items-center justify-center shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-                             {sub.student?.profileImage ? (
-                               <img src={sub.student.profileImage} alt={sub.student.name} className="w-full h-full object-cover" />
-                             ) : (
-                               <UserIcon size={24} className="text-app-text-muted" />
-                             )}
-                           </div>
-                           <div>
-                             <div className="text-sm font-black text-app-text-bright">{sub.student?.name || 'Unknown Candidate'}</div>
-                             <div className="text-[10px] font-bold text-app-text-muted uppercase tracking-widest">{sub.student?.email || 'N/A'}</div>
-                           </div>
+                            <div className="w-12 h-12 rounded-2xl bg-app-card border border-app-border overflow-hidden flex items-center justify-center shrink-0 shadow-inner group-hover:scale-105 transition-transform">
+                              {sub.student?.profileImage ? (
+                                <img src={sub.student.profileImage} alt={sub.student.name || 'Candidate'} className="w-full h-full object-cover" />
+                              ) : (
+                                <UserIcon size={24} className="text-app-text-muted" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className="text-sm font-black text-app-text-bright">{sub.student?.name || 'Unknown Candidate'}</div>
+                                <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[8px] font-black uppercase tracking-widest text-app-text-bright">
+                                  B: {sub.student?.batch || '--'}
+                                </span>
+                                <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[8px] font-black uppercase tracking-widest text-app-text-bright">
+                                  C: {sub.student?.chestNo || '--'}
+                                </span>
+                              </div>
+                              <div className="text-[10px] font-bold text-app-text-muted uppercase tracking-widest">{sub.student?.email || 'N/A'}</div>
+                            </div>
                          </div>
                        </td>
                        <td className="p-6">

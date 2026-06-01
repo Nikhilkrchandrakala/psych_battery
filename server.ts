@@ -83,8 +83,8 @@ const authenticate = async (req: any, res: any, next: any) => {
     token = req.headers.token;
   }
 
-  const isBypass = process.env.BYPASS_AUTH === 'true' || 
-                   (token && token.trim().startsWith('mock-'));
+  const isBypass = process.env.BYPASS_AUTH === 'true' ||
+    (token && token.trim().startsWith('mock-'));
 
   if (isBypass) {
     let mockUser: any = {
@@ -157,7 +157,7 @@ const authenticate = async (req: any, res: any, next: any) => {
         }
       }
     }
-    
+
     req.user = mockUser;
     return next();
   }
@@ -270,10 +270,10 @@ async function startServer() {
     } else if (req.query.token) {
       token = req.query.token as string;
     }
-    
+
     const envSecret = process.env.JWT_SECRET ? process.env.JWT_SECRET.substring(0, 10) + '...' : 'NOT_SET';
     const secretLength = process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 0;
-    
+
     // Non-reversible hash of secret to verify exact match without exposing key
     let secretHash = 0;
     if (process.env.JWT_SECRET) {
@@ -284,7 +284,7 @@ async function startServer() {
       }
       secretHash = hash;
     }
-    
+
     let decoded = null;
     let error = null;
     if (token) {
@@ -299,7 +299,7 @@ async function startServer() {
         error = e.message;
       }
     }
-    
+
     res.json({
       hasToken: !!token,
       secretPrefix: envSecret,
@@ -432,12 +432,12 @@ async function startServer() {
   // --- SUBMISSION UPLOAD & OCR ROUTES ---
   const uploadDir = path.join(process.cwd(), 'public/uploads/assessments');
   if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    fs.mkdirSync(uploadDir, { recursive: true });
   }
 
   const storage = multer.diskStorage({
-      destination: (req, file, cb) => cb(null, uploadDir),
-      filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.]/g, '')}`)
+    destination: (req, file, cb) => cb(null, uploadDir),
+    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.]/g, '')}`)
   });
   const upload = multer({ storage, limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB per file to support high-res scans
 
@@ -446,7 +446,7 @@ async function startServer() {
       const submissionId = req.params.id;
       const submission = await Submission.findById(submissionId);
       if (!submission) return res.status(404).json({ message: 'Submission not found' });
-      
+
       // Security: Only allow the student who owns the submission or an admin to upload
       if (req.user.role === 'student' && submission.userId.toString() !== req.user._id.toString()) {
         return res.status(403).json({ message: 'Unauthorized' });
@@ -462,7 +462,7 @@ async function startServer() {
       // Add files to submission
       submission.uploadedFiles = [...(submission.uploadedFiles || []), ...filePaths];
       submission.status = 'REVIEW_PENDING';
-      
+
       // Perform OCR in background to not block the request
       runOCR(submissionId, filePaths);
 
@@ -481,13 +481,13 @@ async function startServer() {
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       let fullTranscript = '';
-      
+
       for (const filePath of filePaths) {
         const absolutePath = path.join(process.cwd(), 'public', filePath);
         if (fs.existsSync(absolutePath)) {
           const fileData = fs.readFileSync(absolutePath);
           const mimeType = filePath.endsWith('.pdf') ? 'application/pdf' : (filePath.endsWith('.png') ? 'image/png' : 'image/jpeg');
-          
+
           try {
             const response = await ai.models.generateContent({
               model: 'gemini-2.5-flash',
@@ -507,7 +507,7 @@ async function startServer() {
           }
         }
       }
-      
+
       if (fullTranscript.trim()) {
         await Submission.findByIdAndUpdate(submissionId, { evaluation: fullTranscript.trim() });
         console.log(`OCR Complete for submission ${submissionId}`);
@@ -523,7 +523,7 @@ async function startServer() {
       const submissionId = req.params.id;
       const submission = await Submission.findById(submissionId);
       if (!submission) return res.status(404).json({ message: 'Submission not found' });
-      
+
       if (req.user.role === 'student' && submission.userId.toString() !== req.user._id.toString()) {
         return res.status(403).json({ message: 'Unauthorized' });
       }
@@ -710,10 +710,10 @@ async function startServer() {
           else if (type === 'TO') candidateQuery.assignedTO = assessor._id;
           else if (type === 'Psych') candidateQuery.assignedPsych = assessor._id;
           else if (type === 'IO') candidateQuery.assignedIO = assessor._id;
-          
+
           const candidates = await User.find(candidateQuery).select('_id');
           const candidateIds = candidates.map(c => c._id);
-          
+
           query = {
             $or: [
               { assessorId: assessor._id },
@@ -724,74 +724,83 @@ async function startServer() {
           query.assessorId = req.user._id;
         }
       }
-      
+
       const submissions = await Submission.find(query)
-        .populate('userId', 'name email assignedGTO assignedTO assignedPsych assignedIO clinicalStage profileImage')
-        .populate('assessmentId', 'title type');
-      
-      let mappedSubmissions: any[] = submissions.map(sub => {
+        .populate('userId', 'name email assignedGTO assignedTO assignedPsych assignedIO clinicalStage profileImage chestNo batch')
+        .populate('assessmentId', 'title type')
+        .sort({ updatedAt: -1 });
+
+      const uniqueSubmissionsMap = new Map();
+      submissions.forEach(sub => {
         const subJSON = sub.toJSON ? sub.toJSON() : sub;
-        return {
-          ...subJSON,
-          student: subJSON.userId, // Map populated userId to student for frontend
-        };
-      }).filter((sub: any) => sub.student); // Remove junk submissions where student doesn't exist
+        if (!subJSON.userId) return;
+
+        const studentId = subJSON.userId._id ? subJSON.userId._id.toString() : subJSON.userId.toString();
+        if (!uniqueSubmissionsMap.has(studentId)) {
+          uniqueSubmissionsMap.set(studentId, {
+            ...subJSON,
+            student: subJSON.userId
+          });
+        }
+      });
+
+      let mappedSubmissions = Array.from(uniqueSubmissionsMap.values());
 
       // Append pending submissions for students that are allotted but haven't uploaded anything
       if (req.user.role === 'assessor' || req.user.role === 'admin') {
         let candidateQuery: any = {};
-        
+
         if (req.user.role === 'assessor') {
-            const assessor = await User.findById(req.user._id);
-            if (assessor && assessor.assessorType) {
-              const type = assessor.assessorType;
-              if (type === 'GTO') candidateQuery.assignedGTO = assessor._id;
-              else if (type === 'TO') candidateQuery.assignedTO = assessor._id;
-              else if (type === 'Psych') candidateQuery.assignedPsych = assessor._id;
-              else if (type === 'IO') candidateQuery.assignedIO = assessor._id;
-            } else {
-              // Assessor has no type, don't query candidates
-              candidateQuery = null; 
-            }
+          const assessor = await User.findById(req.user._id);
+          if (assessor && assessor.assessorType) {
+            const type = assessor.assessorType;
+            if (type === 'GTO') candidateQuery.assignedGTO = assessor._id;
+            else if (type === 'TO') candidateQuery.assignedTO = assessor._id;
+            else if (type === 'Psych') candidateQuery.assignedPsych = assessor._id;
+            else if (type === 'IO') candidateQuery.assignedIO = assessor._id;
+          } else {
+            // Assessor has no type, don't query candidates
+            candidateQuery = null;
+          }
         } else if (req.user.role === 'admin') {
-            // Admins should see ALL candidates that have AT LEAST ONE assessor assigned
-            candidateQuery = {
-              $or: [
-                  { assignedPsych: { $exists: true, $ne: null } },
-                  { assignedGTO: { $exists: true, $ne: null } },
-                  { assignedIO: { $exists: true, $ne: null } },
-                  { assignedTO: { $exists: true, $ne: null } }
-              ]
-            };
+          // Admins should see ALL candidates that have AT LEAST ONE assessor assigned
+          candidateQuery = {
+            $or: [
+              { assignedPsych: { $exists: true, $ne: null } },
+              { assignedGTO: { $exists: true, $ne: null } },
+              { assignedIO: { $exists: true, $ne: null } },
+              { assignedTO: { $exists: true, $ne: null } }
+            ]
+          };
         }
 
         if (candidateQuery) {
-            const candidates = await User.find(candidateQuery).select('_id name email assignedGTO assignedTO assignedPsych assignedIO clinicalStage profileImage');
-            const usersWithSubmissions = new Set(submissions.map((s: any) => s.userId && s.userId._id ? s.userId._id.toString() : ''));
-            
-            for (const candidate of candidates) {
-                if (!usersWithSubmissions.has(candidate._id.toString())) {
-                    mappedSubmissions.push({
-                        id: `pending-${candidate._id}`,
-                        _id: `pending-${candidate._id}`,
-                        userId: candidate._id,
-                        status: 'PENDING',
-                        student: candidate.toObject ? candidate.toObject() : candidate,
-                        assessmentId: null,
-                        startedAt: null
-                    });
-                }
+          const candidates = await User.find(candidateQuery).select('_id name email assignedGTO assignedTO assignedPsych assignedIO clinicalStage profileImage chestNo batch');
+          const usersWithSubmissions = new Set(submissions.map((s: any) => s.userId && s.userId._id ? s.userId._id.toString() : ''));
+
+          for (const candidate of candidates) {
+            if (!usersWithSubmissions.has(candidate._id.toString())) {
+              mappedSubmissions.push({
+                id: `pending-${candidate._id}`,
+                _id: `pending-${candidate._id}`,
+                userId: candidate._id,
+                status: 'PENDING',
+                student: candidate.toObject ? candidate.toObject() : candidate,
+                assessmentId: null,
+                startedAt: null
+              });
             }
+          }
         }
       }
 
       // For admin, ensure they ONLY see students that have at least one assigned assessor
       if (req.user.role === 'admin') {
-          mappedSubmissions = mappedSubmissions.filter(sub => {
-              const st = sub.student;
-              if (!st) return false;
-              return st.assignedPsych || st.assignedGTO || st.assignedIO || st.assignedTO;
-          });
+        mappedSubmissions = mappedSubmissions.filter(sub => {
+          const st = sub.student;
+          if (!st) return false;
+          return st.assignedPsych || st.assignedGTO || st.assignedIO || st.assignedTO;
+        });
       }
 
       res.json(mappedSubmissions);
@@ -849,8 +858,8 @@ async function startServer() {
         if (candidateUser.assignedPsych) psychStatus = 'PENDING';
       }
 
-      const submission = new Submission({ 
-        ...req.body, 
+      const submission = new Submission({
+        ...req.body,
         userId: req.user._id,
         psychStatus,
         gtoStatus,

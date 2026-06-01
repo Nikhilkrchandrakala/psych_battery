@@ -32,7 +32,7 @@ const Layout: React.FC = () => {
     // Student-only: test dashboard
     { label: 'My Dashboard', path: '/', icon: LayoutDashboard, show: profile?.role === 'student' },
     // Assessors only: candidate dossier list
-    { label: 'Candidate Dossiers', path: '/assessor', icon: Users, show: profile?.role === 'assessor' },
+    { label: 'Candidates', path: '/assessor', icon: Users, show: profile?.role === 'assessor' },
     // Admin only: admin hub
     { label: 'Admin Hub', path: '/admin?tab=progress', icon: Shield, show: isAdminUser },
     // Admin only: assessment catalogue

@@ -288,8 +288,16 @@ const AdminDashboard: React.FC = () => {
                   return (
                   <tr key={s.id} className="border-b border-app-border hover:bg-white/5 transition-colors group">
                     <td className="p-6">
-                       <div className="text-sm font-black text-app-text-bright">{studentName}</div>
-                       <div className="text-[9px] font-black text-app-text-muted mt-1 uppercase tracking-widest">{studentEmail}</div>
+                       <div className="flex items-center gap-2 mb-1">
+                         <div className="text-sm font-black text-app-text-bright">{studentName}</div>
+                         <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[8px] font-black uppercase tracking-widest text-app-text-bright">
+                           B: {student?.batch || '--'}
+                         </span>
+                         <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[8px] font-black uppercase tracking-widest text-app-text-bright">
+                           C: {student?.chestNo || '--'}
+                         </span>
+                       </div>
+                       <div className="text-[9px] font-black text-app-text-muted uppercase tracking-widest">{studentEmail}</div>
                     </td>
                     <td className="p-6 text-center">
                        {candidateStepContent}
@@ -474,7 +482,10 @@ const AdminDashboard: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <h2 className="text-3xl font-black text-app-text-bright tracking-tight uppercase">Audit: {studentName}</h2>
                     <span className="px-2.5 py-0.5 bg-app-accent/10 border border-app-accent/20 rounded text-[9px] font-black text-app-accent uppercase tracking-wider leading-none">
-                      Chest No: 12
+                      Batch: {student?.batch || '--'}
+                    </span>
+                    <span className="px-2.5 py-0.5 bg-app-accent/10 border border-app-accent/20 rounded text-[9px] font-black text-app-accent uppercase tracking-wider leading-none">
+                      Chest No: {student?.chestNo || '--'}
                     </span>
                   </div>
                   <p className="text-xs text-app-text-muted font-serif italic">{studentEmail}</p>

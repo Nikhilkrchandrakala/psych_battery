@@ -8,7 +8,7 @@ import {
   User as UserIcon, Clock, ShieldCheck,
   CheckCircle2, Sparkles, AlertCircle, Maximize2,
   FileSearch, Layers, ChevronLeft, ChevronRight,
-  Loader2
+  Loader2, Users
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -25,118 +25,73 @@ const PIQ_STATUS_STYLES: Record<string, string> = {
   FAILED:     'bg-red-500/10 text-red-400 border-red-500/20',
 };
 
-const SPECIALIZED_TRAITS = {
-  Psych: {
-    'Factor I: Planning & Organizing': {
-      effective_intelligence: 'Effective Intelligence',
-      reasoning_ability: 'Reasoning Ability',
-      organizing_ability: 'Organizing Ability',
-      power_of_expression: 'Power of Expression'
-    },
-    'Factor II: Social Adjustment': {
-      social_adaptability: 'Social Adaptability',
-      cooperation: 'Cooperation',
-      sense_of_responsibility: 'Sense of Responsibility'
-    },
-    'Factor III: Social Effectiveness': {
-      initiative: 'Initiative',
-      self_confidence: 'Self Confidence',
-      speed_of_decision: 'Speed of Decision',
-      ability_to_influence_the_group: 'Influence the Group',
-      liveliness: 'Liveliness'
-    },
-    'Factor IV: Dynamic': {
-      determination: 'Determination',
-      courage: 'Courage',
-      stamina: 'Stamina'
-    }
+const PSYCH_TRAITS = {
+  'Factor I: Planning & Organizing': {
+    effective_intelligence: 'Effective Intelligence',
+    reasoning_ability: 'Reasoning Ability',
+    organizing_ability: 'Organizing Ability',
+    power_of_expression: 'Power of Expression'
   },
-  GTO: {
-    'GTO Battery Evaluation': {
-      group_dynamics: 'Group Dynamics',
-      physical_coordination: 'Physical Coordination',
-      practical_intellect: 'Practical Intellect',
-      cooperation: 'Cooperation'
-    }
+  'Factor II: Social Adjustment': {
+    social_adaptability: 'Social Adaptability',
+    cooperation: 'Cooperation',
+    sense_of_responsibility: 'Sense of Responsibility'
   },
-  IO: {
-    'Interviewing Evaluation': {
-      verbal_expression: 'Verbal Expression',
-      general_awareness: 'General Awareness',
-      emotional_tolerance: 'Emotional Tolerance',
-      motivation: 'Motivation'
-    }
+  'Factor III: Social Effectiveness': {
+    initiative: 'Initiative',
+    self_confidence: 'Self Confidence',
+    speed_of_decision: 'Speed of Decision',
+    ability_to_influence_the_group: 'Influence the Group',
+    liveliness: 'Liveliness'
   },
-  TO: {
-    'Technical Evaluation': {
-      technical_comprehension: 'Technical Comprehension',
-      analytical_ability: 'Analytical Ability',
-      practical_problem_solving: 'Practical Problem Solving'
-    }
+  'Factor IV: Dynamic': {
+    determination: 'Determination',
+    courage: 'Courage',
+    stamina: 'Stamina'
   }
 };
 
+const SPECIALIZED_TRAITS = {
+  Psych: PSYCH_TRAITS,
+  GTO: PSYCH_TRAITS,
+  IO: PSYCH_TRAITS,
+  TO: PSYCH_TRAITS
+};
+
+const PSYCH_GRID_CONFIG = {
+  factors: [
+    { label: 'Factor I: Planning & Organizing', colSpan: 4 },
+    { label: 'Factor II: Social Adjustment', colSpan: 3 },
+    { label: 'Factor III: Social Effectiveness', colSpan: 5 },
+    { label: 'Factor IV: Dynamic', colSpan: 3 }
+  ],
+  traits: [
+    { id: 'effective_intelligence', code: 'EI', num: 1, name: 'Effective Intelligence', factor: 'Factor I' },
+    { id: 'reasoning_ability', code: 'RA', num: 2, name: 'Reasoning Ability', factor: 'Factor I' },
+    { id: 'organizing_ability', code: 'OA', num: 3, name: 'Organizing Ability', factor: 'Factor I' },
+    { id: 'power_of_expression', code: 'POE', num: 4, name: 'Power of Expression', factor: 'Factor I' },
+    
+    { id: 'social_adaptability', code: 'SA', num: 5, name: 'Social Adaptability', factor: 'Factor II' },
+    { id: 'cooperation', code: 'COOP', num: 6, name: 'Cooperation', factor: 'Factor II' },
+    { id: 'sense_of_responsibility', code: 'SOR', num: 7, name: 'Sense of Responsibility', factor: 'Factor II' },
+    
+    { id: 'initiative', code: 'INIT', num: 8, name: 'Initiative', factor: 'Factor III' },
+    { id: 'self_confidence', code: 'SC', num: 9, name: 'Self Confidence', factor: 'Factor III' },
+    { id: 'speed_of_decision', code: 'SOD', num: 10, name: 'Speed of Decision', factor: 'Factor III' },
+    { id: 'ability_to_influence_the_group', code: 'AIG', num: 11, name: 'Influence Group', factor: 'Factor III' },
+    { id: 'liveliness', code: 'LIV', num: 12, name: 'Liveliness', factor: 'Factor III' },
+    
+    { id: 'determination', code: 'D', num: 13, name: 'Determination', factor: 'Factor IV' },
+    { id: 'courage', code: 'C', num: 14, name: 'Courage', factor: 'Factor IV' },
+    { id: 'stamina', code: 'S', num: 15, name: 'Stamina', factor: 'Factor IV' }
+  ]
+};
+
 const ASSESSOR_GRID_CONFIG = {
-  Psych: {
-    factors: [
-      { label: 'Factor I: Planning & Organizing', colSpan: 4 },
-      { label: 'Factor II: Social Adjustment', colSpan: 3 },
-      { label: 'Factor III: Social Effectiveness', colSpan: 5 },
-      { label: 'Factor IV: Dynamic', colSpan: 3 }
-    ],
-    traits: [
-      { id: 'effective_intelligence', code: 'EI', num: 1, name: 'Effective Intelligence', factor: 'Factor I' },
-      { id: 'reasoning_ability', code: 'RA', num: 2, name: 'Reasoning Ability', factor: 'Factor I' },
-      { id: 'organizing_ability', code: 'OA', num: 3, name: 'Organizing Ability', factor: 'Factor I' },
-      { id: 'power_of_expression', code: 'POE', num: 4, name: 'Power of Expression', factor: 'Factor I' },
-      
-      { id: 'social_adaptability', code: 'SA', num: 5, name: 'Social Adaptability', factor: 'Factor II' },
-      { id: 'cooperation', code: 'COOP', num: 6, name: 'Cooperation', factor: 'Factor II' },
-      { id: 'sense_of_responsibility', code: 'SOR', num: 7, name: 'Sense of Responsibility', factor: 'Factor II' },
-      
-      { id: 'initiative', code: 'INIT', num: 8, name: 'Initiative', factor: 'Factor III' },
-      { id: 'self_confidence', code: 'SC', num: 9, name: 'Self Confidence', factor: 'Factor III' },
-      { id: 'speed_of_decision', code: 'SOD', num: 10, name: 'Speed of Decision', factor: 'Factor III' },
-      { id: 'ability_to_influence_the_group', code: 'AIG', num: 11, name: 'Influence Group', factor: 'Factor III' },
-      { id: 'liveliness', code: 'LIV', num: 12, name: 'Liveliness', factor: 'Factor III' },
-      
-      { id: 'determination', code: 'D', num: 13, name: 'Determination', factor: 'Factor IV' },
-      { id: 'courage', code: 'C', num: 14, name: 'Courage', factor: 'Factor IV' },
-      { id: 'stamina', code: 'S', num: 15, name: 'Stamina', factor: 'Factor IV' }
-    ]
-  },
-  GTO: {
-    factors: [
-      { label: 'GTO Battery Evaluation', colSpan: 4 }
-    ],
-    traits: [
-      { id: 'group_dynamics', code: 'GD', num: 1, name: 'Group Dynamics', factor: 'GTO Battery' },
-      { id: 'physical_coordination', code: 'PC', num: 2, name: 'Physical Coordination', factor: 'GTO Battery' },
-      { id: 'practical_intellect', code: 'PI', num: 3, name: 'Practical Intellect', factor: 'GTO Battery' },
-      { id: 'cooperation', code: 'COOP', num: 4, name: 'Cooperation', factor: 'GTO Battery' }
-    ]
-  },
-  IO: {
-    factors: [
-      { label: 'Interviewing Evaluation', colSpan: 4 }
-    ],
-    traits: [
-      { id: 'verbal_expression', code: 'VE', num: 1, name: 'Verbal Expression', factor: 'Interview' },
-      { id: 'general_awareness', code: 'GA', num: 2, name: 'General Awareness', factor: 'Interview' },
-      { id: 'emotional_tolerance', code: 'ET', num: 3, name: 'Emotional Tolerance', factor: 'Interview' },
-      { id: 'motivation', code: 'MOT', num: 4, name: 'Motivation', factor: 'Interview' }
-    ]
-  },
-  TO: {
-    factors: [
-      { label: 'Technical Evaluation', colSpan: 3 }
-    ],
-    traits: [
-      { id: 'technical_comprehension', code: 'TC', num: 1, name: 'Technical Comprehension', factor: 'Technical' },
-      { id: 'analytical_ability', code: 'AA', num: 2, name: 'Analytical Ability', factor: 'Technical' },
-      { id: 'practical_problem_solving', code: 'PPS', num: 3, name: 'Practical Problem Solving', factor: 'Technical' }
-    ]
-  }
+  Psych: PSYCH_GRID_CONFIG,
+  GTO: PSYCH_GRID_CONFIG,
+  IO: PSYCH_GRID_CONFIG,
+  TO: PSYCH_GRID_CONFIG
 };
 
 const SubmissionReview: React.FC = () => {
@@ -149,7 +104,7 @@ const SubmissionReview: React.FC = () => {
   const [student, setStudent] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dossier' | 'evaluation' | 'meeting'>('dossier');
+  const [activeTab, setActiveTab] = useState<'dossier' | 'evaluation' | 'meeting' | 'feedback'>('dossier');
   const [showEthicsModal, setShowEthicsModal] = useState(true);
   
   // Attempted Psych Battery details state
@@ -388,7 +343,7 @@ const SubmissionReview: React.FC = () => {
             onClick={() => navigate('/assessor')}
             className="text-[10px] font-black text-app-text-muted hover:text-app-text-bright flex items-center gap-2 transition-colors uppercase tracking-[0.2em]"
           >
-            <ArrowLeft size={14} /> Back to Candidate Dossiers
+            <ArrowLeft size={14} /> Back to Candidates
           </button>
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-[1.5rem] bg-app-card border border-app-border overflow-hidden flex items-center justify-center shrink-0 shadow-2xl">
@@ -399,7 +354,15 @@ const SubmissionReview: React.FC = () => {
               )}
             </div>
             <div>
-              <h1 className="text-4xl font-black tracking-tighter text-app-text-bright">{studentName}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-4xl font-black tracking-tighter text-app-text-bright">{studentName}</h1>
+                <span className="px-2.5 py-1 rounded-lg bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-[0.15em] text-app-text-bright">
+                  Batch: {student?.batch || '--'}
+                </span>
+                <span className="px-2.5 py-1 rounded-lg bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-[0.15em] text-app-text-bright">
+                  Chest: {student?.chestNo || '--'}
+                </span>
+              </div>
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">{assessmentTitle}</span>
                 <span className="w-1 h-1 bg-app-border rounded-full" />
@@ -459,7 +422,8 @@ const SubmissionReview: React.FC = () => {
         {[
           { id: 'dossier', label: 'Document Viewer', icon: FileSearch },
           { id: 'evaluation', label: 'Assessment', icon: MessageSquare },
-          { id: 'meeting', label: 'Feedback Scheduler', icon: Calendar }
+          { id: 'meeting', label: 'Feedback Scheduler', icon: Calendar },
+          ...(submission.status === 'REPORT_RELEASED' ? [{ id: 'feedback', label: 'All Assessor Feedback', icon: Users }] : [])
         ].filter(tab => {
           if (activeAssessorType === 'GTO' && tab.id === 'dossier') return false;
           return true;
@@ -801,8 +765,8 @@ const SubmissionReview: React.FC = () => {
                                     {f.label}
                                   </th>
                                 ))}
-                                <th className="px-1 py-3 text-center text-app-text-bright bg-app-accent/10 overflow-hidden text-ellipsis whitespace-nowrap">
-                                  Final Rating
+                                <th rowSpan={2} className="px-1 py-3 text-center align-middle font-bold text-app-accent bg-app-accent/10 overflow-hidden text-ellipsis whitespace-nowrap">
+                                  MARKS
                                 </th>
                               </tr>
                               {/* OLQ Codes Row */}
@@ -817,9 +781,6 @@ const SubmissionReview: React.FC = () => {
                                     </div>
                                   </td>
                                 ))}
-                                <td className="px-1 py-2 font-mono font-bold text-center text-app-accent bg-app-accent/5 overflow-hidden text-ellipsis whitespace-nowrap">
-                                  MARKS
-                                </td>
                               </tr>
                             </thead>
                             <tbody>
@@ -827,12 +788,17 @@ const SubmissionReview: React.FC = () => {
                               <tr className="divide-x divide-app-border/40 hover:bg-black/10 transition-colors">
                                 <td className="px-2 py-3">
                                   <div className="flex flex-col overflow-hidden">
-                                    <span className="text-[11px] font-black text-app-text-bright uppercase tracking-wide leading-tight truncate">
+                                    <span className="text-[11px] font-black text-app-text-bright uppercase tracking-wide leading-tight truncate mb-1">
                                       {student?.name || 'Trainee'}
                                     </span>
-                                    <span className="text-[8px] font-bold text-app-text-muted mt-0.5 truncate">
-                                      Chest: {submission?.piqFiles?.length ? '12' : '--'}
-                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <span className="px-1 py-0.5 rounded bg-black/30 border border-app-border text-[7px] font-black uppercase tracking-widest text-app-text-bright truncate">
+                                        B: {student?.batch || '--'}
+                                      </span>
+                                      <span className="px-1 py-0.5 rounded bg-black/30 border border-app-border text-[7px] font-black uppercase tracking-widest text-app-text-bright truncate">
+                                        C: {student?.chestNo || '--'}
+                                      </span>
+                                    </div>
                                   </div>
                                 </td>
                                 {gridConfig.traits.map((t) => (
@@ -843,6 +809,7 @@ const SubmissionReview: React.FC = () => {
                                       max={10}
                                       value={scores[t.id] ?? ''}
                                       onChange={(e) => {
+                                        if (e.target.value.length > 2) return;
                                         const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
                                         setScores((prev) => ({ ...prev, [t.id]: val }));
                                       }}
@@ -857,6 +824,7 @@ const SubmissionReview: React.FC = () => {
                                     min={0}
                                     value={scores['marks'] ?? ''}
                                     onChange={(e) => {
+                                      if (e.target.value.length > 3) return;
                                       const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
                                       setScores((prev) => ({ ...prev, marks: val }));
                                     }}
@@ -923,6 +891,41 @@ const SubmissionReview: React.FC = () => {
                   Confirm & Transmit Invite
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── ALL ASSESSOR FEEDBACK TAB ──────────────────────────────────────── */}
+      {activeTab === 'feedback' && (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="bg-app-sidebar border border-app-border rounded-[3rem] p-12 shadow-2xl space-y-8 w-full">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-app-accent">
+                <Users size={24} className="fill-current" />
+                <h3 className="text-2xl font-black text-app-text-bright tracking-tight">Final Broadcasted Feedback</h3>
+              </div>
+              <p className="text-app-text-muted text-sm font-serif italic leading-relaxed">
+                Review the qualitative feedback from all assessors across different evaluations.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                { title: 'Psychology Evaluation', remarks: submission.psychRemarks },
+                { title: 'GTO Outdoor Case', remarks: (submission as any).gtoRemarks },
+                { title: 'IO Personal Interview', remarks: (submission as any).ioRemarks },
+                { title: 'Technical Officer Aptitude', remarks: (submission as any).toRemarks },
+              ].map((feedback, idx) => (
+                <div key={idx} className="bg-app-card border border-app-border rounded-3xl p-6 space-y-4 shadow-xl">
+                  <div className="border-b border-app-border pb-3">
+                    <h4 className="text-xs font-black uppercase text-app-text-bright tracking-widest">{feedback.title}</h4>
+                  </div>
+                  <div className="bg-black/30 border border-app-border p-4 rounded-2xl min-h-[140px] overflow-y-auto leading-relaxed text-xs font-serif italic text-app-text-bright">
+                    {feedback.remarks ? feedback.remarks : 'No qualitative comments recorded.'}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
