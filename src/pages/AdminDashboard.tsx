@@ -337,7 +337,6 @@ const AdminDashboard: React.FC = () => {
         const student = s.student || users.find(u => u.uid === s.userId) || users.find(u => u.id === s.userId);
         const studentName = student?.name || 'Candidate';
         const studentEmail = student?.email || 'N/A';
-        const scoresMap = s.scores || {};
 
         // Audit broadcast completion check
         const isPsychDone = !student?.assignedPsych || s.psychStatus === 'COMPLETED';
@@ -347,8 +346,7 @@ const AdminDashboard: React.FC = () => {
         const allAssessorDone = isPsychDone && isGtoDone && isIoDone && isToDone;
         const isBroadcasted = s.status === 'REPORT_RELEASED';
 
-        const ASSESSOR_TRAITS_CONFIG = {
-          Psych: [
+        const psychTraits = [
             { id: 'effective_intelligence', code: 'EI', name: 'Effective Intelligence' },
             { id: 'reasoning_ability', code: 'RA', name: 'Reasoning Ability' },
             { id: 'organizing_ability', code: 'OA', name: 'Organizing Ability' },
@@ -364,29 +362,19 @@ const AdminDashboard: React.FC = () => {
             { id: 'determination', code: 'D', name: 'Determination' },
             { id: 'courage', code: 'C', name: 'Courage' },
             { id: 'stamina', code: 'S', name: 'Stamina' }
-          ],
-          GTO: [
-            { id: 'group_dynamics', code: 'GD', name: 'Group Dynamics' },
-            { id: 'physical_coordination', code: 'PC', name: 'Physical Coordination' },
-            { id: 'practical_intellect', code: 'PI', name: 'Practical Intellect' },
-            { id: 'cooperation', code: 'COOP', name: 'Cooperation' }
-          ],
-          IO: [
-            { id: 'verbal_expression', code: 'VE', name: 'Verbal Expression' },
-            { id: 'general_awareness', code: 'GA', name: 'General Awareness' },
-            { id: 'emotional_tolerance', code: 'ET', name: 'Emotional Tolerance' },
-            { id: 'motivation', code: 'MOT', name: 'Motivation' }
-          ],
-          TO: [
-            { id: 'technical_comprehension', code: 'TC', name: 'Technical Comprehension' },
-            { id: 'analytical_ability', code: 'AA', name: 'Analytical Ability' },
-            { id: 'practical_problem_solving', code: 'PPS', name: 'Practical Problem Solving' }
-          ]
+        ];
+
+        const ASSESSOR_TRAITS_CONFIG = {
+          Psych: psychTraits,
+          GTO: psychTraits,
+          IO: psychTraits,
+          TO: psychTraits
         };
 
         const renderAuditAssessorCard = (type: 'Psych' | 'GTO' | 'IO' | 'TO', title: string, assignedId: any, statusVal: string, remarksVal: string) => {
           if (!assignedId) return null;
 
+          const scoresMap = (s as any)[`${type.toLowerCase()}Scores`] || {};
           const traitsList = ASSESSOR_TRAITS_CONFIG[type];
           const traitsScoreEntries = traitsList.filter(t => scoresMap[t.id] !== undefined && scoresMap[t.id] > 0);
           const finalMarks = scoresMap.marks || 0;
@@ -425,7 +413,7 @@ const AdminDashboard: React.FC = () => {
                         <div className="text-xs font-black text-app-text-bright mt-0.5 font-mono">{scoresMap[t.id]}/10</div>
                       </div>
                     ))}
-                    {type === 'Psych' && finalMarks > 0 && (
+                    {finalMarks > 0 && (
                       <div className="text-center bg-app-accent/10 border border-app-accent/30 py-1.5 px-2 rounded-xl col-span-3">
                         <div className="text-[8px] font-black text-app-accent uppercase tracking-wider">Overall Rating</div>
                         <div className="text-sm font-black text-app-accent mt-0.5 font-mono">MARKS: {finalMarks}</div>

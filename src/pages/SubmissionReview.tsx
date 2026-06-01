@@ -174,8 +174,10 @@ const SubmissionReview: React.FC = () => {
 
         setSubmission(normalizedSub);
         setRemarks(subData.assessorRemarks || '');
-        if (subData.scores && Object.keys(subData.scores).length > 0) {
-          setScores(subData.scores);
+        const roleScoresField = `${activeAssessorType.toLowerCase()}Scores`;
+        const roleScores = (subData as any)[roleScoresField];
+        if (roleScores && Object.keys(roleScores).length > 0) {
+          setScores(roleScores);
         } else {
           const initialScores: Record<string, number> = {};
           Object.values(SPECIALIZED_TRAITS).forEach(groups => {
@@ -264,7 +266,7 @@ const SubmissionReview: React.FC = () => {
     setSaving(true);
     try {
       const updateData: any = {
-        scores,
+        [`${activeAssessorType.toLowerCase()}Scores`]: scores,
       };
 
       // Isolated status and remarks routing
