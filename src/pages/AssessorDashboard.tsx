@@ -304,12 +304,15 @@ const AssessorDashboard: React.FC = () => {
                               Awaiting Action
                             </span>
                           ) : (
-                            <Link 
-                              to={`/review/${sub.id}`}
-                              className="inline-flex items-center gap-2 text-[10px] font-black text-app-accent hover:text-white transition-all uppercase tracking-widest group/btn"
-                            >
-                              Initialize Review 
-                              <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                              <Link 
+                                to={`/review/${sub.id}`}
+                                className={cn(
+                                  "inline-flex items-center gap-2 text-[10px] font-black transition-all uppercase tracking-widest group/btn",
+                                  sub.status === 'REPORT_RELEASED' ? "text-green-400 hover:text-green-300" : "text-app-accent hover:text-white"
+                                )}
+                              >
+                                {sub.status === 'REPORT_RELEASED' ? 'View Finalized Report' : 'Initialize Review'} 
+                                <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                             </Link>
                           )}
                        </td>

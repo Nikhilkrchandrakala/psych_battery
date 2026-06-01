@@ -435,7 +435,7 @@ const SubmissionReview: React.FC = () => {
           ...(submission.status === 'REPORT_RELEASED' ? [{ id: 'feedback', label: 'All Assessor Feedback', icon: Users }] : [])
         ].filter(tab => {
           if (activeAssessorType === 'GTO' && tab.id === 'dossier') return false;
-          if (tab.id === 'meeting' && !['Psych', 'IO', 'GTO', 'TO'].includes(activeAssessorType)) return false;
+          if (tab.id === 'meeting' && !['Psych', 'IO', 'TO'].includes(activeAssessorType)) return false;
           return true;
         }).map(tab => (
           <button

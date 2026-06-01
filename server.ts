@@ -735,7 +735,9 @@ async function startServer() {
         const subJSON = sub.toJSON ? sub.toJSON() : sub;
         if (!subJSON.userId) return;
 
-        const studentId = subJSON.userId._id ? subJSON.userId._id.toString() : subJSON.userId.toString();
+        const uid = subJSON.userId.id || subJSON.userId._id || subJSON.userId;
+        const studentId = uid.toString();
+        
         if (!uniqueSubmissionsMap.has(studentId)) {
           uniqueSubmissionsMap.set(studentId, {
             ...subJSON,
@@ -912,6 +914,30 @@ async function startServer() {
       };
 
       await submission.save();
+
+      // Create notifications for the student and all allotted assessors
+      const student = await User.findById(submission.userId);
+      if (student) {
+        const recipientIds = [student._id.toString()];
+        if (student.assignedPsych) recipientIds.push(student.assignedPsych.toString());
+        if (student.assignedGTO) recipientIds.push(student.assignedGTO.toString());
+        if (student.assignedIO) recipientIds.push(student.assignedIO.toString());
+        if (student.assignedTO) recipientIds.push(student.assignedTO.toString());
+
+        const candidateName = student.name || 'Candidate';
+        for (const recipientId of new Set(recipientIds)) {
+          const notification = new Notification({
+            recipientId,
+            studentId: submission.userId,
+            submissionId: submission._id,
+            title: 'Results Broadcasted',
+            message: `The official evaluation report for ${candidateName} has been broadcasted by the Admin.`,
+            isRead: false
+          });
+          await notification.save();
+        }
+      }
+
       res.json({ message: 'Results successfully broadcasted to student', submission });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
