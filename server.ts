@@ -617,16 +617,12 @@ async function startServer() {
 
         // Create notification for the allotted assessor
         const student = await User.findById(submission.userId);
-          const recipientIds: string[] = [];
-          if (submission.assessorId) {
-            recipientIds.push(submission.assessorId.toString());
-          } else if (student && student.assignedAssessor) {
-            recipientIds.push(student.assignedAssessor.toString());
-          } else {
-            // Notify all assessors
-            const assessors = await User.find({ role: 'assessor' });
-            assessors.forEach(a => recipientIds.push(a._id.toString()));
-          }
+        const recipientIds: string[] = [];
+        if (student) {
+          if (student.assignedIO) recipientIds.push(student.assignedIO.toString());
+          if (student.assignedTO) recipientIds.push(student.assignedTO.toString());
+          if (student.assignedPsych) recipientIds.push(student.assignedPsych.toString());
+        }
 
           // Ensure super admins also get notified
           const admins = await User.find({ role: 'admin' });
