@@ -11,6 +11,7 @@ import {
   Loader2, Users
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { AssessmentPresenter } from './AssessmentPresenter';
 
 // Base URL for serving uploaded files from the PsychBattery server
 // The PsychBattery server (tsx server.ts) serves /uploads at the same port as the Vite dev server (5173)
@@ -108,9 +109,7 @@ const SubmissionReview: React.FC = () => {
   const [showEthicsModal, setShowEthicsModal] = useState(true);
   
   // Attempted Psych Battery details state
-  const [slides, setSlides] = useState<any[]>([]);
   const [loadingSlides, setLoadingSlides] = useState(false);
-  const [showBatteryDetails, setShowBatteryDetails] = useState(false);
 
   // Dossier viewer state
   const [activePiqIndex, setActivePiqIndex] = useState(0);
@@ -195,15 +194,6 @@ const SubmissionReview: React.FC = () => {
         }
         if (populatedAssessment) {
           setAssessment(populatedAssessment);
-          try {
-            setLoadingSlides(true);
-            const slidesData = await api.assessments.slides(populatedAssessment._id || populatedAssessment.id);
-            setSlides(slidesData || []);
-          } catch (slideErr) {
-            console.error('Failed to fetch assessment slides:', slideErr);
-          } finally {
-            setLoadingSlides(false);
-          }
         }
       } catch (error) {
         console.error('Failed to fetch review data:', error);
@@ -469,12 +459,9 @@ const SubmissionReview: React.FC = () => {
             </div>
 
             {piqFiles.length > 0 ? (
-              <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 items-start">
-                {/* Left: PDF / Image Viewer */}
-                <div className={cn(
-                  activeAssessorType === 'IO' ? "xl:col-span-5" : "xl:col-span-3",
-                  "space-y-3"
-                )}>
+              <div className="flex flex-col gap-8">
+                {/* Top: PDF / Image Viewer */}
+                <div className="w-full space-y-3">
                   <div className="flex items-center justify-between text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2">
                     <span>{activeAssessorType === 'IO' ? 'Personal Information Questionnaire (PIQ)' : `File ${activePiqIndex + 1} of ${piqFiles.length}`}</span>
                     {activeAssessorType !== 'IO' && (
@@ -545,131 +532,19 @@ const SubmissionReview: React.FC = () => {
                   )}
                 </div>
 
-                {/* Right: OCR Transcript / Psych Battery details */}
+                {/* Bottom: Psych Battery details */}
                 {activeAssessorType !== 'IO' && (
-                  <div className="xl:col-span-2 space-y-4">
+                  <div className="w-full space-y-4">
                     <div className="flex items-center justify-between px-2 text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em]">
                       <div className="flex items-center gap-2">
                         <Sparkles size={12} className="text-app-accent animate-pulse" />
-                        <span>{showBatteryDetails ? 'Attempted Psych Battery' : 'Gemini OCR Transcript'}</span>
+                        <span>Assessment Preview</span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowBatteryDetails(!showBatteryDetails)}
-                        className={cn(
-                          "px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer",
-                          showBatteryDetails 
-                            ? "bg-app-accent text-white border-app-accent shadow-sm" 
-                            : "bg-app-card text-app-text-muted border-app-border hover:border-app-accent/50 hover:text-app-text-bright"
-                        )}
-                      >
-                        {showBatteryDetails ? 'Show Transcript' : 'Show Attempted Test'}
-                      </button>
                     </div>
                   
-                  <div className="bg-app-card/60 border border-app-border rounded-3xl p-6 shadow-inner overflow-y-auto leading-relaxed" style={{ height: '680px' }}>
-                    {showBatteryDetails ? (
-                      <div className="space-y-6 animate-in fade-in duration-300">
-                        {/* Title & Desc */}
-                        <div className="space-y-2">
-                          <h3 className="text-sm font-black text-app-text-bright tracking-tight uppercase">
-                            {assessmentTitle}
-                          </h3>
-                          {assessment?.description && (
-                            <p className="text-xs text-app-text-muted font-serif italic leading-relaxed">
-                              {assessment.description}
-                            </p>
-                          )}
-                          <div className="flex gap-2 pt-1">
-                            <span className="px-2 py-0.5 rounded bg-black/30 border border-app-border text-[9px] font-black text-app-text-bright uppercase tracking-widest leading-none">
-                              Duration: {assessmentDuration} Min
-                            </span>
-                            <span className="px-2 py-0.5 rounded bg-black/30 border border-app-border text-[9px] font-black text-app-text-bright uppercase tracking-widest leading-none">
-                              Slides: {slides.length} Items
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Slides List/Grid */}
-                        <div className="space-y-4 pt-4 border-t border-app-border">
-                          <div className="text-[9px] font-black text-app-accent uppercase tracking-widest">
-                            Slides in this Series
-                          </div>
-                          
-                          {loadingSlides ? (
-                            <div className="flex flex-col items-center justify-center py-10 gap-3 opacity-60">
-                              <Loader2 size={24} className="animate-spin text-app-accent" />
-                              <p className="text-[10px] font-serif italic">Loading slide sequence...</p>
-                            </div>
-                          ) : slides.length === 0 ? (
-                            <p className="text-xs text-app-text-muted italic font-serif">
-                              No visual slides configured for this test battery.
-                            </p>
-                          ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              {slides.map((slide, index) => (
-                                <div key={slide.id || index} className="bg-app-card/80 rounded-2xl border border-app-border overflow-hidden p-3 space-y-3 group hover:border-app-accent/30 transition-all">
-                                  <div className="flex justify-between items-center text-[9px] font-black text-app-text-muted uppercase tracking-widest">
-                                    <span>Slide {slide.order || index + 1}</span>
-                                    <span className="text-app-accent">{slide.displayTime || slide.duration || 30}s</span>
-                                  </div>
-                                  
-                                  {slide.imageUrl ? (
-                                    <div className="bg-black/40 rounded-xl overflow-hidden border border-app-border aspect-video flex items-center justify-center">
-                                      <img 
-                                        src={slide.imageUrl} 
-                                        alt={`Slide ${slide.order || index + 1}`} 
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                        onError={(e) => {
-                                          (e.target as HTMLElement).style.display = 'none';
-                                        }}
-                                      />
-                                    </div>
-                                  ) : slide.content ? (
-                                    <div className="bg-black/30 rounded-xl p-4 border border-app-border font-serif italic text-center text-xs text-app-text-bright leading-relaxed min-h-[80px] flex items-center justify-center">
-                                      "{slide.content}"
-                                    </div>
-                                  ) : (
-                                    <div className="bg-black/30 rounded-xl p-4 border border-app-border font-serif italic text-center text-[10px] text-app-text-muted leading-relaxed">
-                                      Blank Slide / Break
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      // Original OCR transcript block
-                      <div className="font-mono text-[11px] text-app-text-muted leading-relaxed whitespace-pre-wrap">
-                        {piqStatus === 'PROCESSING' && (
-                          <div className="flex flex-col items-center justify-center h-full gap-4 opacity-60">
-                            <Loader2 size={32} className="animate-spin text-app-accent" />
-                            <p className="text-xs font-serif italic">OCR processing in progress…</p>
-                          </div>
-                        )}
-                        {piqStatus === 'PENDING' && (
-                          <div className="flex flex-col items-center justify-center h-full gap-3 opacity-40">
-                            <FileSearch size={40} />
-                            <p className="text-xs font-serif italic text-center">PIQ uploaded. OCR pipeline will process shortly.</p>
-                          </div>
-                        )}
-                        {piqStatus === 'FAILED' && (
-                          <div className="flex flex-col items-center justify-center h-full gap-3 text-red-400/60">
-                            <AlertCircle size={40} />
-                            <p className="text-xs font-serif italic text-center">OCR processing failed. Review the original document manually.</p>
-                          </div>
-                        )}
-                        {piqStatus === 'PARSED' && ocrTranscript && (
-                          <span className="text-app-text-main">{ocrTranscript}</span>
-                        )}
-                        {piqStatus === 'PARSED' && !ocrTranscript && (
-                          <span className="opacity-40 italic font-serif">Transcript parsed but no text returned.</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                    <div className="bg-app-card/60 border border-app-border rounded-3xl overflow-hidden shadow-inner flex flex-col relative" style={{ height: '75vh', minHeight: '600px' }}>
+                      <AssessmentPresenter assessmentId={assessment._id || assessment.id} />
+                    </div>
                   </div>
                 )}
               </div>

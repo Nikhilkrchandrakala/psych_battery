@@ -11,6 +11,7 @@ import AssessorDashboard from './pages/AssessorDashboard';
 import SubmissionReview from './pages/SubmissionReview';
 import AdminDashboard from './pages/AdminDashboard';
 import AssessmentEditor from './pages/AssessmentEditor';
+import { AssessmentPresenter } from './pages/AssessmentPresenter';
 
 /**
  * Redirects users to their role-appropriate home page on root visit.
@@ -65,6 +66,7 @@ export default function App() {
       {/* Fullscreen Routes (No Sidebar) */}
       <Route element={<ProtectedRoute />}>
         <Route path="/assessment/:id" element={<AssessmentEngine />} />
+        <Route path="/presentation/:id" element={<div className="h-screen w-screen"><AssessmentPresenter /></div>} />
       </Route>
 
       <Route element={<ProtectedRoute requireAdmin />}>

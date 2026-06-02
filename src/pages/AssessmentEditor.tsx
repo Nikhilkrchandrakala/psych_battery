@@ -7,7 +7,7 @@ import {
   Image as ImageIcon, Type, MessageSquare, 
   Clock, Play, Settings, ArrowLeft, Loader2,
   Layout, Eye, Shield, Timer, Navigation,
-  Bold, Italic, List, ListOrdered, Palette
+  Bold, Italic, List, ListOrdered, Palette, AlignLeft, AlignCenter
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -77,6 +77,11 @@ const TextFormattingToolbar: React.FC = () => {
     <div className="flex items-center gap-1 bg-app-sidebar border border-app-border rounded-xl p-1 shadow-xl relative">
       <button onMouseDown={(e) => { e.preventDefault(); applyCommand('bold'); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors" title="Bold"><Bold size={16} /></button>
       <button onMouseDown={(e) => { e.preventDefault(); applyCommand('italic'); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors" title="Italic"><Italic size={16} /></button>
+      
+      <div className="w-px h-4 bg-app-border mx-1" />
+
+      <button onMouseDown={(e) => { e.preventDefault(); applyCommand('justifyLeft'); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors" title="Align Left"><AlignLeft size={16} /></button>
+      <button onMouseDown={(e) => { e.preventDefault(); applyCommand('justifyCenter'); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors" title="Align Center"><AlignCenter size={16} /></button>
       
       <div className="w-px h-4 bg-app-border mx-1" />
       
@@ -218,9 +223,9 @@ const AssessmentEditor: React.FC = () => {
       id: `new-${Date.now()}`,
       assessmentId: id!,
       module: activeModule,
-      slideType: activeModule === 'SRT' ? 'INSTRUCTIONS' : 
+      slideType: activeModule === 'SRT' ? 'TEXT' : 
                  activeModule === 'WAT' ? 'WORD' :
-                 activeModule === 'TAT' ? 'IMAGE' : 'INSTRUCTIONS',
+                 activeModule === 'TAT' ? 'IMAGE' : 'TEXT',
       content: activeModule === 'SRT' ? 'New situation...' :
                activeModule === 'WAT' ? 'WORD' : 'New Slide Content',
       displayTime: activeModule === 'WAT' ? 15 : activeModule === 'TAT' ? 30 : 5,
@@ -526,7 +531,7 @@ const AssessmentEditor: React.FC = () => {
                    </div>
                  )}
 
-                  {(activeSlide.slideType === 'WORD' || activeSlide.slideType === 'SITUATION' || activeSlide.slideType === 'INSTRUCTIONS') && (
+                  {(activeSlide.slideType === 'WORD' || activeSlide.slideType === 'TEXT') && (
                     <>
                       <EditableContent 
                         value={activeSlide.content || ''}
@@ -534,9 +539,9 @@ const AssessmentEditor: React.FC = () => {
                         placeholder="ENTER CONTENT..."
                         className={cn(
                           "font-black text-app-text-bright tracking-tight font-sans bg-transparent border-none outline-none text-center w-full focus:ring-0 focus:outline-none",
+                          "[&_ul]:list-disc [&_ul]:list-inside [&_ol]:list-decimal [&_ol]:list-inside [&_li]:my-1",
                           activeSlide.slideType === 'WORD' ? "text-7xl" : 
-                          activeSlide.slideType === 'SITUATION' ? "text-2xl italic leading-relaxed max-w-4xl" :
-                          "text-xl leading-relaxed max-w-4xl"
+                          "text-2xl leading-relaxed max-w-4xl"
                         )}
                       />
                     </>
@@ -674,7 +679,7 @@ const AssessmentEditor: React.FC = () => {
                   <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Slide Type</label>
                   <div className="grid grid-cols-3 gap-1.5">
                      {[
-                      { id: 'INSTRUCTIONS', label: 'Instructions', icon: Type },
+                      { id: 'TEXT', label: 'Text', icon: Type },
                       { id: 'IMAGE', label: 'Image', icon: ImageIcon },
                       { id: 'WORD', label: 'Slide Title', icon: MessageSquare },
                       { id: 'BREAK', label: 'Break', icon: Clock },

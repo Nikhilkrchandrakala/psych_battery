@@ -561,52 +561,19 @@ async function startServer() {
   });
 
   async function runPiqOCR(submissionId: string, filePaths: string[]) {
-    if (!process.env.GEMINI_API_KEY) {
-      console.warn("Skipping PIQ OCR: No GEMINI_API_KEY found");
-      await Submission.findByIdAndUpdate(submissionId, { piqStatus: 'FAILED' });
-      return;
-    }
+    // OCR Deactivated temporarily.
+    // Set text to empty but mark as PARSED so assessors can review the PIQ.
+    let combinedText = '';
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      let combinedText = '';
+      const submission = await Submission.findById(submissionId);
+      if (submission) {
+        submission.piqParsedData = combinedText;
+        submission.piqStatus = 'PARSED';
+        await submission.save();
 
-      for (const filePath of filePaths) {
-        const absolutePath = path.join(process.cwd(), 'public', filePath);
-        if (fs.existsSync(absolutePath)) {
-          const fileData = fs.readFileSync(absolutePath);
-          const mimeType = filePath.endsWith('.pdf') ? 'application/pdf' : (filePath.endsWith('.png') ? 'image/png' : 'image/jpeg');
-
-          try {
-            console.log(`Processing PIQ page OCR for file: ${filePath}`);
-            const response = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
-              contents: [
-                {
-                  role: 'user',
-                  parts: [
-                    { inlineData: { data: fileData.toString('base64'), mimeType } },
-                    { text: 'You are an expert military selector. Analyze this Personal Information Questionnaire (PIQ) document and extract a detailed, structured, clear profile of the candidate. Include Name, Family Background, Education, SSB Entry, Previous attempts, and notable achievements in markdown lists. Do not add conversational fillers.' }
-                  ]
-                }
-              ]
-            });
-            combinedText += `\n\n--- Document Page OCR ---\n\n${response.text}`;
-          } catch (apiErr) {
-            console.error(`Gemini PIQ OCR failed for ${filePath}:`, apiErr);
-          }
-        }
-      }
-
-      if (combinedText.trim()) {
-        const submission = await Submission.findById(submissionId);
-        if (submission) {
-          submission.piqParsedData = combinedText.trim();
-          submission.piqStatus = 'PARSED';
-          await submission.save();
-
-          // Create notification for the allotted assessor
-          const student = await User.findById(submission.userId);
+        // Create notification for the allotted assessor
+        const student = await User.findById(submission.userId);
           const recipientIds: string[] = [];
           if (submission.assessorId) {
             recipientIds.push(submission.assessorId.toString());
@@ -647,9 +614,6 @@ async function startServer() {
             await notification.save();
           }
           console.log(`PIQ OCR Completed and Assessor Notification created for submission ${submissionId}`);
-        }
-      } else {
-        await Submission.findByIdAndUpdate(submissionId, { piqStatus: 'FAILED' });
       }
     } catch (err) {
       console.error("PIQ OCR Pipeline Error:", err);

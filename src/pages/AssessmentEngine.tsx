@@ -6,8 +6,8 @@ import { useAuth } from '../components/AuthProvider';
 import { motion, AnimatePresence } from 'motion/react';
 import { Maximize, Timer, AlertTriangle, Play, BookOpen, Clock, Zap, ChevronLeft, ChevronRight, Pause, Type } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useAssessmentData } from '../hooks/useAssessmentData';
 
-const MODULE_ORDER: ModuleId[] = ['INTRO', 'TAT', 'WAT', 'SRT', 'SDT', 'CLOSING'];
 const DEFAULT_MODULE_CONFIG: ModuleConfig = { timingMode: 'per-slide', globalDuration: 0, navigable: false };
 
 const AssessmentEngine: React.FC = () => {
@@ -17,9 +17,8 @@ const AssessmentEngine: React.FC = () => {
   const [searchParams] = useSearchParams();
   const previewModule = searchParams.get('module');
 
-  const [assessment, setAssessment] = useState<Assessment | null>(null);
-  const [allSlides, setAllSlides] = useState<AssessmentSlide[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { assessment, allSlides, loading, error, moduleSlideMap, activeModules } = useAssessmentData(id, previewModule);
+
   const [isStarted, setIsStarted] = useState(false);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -37,31 +36,11 @@ const AssessmentEngine: React.FC = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastSlideKeyRef = useRef<string>('');
 
-  // Group slides by module
-  const moduleSlideMap = useMemo(() => {
-    const map: Record<ModuleId, AssessmentSlide[]> = { INTRO: [], TAT: [], WAT: [], SRT: [], SDT: [], CLOSING: [] };
-    allSlides.forEach(s => {
-      if (map[s.module]) map[s.module].push(s);
-    });
-    // Sort within each module
-    Object.keys(map).forEach(k => map[k as ModuleId].sort((a, b) => a.order - b.order));
-    return map;
-  }, [allSlides]);
-
-  // Only modules that have slides
-  const activeModules = useMemo(() => {
-    const modules = MODULE_ORDER.filter(m => moduleSlideMap[m].length > 0);
-    if (previewModule && modules.includes(previewModule as ModuleId)) {
-      return [previewModule as ModuleId];
-    }
-    return modules;
-  }, [moduleSlideMap, previewModule]);
-
-  // Current state derived values
   const currentModule = activeModules[currentModuleIndex] || 'INTRO';
   const currentModuleSlides = moduleSlideMap[currentModule] || [];
 
-  const isAdminPreview = profile?.role === 'admin';
+  const isAdminPreview = profile?.role === 'admin' || profile?.role === 'assessor';
+
   const currentModuleConfig: ModuleConfig = useMemo(() => {
     const base = assessment?.modules?.[currentModule] || DEFAULT_MODULE_CONFIG;
     if (isAdminPreview) {
@@ -82,29 +61,12 @@ const AssessmentEngine: React.FC = () => {
     return count + currentSlideInModule;
   }, [currentModuleIndex, currentSlideInModule, activeModules, moduleSlideMap]);
 
-  // Data fetch
+  // Data fetch auto-start for admin
   useEffect(() => {
-    const fetchAssessment = async () => {
-      if (!id) return;
-      try {
-        const assessmentData = await api.assessments.get(id);
-        setAssessment(assessmentData);
-        
-        const slidesList = await api.assessments.slides(id);
-        setAllSlides(slidesList);
-        
-        if (profile?.role === 'admin') {
-          setIsStarted(true);
-        }
-      } catch (error) {
-        console.error('Failed to fetch assessment:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAssessment();
-  }, [id]);
+    if (!loading && assessment && profile?.role === 'admin') {
+      setIsStarted(true);
+    }
+  }, [loading, assessment, profile]);
 
   // Advance to next module
   const advanceToNextModule = useCallback(() => {
@@ -431,6 +393,14 @@ const AssessmentEngine: React.FC = () => {
               <ChevronRight size={12} className="text-app-accent" />
             </div>
           )}
+
+          <button 
+            onClick={() => setIsPaused(!isPaused)}
+            className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center rounded-full bg-app-card border border-app-border hover:bg-app-sidebar transition-colors"
+            title={isPaused ? "Resume" : "Pause"}
+          >
+            {isPaused ? <Play size={12} className="text-green-500 fill-current ml-0.5" /> : <Pause size={12} className="text-app-accent fill-current" />}
+          </button>
         </div>
 
         <div className="hidden md:flex flex-col items-center absolute left-1/2 -translate-x-1/2">
@@ -498,22 +468,6 @@ const AssessmentEngine: React.FC = () => {
                 </div>
               )}
 
-              {currentSlide.slideType === 'SITUATION' && currentSlide.content && (
-                <div className="w-full max-w-4xl px-4 text-center relative flex flex-col items-center justify-center">
-                   <div className="absolute inset-0 bg-app-accent/5 rounded-full blur-[150px] pointer-events-none" />
-                   <div className="w-full p-6 sm:p-10 bg-app-sidebar/50 backdrop-blur rounded-[1.5rem] sm:rounded-[3rem] border border-app-border shadow-2xl relative z-10 max-h-[calc(100vh-13rem)] overflow-y-auto custom-scrollbar">
-                      <h3 
-                        style={{ fontSize: `calc(${fontSizeMultiplier} * clamp(1.25rem, 3.5vw, 2.5rem))`, lineHeight: '1.4' }}
-                        className="font-sans italic text-app-text-bright tracking-tight whitespace-pre-wrap break-words"
-                        dangerouslySetInnerHTML={{ __html: `"${currentSlide.content}"` }}
-                      />
-                   </div>
-                   <div className="text-[4rem] sm:text-[8rem] md:text-[12rem] font-black text-white/5 uppercase italic absolute -bottom-8 sm:-bottom-20 left-1/2 -translate-x-1/2 select-none pointer-events-none">
-                      REACT
-                   </div>
-                </div>
-              )}
-
               {currentSlide.slideType === 'BREAK' && (
                 <div className="text-center space-y-6 sm:space-y-10 group px-4 max-w-full">
                    <div className="w-20 h-20 sm:w-32 sm:h-32 bg-app-card rounded-full flex items-center justify-center mx-auto border border-app-border group-hover:scale-110 transition-transform duration-700 shadow-2xl">
@@ -534,22 +488,15 @@ const AssessmentEngine: React.FC = () => {
                 </div>
               )}
 
-              {currentSlide.slideType === 'INSTRUCTIONS' && (
-                <div className="bg-app-sidebar p-6 sm:p-10 md:p-14 rounded-[1.5rem] sm:rounded-[3rem] border border-app-border shadow-2xl w-full max-w-4xl text-left space-y-6 sm:space-y-8 relative overflow-hidden max-h-[calc(100vh-13rem)] flex flex-col justify-between">
+              {currentSlide.slideType === 'TEXT' && (
+                <div className="bg-app-sidebar p-6 sm:p-10 md:p-14 rounded-[1.5rem] sm:rounded-[3rem] border border-app-border shadow-2xl w-full max-w-4xl space-y-6 sm:space-y-8 relative overflow-hidden max-h-[calc(100vh-13rem)] flex flex-col justify-between">
                    <div className="absolute top-0 right-0 w-64 h-64 bg-app-accent/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
                    
                    <div className="space-y-6 overflow-y-auto custom-scrollbar flex-grow pr-2">
-                     <h3 
-                       style={{ fontSize: `calc(${fontSizeMultiplier} * clamp(1.5rem, 4vw, 2.5rem))` }}
-                       className="font-black text-app-text-bright tracking-tight flex items-center gap-3 sm:gap-6 italic font-sans"
-                     >
-                      <BookOpen className="text-app-accent w-8 h-8 sm:w-12 sm:h-12 shrink-0" />
-                      Instructions
-                     </h3>
                      <div 
-                       style={{ fontSize: `calc(${fontSizeMultiplier} * clamp(0.95rem, 2.5vw, 1.5rem))`, lineHeight: '1.5' }}
-                       className="text-app-text-main font-sans italic whitespace-pre-wrap break-words"
-                       dangerouslySetInnerHTML={{ __html: currentSlide.content || "Please adhere to the protocols established in the previous section." }}
+                       style={{ fontSize: `calc(${fontSizeMultiplier} * clamp(1.25rem, 3.5vw, 2.25rem))`, lineHeight: '1.5' }}
+                       className="text-app-text-bright font-sans whitespace-pre-wrap break-words"
+                       dangerouslySetInnerHTML={{ __html: currentSlide.content || "" }}
                      />
                    </div>
                    

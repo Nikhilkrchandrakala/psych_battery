@@ -18,7 +18,7 @@ export interface UserProfile {
   createdAt: any;
 }
 
-export type SlideType = 'IMAGE' | 'WORD' | 'SITUATION' | 'BLACKOUT' | 'BREAK' | 'INSTRUCTIONS';
+export type SlideType = 'IMAGE' | 'WORD' | 'TEXT' | 'BLACKOUT' | 'BREAK';
 
 export type ModuleId = 'INTRO' | 'TAT' | 'WAT' | 'SRT' | 'SDT' | 'CLOSING';
 
