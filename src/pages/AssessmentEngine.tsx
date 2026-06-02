@@ -4,7 +4,7 @@ import { api } from '../lib/api';
 import { Assessment, AssessmentSlide, ModuleId, ModuleConfig } from '../types';
 import { useAuth } from '../components/AuthProvider';
 import { motion, AnimatePresence } from 'motion/react';
-import { Maximize, Timer, AlertTriangle, Play, BookOpen, Clock, Zap, ChevronLeft, ChevronRight, Pause, Type } from 'lucide-react';
+import { Maximize, Timer, AlertTriangle, Play, BookOpen, Clock, Zap, ChevronLeft, ChevronRight, Pause } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAssessmentData } from '../hooks/useAssessmentData';
 
@@ -30,7 +30,6 @@ const AssessmentEngine: React.FC = () => {
   // Timers
   const [timeLeft, setTimeLeft] = useState(0); // per-slide countdown OR global countdown
   const [isPaused, setIsPaused] = useState(false);
-  const [fontSizeMultiplier, setFontSizeMultiplier] = useState<number>(1.0);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -461,7 +460,7 @@ const AssessmentEngine: React.FC = () => {
                 <div className="relative max-w-full px-4">
                   <div className="absolute inset-0 bg-app-accent/10 rounded-full blur-[150px]" />
                   <h3 
-                    style={{ fontSize: `calc(${fontSizeMultiplier} * clamp(2rem, 15vw, 10rem))` }}
+                    style={{ fontSize: 'clamp(2rem, 15vw, 10rem)' }}
                     className="font-black tracking-tighter text-app-text-bright leading-none relative z-10 text-center font-sans break-words max-w-full"
                     dangerouslySetInnerHTML={{ __html: currentSlide.content }}
                   />
@@ -474,13 +473,13 @@ const AssessmentEngine: React.FC = () => {
                     <Clock className="text-app-text-muted w-10 h-10 sm:w-16 sm:h-16" />
                   </div>
                   <h3 
-                    style={{ fontSize: `calc(${fontSizeMultiplier} * clamp(2rem, 8vw, 5rem))` }}
+                    style={{ fontSize: 'clamp(2rem, 8vw, 5rem)' }}
                     className="font-black text-app-text-bright uppercase tracking-tighter italic font-sans"
                   >
                     BREAK
                   </h3>
                   <p 
-                    style={{ fontSize: `calc(${fontSizeMultiplier} * clamp(1rem, 2.5vw, 1.5rem))` }}
+                    style={{ fontSize: 'clamp(1rem, 2.5vw, 1.5rem)' }}
                     className="text-app-text-muted font-sans italic max-w-md mx-auto"
                   >
                     Deep breaths encouraged. Next section loading shortly.
@@ -489,20 +488,13 @@ const AssessmentEngine: React.FC = () => {
               )}
 
               {currentSlide.slideType === 'TEXT' && (
-                <div className="bg-app-sidebar p-6 sm:p-10 md:p-14 rounded-[1.5rem] sm:rounded-[3rem] border border-app-border shadow-2xl w-full max-w-4xl space-y-6 sm:space-y-8 relative overflow-hidden max-h-[calc(100vh-13rem)] flex flex-col justify-between">
-                   <div className="absolute top-0 right-0 w-64 h-64 bg-app-accent/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
-                   
-                   <div className="space-y-6 overflow-y-auto custom-scrollbar flex-grow pr-2">
+                <div className="w-full h-full flex flex-col max-h-full overflow-hidden">
+                   <div className="flex-grow overflow-y-auto px-8 md:px-16 lg:px-24 py-6 md:py-10 custom-scrollbar">
                      <div 
-                       style={{ fontSize: `calc(${fontSizeMultiplier} * clamp(1.25rem, 3.5vw, 2.25rem))`, lineHeight: '1.5' }}
-                       className="text-app-text-bright font-sans whitespace-pre-wrap break-words"
+                       style={{ fontSize: 'clamp(1.125rem, 2vw, 1.75rem)', lineHeight: '1.7' }}
+                       className="text-app-text-bright font-sans whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-8 [&_ol]:pl-8"
                        dangerouslySetInnerHTML={{ __html: currentSlide.content || "" }}
                      />
-                   </div>
-                   
-                   <div className="pt-4 sm:pt-6 border-t border-app-border flex items-center gap-4 text-xs font-black text-app-accent uppercase tracking-[0.3em] shrink-0 bg-app-sidebar/80 backdrop-blur z-10">
-                     <Zap size={16} className="fill-current animate-pulse" />
-                     Next in {timeLeft}s
                    </div>
                 </div>
               )}
@@ -567,35 +559,6 @@ const AssessmentEngine: React.FC = () => {
             >
               <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
             </button>
-          </div>
-
-          <div className="h-5 md:h-6 w-px bg-app-border/40" />
-
-          {/* Font Scaling Slider */}
-          <div className="flex items-center gap-1.5 md:gap-3 select-none">
-            <Type className="text-app-text-muted shrink-0 w-3.5 h-3.5 md:w-4 md:h-4" />
-            <input 
-              type="range"
-              min="0.6"
-              max="1.8"
-              step="0.05"
-              value={fontSizeMultiplier}
-              onChange={(e) => setFontSizeMultiplier(Number(e.target.value))}
-              className="w-16 md:w-24 h-1 bg-app-card border border-app-border rounded-lg appearance-none cursor-pointer accent-app-accent"
-              title="Adjust Font Size"
-            />
-            <span className="text-[9px] md:text-[10px] font-black font-mono text-app-accent w-6 md:w-8 shrink-0">
-              {Math.round(fontSizeMultiplier * 100)}%
-            </span>
-          </div>
-
-          <div className="h-5 md:h-6 w-px bg-app-border/40" />
-
-          <div className="flex items-center gap-1.5 md:gap-2 select-none px-1 md:px-2">
-            <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-app-accent animate-pulse shrink-0" />
-            <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.15em] text-app-text-muted hidden sm:inline-block">
-              {currentModuleConfig.timingMode === 'global' ? 'Free Nav' : 'Timed'}
-            </span>
           </div>
         </div>
       )}

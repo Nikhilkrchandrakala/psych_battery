@@ -3,7 +3,7 @@ import { useAssessmentData } from '../hooks/useAssessmentData';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, Clock, Maximize } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 
 interface AssessmentPresenterProps {
   assessmentId?: string; // Can be passed directly or taken from route params
@@ -13,8 +13,11 @@ interface AssessmentPresenterProps {
 export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assessmentId: propId, onExit }) => {
   const { id: routeId } = useParams<{ id: string }>();
   const id = propId || routeId;
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const previewModule = searchParams.get('module');
   
-  const { assessment, allSlides, loading, error, moduleSlideMap, activeModules } = useAssessmentData(id);
+  const { assessment, allSlides, loading, error, moduleSlideMap, activeModules } = useAssessmentData(id, previewModule);
 
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
   const [currentSlideInModule, setCurrentSlideInModule] = useState(0);
@@ -92,9 +95,6 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
   const isAtStart = currentModuleIndex === 0 && currentSlideInModule === 0;
   const isAtEnd = currentModuleIndex === activeModules.length - 1 && currentSlideInModule === currentModuleSlides.length - 1;
 
-  // We use a fixed font size multiplier so it always looks good in embedded views
-  const fontSizeMultiplier = 1.0;
-
   return (
     <div className={cn("w-full h-full flex flex-col bg-app-bg overflow-hidden font-sans select-none relative", currentSlide?.slideType === 'BLACKOUT' && "bg-black")}>
       
@@ -108,8 +108,12 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
         />
       </div>
 
-      {/* Slide Content Area (Full Bleed) */}
-      <div className="flex-grow flex items-center justify-center relative px-2 py-4 sm:px-8 sm:py-8 overflow-hidden">
+      {/* Slide Content Area (WYSIWYG 16:9 Canvas) */}
+      <div className="absolute inset-0 flex items-center justify-center overflow-hidden bg-black/40">
+        <div 
+          className="w-full max-h-full flex flex-col relative"
+          style={{ aspectRatio: '16/9' }}
+        >
         <AnimatePresence mode="wait">
           {currentSlide && (
             <motion.div
@@ -136,11 +140,11 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
               )}
 
               {currentSlide.slideType === 'WORD' && currentSlide.content && (
-                <div className="relative max-w-full px-4">
-                  <h3 
-                    style={{ fontSize: `calc(${fontSizeMultiplier} * clamp(2rem, 10vw, 8rem))` }}
-                    className="font-black tracking-tighter text-app-text-bright leading-none relative z-10 text-center font-sans break-words max-w-full"
+                <div className="w-full h-full flex flex-col overflow-hidden">
+                  <div 
+                    className="flex-1 font-sans font-normal text-app-text-bright tracking-tight w-full p-10 md:p-16 text-[8cqi] text-center font-black flex items-center justify-center whitespace-pre-wrap break-words"
                     dangerouslySetInnerHTML={{ __html: currentSlide.content }}
+                    style={{ containerType: 'inline-size' }}
                   />
                 </div>
               )}
@@ -151,7 +155,7 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
                     <Clock className="text-app-text-muted w-8 h-8" />
                   </div>
                   <h3 
-                    style={{ fontSize: `calc(${fontSizeMultiplier} * clamp(2rem, 6vw, 4rem))` }}
+                    style={{ fontSize: 'clamp(2rem, 6vw, 4rem)' }}
                     className="font-black text-app-text-bright uppercase tracking-tighter italic font-sans"
                   >
                     BREAK
@@ -160,12 +164,12 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
               )}
 
               {currentSlide.slideType === 'TEXT' && (
-                <div className="bg-app-sidebar p-6 sm:p-12 rounded-[2rem] border border-app-border shadow-2xl w-full max-w-5xl max-h-[80vh] overflow-y-auto custom-scrollbar relative">
-                   <div 
-                     style={{ fontSize: `calc(${fontSizeMultiplier} * clamp(1.25rem, 2.5vw, 2rem))`, lineHeight: '1.6' }}
-                     className="text-app-text-bright font-sans whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-8 [&_ol]:pl-8"
-                     dangerouslySetInnerHTML={{ __html: currentSlide.content || "" }}
-                   />
+                <div className="w-full h-full flex flex-col overflow-hidden">
+                     <div 
+                       className="flex-1 font-sans font-normal text-app-text-bright tracking-tight w-full overflow-y-auto custom-scrollbar p-10 md:p-16 text-2xl md:text-3xl lg:text-4xl leading-relaxed whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-12 [&_ol]:pl-12 [&_li]:my-2"
+                       dangerouslySetInnerHTML={{ __html: currentSlide.content || "" }}
+                       style={{ containerType: 'inline-size' }}
+                     />
                 </div>
               )}
 
@@ -177,10 +181,11 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </div>
 
-      {/* Bottom Presenter Toolbar */}
-      <div className="h-16 shrink-0 bg-app-header border-t border-app-border flex items-center justify-between px-4 sm:px-8 z-50">
+      {/* Bottom Presenter Toolbar (Floating Overlay) */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 h-14 bg-black/40 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-between px-6 z-50 shadow-2xl gap-8 transition-all hover:bg-black/80 opacity-60 hover:opacity-100 w-auto min-w-[500px]">
         
         {/* Module Info */}
         <div className="flex flex-col">
@@ -215,14 +220,15 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
 
         {/* Utilities */}
         <div className="flex items-center">
-          {onExit && (
              <button
-               onClick={onExit}
-               className="text-[10px] font-black uppercase tracking-widest text-app-text-muted hover:text-white transition-colors"
+               onClick={() => {
+                 if (onExit) onExit();
+                 else navigate(-1);
+               }}
+               className="px-4 py-2 bg-red-500/10 text-red-400 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-500/20"
              >
-               Exit
+               Exit Preview
              </button>
-          )}
         </div>
       </div>
     </div>

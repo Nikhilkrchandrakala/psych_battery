@@ -54,22 +54,54 @@ const TextFormattingToolbar: React.FC = () => {
     document.execCommand(command, false, value);
   };
 
-  const handleFontSize = (direction: 'up' | 'down') => {
-    // get current font size (default is 3 if not set)
-    let currentSize = parseInt(document.queryCommandValue('fontSize') || '3');
-    if (isNaN(currentSize)) currentSize = 3;
-    const newSize = direction === 'up' ? Math.min(7, currentSize + 1) : Math.max(1, currentSize - 1);
-    applyCommand('fontSize', newSize.toString());
+  const [showFontSize, setShowFontSize] = useState(false);
+
+  const FONT_SIZE_MAPPING: Record<string, string> = {
+    'Heading': '1.0em',
+    'Paragraph': '0.75em',
+  };
+
+  const handleFontSizeSelect = (val: string) => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      setShowFontSize(false);
+      return;
+    }
+    
+    const range = selection.getRangeAt(0);
+    const div = document.createElement('div');
+    div.appendChild(range.cloneContents());
+    
+    // Strip any nested inline font-sizes to prevent conflicts
+    div.querySelectorAll('*').forEach((el: any) => {
+      if (el.style) el.style.fontSize = '';
+    });
+    
+    const mappedSize = FONT_SIZE_MAPPING[val] || '1.0em';
+    const html = `<span style="font-size: ${mappedSize}">${div.innerHTML}</span>`;
+    
+    document.execCommand('insertHTML', false, html);
+    setShowFontSize(false);
   };
 
   const handleLineHeight = (val: string) => {
-    // Wrap selection in a div with line-height
-    // It's tricky to apply line-height to just text node natively, so we apply it to a block wrapper.
-    // Easiest cross-browser way: insert HTML wrapping the selection
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
-    const html = `<div style="line-height: ${val};">${selection.toString()}</div>`;
-    applyCommand('insertHTML', html);
+    
+    let block = selection.getRangeAt(0).startContainer as HTMLElement;
+    
+    // Walk up until we find a block element or the editor container itself
+    while (block && block.nodeType !== 1) block = block.parentElement!;
+    while (block && !['DIV','P','LI','BLOCKQUOTE','H1','H2','H3'].includes(block.tagName)) {
+      if (block.hasAttribute?.('contenteditable')) break; // Stop if we hit the root editor
+      if (!block.parentElement) break;
+      block = block.parentElement;
+    }
+    
+    if (block) {
+      block.style.lineHeight = val;
+    }
+    
     setShowLineHeight(false);
   };
 
@@ -85,13 +117,21 @@ const TextFormattingToolbar: React.FC = () => {
       
       <div className="w-px h-4 bg-app-border mx-1" />
       
-      {/* Font Size */}
-      <button onMouseDown={(e) => { e.preventDefault(); handleFontSize('up'); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors flex items-center gap-1" title="Increase Font Size">
-        <Type size={16} /><ChevronUp size={12} />
-      </button>
-      <button onMouseDown={(e) => { e.preventDefault(); handleFontSize('down'); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors flex items-center gap-1" title="Decrease Font Size">
-        <Type size={14} /><ChevronDown size={12} />
-      </button>
+      {/* Font Size Dropdown */}
+      <div className="relative">
+        <button onMouseDown={(e) => { e.preventDefault(); setShowFontSize(!showFontSize); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors flex items-center gap-1" title="Font Size">
+          <Type size={16} />
+        </button>
+        {showFontSize && (
+          <div className="absolute top-full left-0 mt-1 bg-app-card border border-app-border rounded-lg shadow-xl p-1 z-50 flex flex-col min-w-[100px] max-h-48 overflow-y-auto custom-scrollbar">
+            {['Heading', 'Paragraph'].map(size => (
+              <button key={size} onMouseDown={(e) => { e.preventDefault(); handleFontSizeSelect(size); }} className="text-xs text-app-text-muted hover:text-app-text-bright hover:bg-white/5 p-2 rounded text-left transition-colors">
+                {size}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="w-px h-4 bg-app-border mx-1" />
       
@@ -149,6 +189,12 @@ const MODULE_LABELS: Record<ModuleId, { label: string; shortLabel: string; color
 };
 
 const DEFAULT_MODULE_CONFIG: ModuleConfig = { timingMode: 'per-slide', globalDuration: 0, navigable: false };
+
+const stripHtml = (html: string) => {
+  const tmp = document.createElement("DIV");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+};
 
 const AssessmentEditor: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -364,13 +410,13 @@ const AssessmentEditor: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => navigate(`/assessment/${id}?module=${activeModule}`)}
+            onClick={() => navigate(`/presentation/${id}?module=${activeModule}`)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-app-card border border-app-border text-xs font-black text-app-text-bright hover:bg-white/5 transition-all"
           >
             <Eye size={16} /> Preview Module
           </button>
           <button 
-            onClick={() => navigate(`/assessment/${id}`)}
+            onClick={() => navigate(`/presentation/${id}`)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-app-card border border-app-border text-xs font-black text-app-text-bright hover:bg-white/5 transition-all"
           >
             <Eye size={16} /> Preview All
@@ -408,12 +454,12 @@ const AssessmentEditor: React.FC = () => {
                   )}
                 >
                   <span className={cn(
-                    "text-[10px] font-black uppercase tracking-wider",
+                    "text-xs font-black uppercase tracking-wider",
                     activeModule === mod ? MODULE_LABELS[mod].color : "text-app-text-muted"
                   )}>
                     {MODULE_LABELS[mod].shortLabel}
                   </span>
-                  <span className="text-[8px] font-bold text-app-text-muted">
+                  <span className="text-[10px] font-bold text-app-text-muted">
                     {moduleCounts[mod]} slides
                   </span>
                 </button>
@@ -463,19 +509,48 @@ const AssessmentEditor: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="h-14 rounded-lg bg-black/40 border border-app-border overflow-hidden flex items-center justify-center relative">
+                  <div className="w-full aspect-video rounded-lg bg-black/40 border border-app-border overflow-hidden flex items-center justify-center relative">
                     {slide.slideType === 'IMAGE' ? (
                       slide.imageUrl ? (
                         <img src={slide.imageUrl} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <ImageIcon size={14} className="text-app-text-muted" />
                       )
+                    ) : slide.slideType === 'BLACKOUT' ? (
+                      <div className="text-[9px] font-bold text-app-text-muted text-center px-2 line-clamp-3 p-1 w-full h-full flex items-center justify-center">
+                         ■ BLACKOUT
+                      </div>
+                    ) : slide.slideType === 'BREAK' ? (
+                      <div className="text-[9px] font-bold text-app-text-muted text-center px-2 line-clamp-3 p-1 w-full h-full flex items-center justify-center">
+                         ⏸ BREAK
+                      </div>
                     ) : (
-                      <div className="text-[9px] font-bold text-app-text-muted text-center px-2 line-clamp-2">
-                        {slide.slideType === 'WORD' ? slide.content : 
-                         slide.slideType === 'BLACKOUT' ? '■ BLACKOUT' :
-                         slide.slideType === 'BREAK' ? '⏸ BREAK' :
-                         (slide.content || '').substring(0, 60)}
+                      <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center bg-app-bg">
+                        <div 
+                          className="origin-center flex flex-col items-center justify-center shrink-0"
+                          style={{ 
+                            width: '1280px', 
+                            height: '720px', 
+                            transform: 'scale(0.19)',
+                            padding: slide.slideType === 'TEXT' ? '40px' : '20px'
+                          }}
+                        >
+                           {slide.slideType === 'WORD' ? (
+                             <h3 
+                               style={{ fontSize: '100px' }}
+                               className="font-black tracking-tighter text-app-text-bright leading-none text-center font-sans break-words max-w-full"
+                               dangerouslySetInnerHTML={{ __html: slide.content || '' }}
+                             />
+                           ) : (
+                             <div className="w-full h-full bg-app-sidebar rounded-3xl p-10 flex flex-col overflow-hidden">
+                               <div 
+                                 style={{ fontSize: '32px', lineHeight: '1.6', width: '100%' }}
+                                 className="text-app-text-bright font-sans whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-12 [&_ol]:pl-12 text-left"
+                                 dangerouslySetInnerHTML={{ __html: slide.content || '' }}
+                               />
+                             </div>
+                           )}
+                        </div>
                       </div>
                     )}
                     <div className="absolute bottom-0.5 right-1 bg-black/60 px-1 py-0.5 rounded text-[7px] font-bold text-white">
@@ -504,24 +579,28 @@ const AssessmentEditor: React.FC = () => {
         </aside>
 
         {/* Center — Workspace Canvas */}
-        <main className="flex-1 bg-black/30 p-8 overflow-y-auto flex items-center justify-center relative">
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-10">
+        <main className="flex-1 bg-black/30 flex flex-col overflow-hidden relative">
+          <div className="flex items-center justify-between px-6 py-3 shrink-0 z-10 bg-black/20 border-b border-app-border">
             <div className="flex items-center gap-6 text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em]">
                <span className={MODULE_LABELS[activeModule].color}>{MODULE_LABELS[activeModule].label} Module</span>
                <div className="h-px w-16 bg-app-border" />
-               <span>Canvas Preview</span>
+               <span>Canvas Editor</span>
             </div>
             
             <TextFormattingToolbar />
           </div>
 
-          <div className="w-full max-w-4xl mt-16 aspect-video bg-app-sidebar border border-app-border rounded-[2rem] shadow-[0_30px_80px_-15px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col items-center justify-center p-16 text-center relative group">
+          <div className="flex-1 p-4 md:p-8 flex items-center justify-center bg-black/40 overflow-hidden">
+            <div 
+              className="w-full max-h-full bg-app-sidebar border border-app-border rounded-xl shadow-[0_30px_80px_-15px_rgba(0,0,0,0.5)] overflow-y-auto flex flex-col relative group"
+              style={{ aspectRatio: '16/9' }}
+            >
              {activeSlide ? (
                <>
                  {activeSlide.slideType === 'IMAGE' && (
-                   <div className="w-full h-full flex flex-col items-center justify-center gap-4">
+                   <div className="w-full h-full flex flex-col items-center justify-center gap-4 p-4">
                       {activeSlide.imageUrl ? (
-                        <img src={activeSlide.imageUrl} alt="Slide Content" className="max-w-full max-h-full object-contain rounded-xl shadow-2xl" />
+                        <img src={activeSlide.imageUrl} alt="Slide Content" className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" />
                       ) : (
                         <div className="p-10 bg-app-card rounded-2xl border-2 border-dashed border-app-border flex flex-col items-center gap-3">
                            <ImageIcon size={40} className="text-app-text-muted" />
@@ -532,19 +611,20 @@ const AssessmentEditor: React.FC = () => {
                  )}
 
                   {(activeSlide.slideType === 'WORD' || activeSlide.slideType === 'TEXT') && (
-                    <>
+                    <div className="w-full h-full flex flex-col overflow-hidden">
                       <EditableContent 
                         value={activeSlide.content || ''}
                         onChange={(val) => updateSlide(activeSlide.id, { content: val })}
                         placeholder="ENTER CONTENT..."
                         className={cn(
-                          "font-black text-app-text-bright tracking-tight font-sans bg-transparent border-none outline-none text-center w-full focus:ring-0 focus:outline-none",
-                          "[&_ul]:list-disc [&_ul]:list-inside [&_ol]:list-decimal [&_ol]:list-inside [&_li]:my-1",
-                          activeSlide.slideType === 'WORD' ? "text-7xl" : 
-                          "text-2xl leading-relaxed max-w-4xl"
+                          "flex-1 font-sans font-normal text-app-text-bright tracking-tight bg-transparent border-none outline-none w-full focus:ring-0 focus:outline-none custom-scrollbar p-10 md:p-16",
+                          "[&_ul]:list-disc [&_ul]:pl-12 [&_ol]:list-decimal [&_ol]:pl-12 [&_li]:my-2",
+                          activeSlide.slideType === 'WORD' ? "text-[8cqi] text-center font-black flex items-center justify-center" : 
+                          "text-2xl md:text-3xl lg:text-4xl leading-relaxed"
                         )}
+                        style={{ containerType: 'inline-size' }}
                       />
-                    </>
+                    </div>
                  )}
 
                  {activeSlide.slideType === 'BLACKOUT' && (
@@ -572,10 +652,11 @@ const AssessmentEditor: React.FC = () => {
                  </div>
                </>
              ) : (
-               <div className="text-app-text-muted font-black uppercase tracking-widest text-sm">
+               <div className="text-app-text-muted font-black uppercase tracking-widest text-sm flex h-full items-center justify-center">
                   Select or add a slide to begin editing
                </div>
              )}
+            </div>
           </div>
         </main>
 
