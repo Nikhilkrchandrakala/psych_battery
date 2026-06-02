@@ -57,8 +57,8 @@ const TextFormattingToolbar: React.FC = () => {
   const [showFontSize, setShowFontSize] = useState(false);
 
   const FONT_SIZE_MAPPING: Record<string, string> = {
-    'Heading': '1.0em',
-    'Paragraph': '0.75em',
+    'Heading': '2.27em',
+    'Paragraph': '1.0em',
   };
 
   const handleFontSizeSelect = (val: string) => {
@@ -68,19 +68,55 @@ const TextFormattingToolbar: React.FC = () => {
       return;
     }
     
-    const range = selection.getRangeAt(0);
-    const div = document.createElement('div');
-    div.appendChild(range.cloneContents());
-    
-    // Strip any nested inline font-sizes to prevent conflicts
-    div.querySelectorAll('*').forEach((el: any) => {
-      if (el.style) el.style.fontSize = '';
-    });
-    
     const mappedSize = FONT_SIZE_MAPPING[val] || '1.0em';
-    const html = `<span style="font-size: ${mappedSize}">${div.innerHTML}</span>`;
     
-    document.execCommand('insertHTML', false, html);
+    // Use native fontSize to correctly wrap selections across complex nodes
+    document.execCommand('fontSize', false, '7');
+    
+    // Convert the legacy <font size="7"> tags to modern spans or apply to block parents
+    const fontElements = document.querySelectorAll('font[size="7"]');
+    fontElements.forEach(el => {
+      // Clear any nested font sizes to prevent conflicts
+      el.querySelectorAll('[style]').forEach((child: any) => {
+        if (child.style.fontSize) child.style.fontSize = '';
+      });
+
+      let appliedToBlock = false;
+      let blockParent = el.closest('li, p, h1, h2, h3, blockquote') as HTMLElement;
+      
+      if (!blockParent) {
+        const div = el.closest('div');
+        if (div && !div.hasAttribute('contenteditable')) {
+          blockParent = div as HTMLElement;
+        }
+      }
+
+      // If the font tag covers the entire block element, apply the font size to the block itself
+      // This ensures list markers (bullets/numbers) inherit the correct size perfectly.
+      if (blockParent && blockParent.textContent?.trim() === el.textContent?.trim()) {
+        blockParent.style.fontSize = mappedSize;
+        // Unwrap the font tag
+        while (el.firstChild) {
+          el.parentNode?.insertBefore(el.firstChild, el);
+        }
+        el.remove();
+        appliedToBlock = true;
+      }
+      
+      if (!appliedToBlock) {
+        const span = document.createElement('span');
+        span.style.fontSize = mappedSize;
+        span.innerHTML = el.innerHTML;
+        el.replaceWith(span);
+      }
+    });
+
+    // Dispatch input event so React's onInput catches the manual DOM mutation
+    const editor = document.querySelector('[contenteditable="true"]');
+    if (editor) {
+      editor.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    
     setShowFontSize(false);
   };
 
@@ -88,18 +124,37 @@ const TextFormattingToolbar: React.FC = () => {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
     
-    let block = selection.getRangeAt(0).startContainer as HTMLElement;
+    const range = selection.getRangeAt(0);
+    const container = range.commonAncestorContainer;
+    let root = (container.nodeType === 3 ? container.parentElement : container) as HTMLElement;
     
-    // Walk up until we find a block element or the editor container itself
-    while (block && block.nodeType !== 1) block = block.parentElement!;
-    while (block && !['DIV','P','LI','BLOCKQUOTE','H1','H2','H3'].includes(block.tagName)) {
-      if (block.hasAttribute?.('contenteditable')) break; // Stop if we hit the root editor
-      if (!block.parentElement) break;
-      block = block.parentElement;
+    // Find the highest level element inside the editor that isn't the editor itself
+    while (root && root.parentElement && !root.parentElement.hasAttribute('contenteditable')) {
+        if (root.hasAttribute('contenteditable')) break;
+        root = root.parentElement;
     }
-    
-    if (block) {
+
+    const blocksToUpdate = new Set<HTMLElement>();
+
+    if (root && root.hasAttribute('contenteditable')) {
+       // The common ancestor is the editor itself, meaning multiple top-level blocks are selected
+       Array.from(root.children).forEach((child: any) => {
+         if (range.intersectsNode(child)) {
+           blocksToUpdate.add(child);
+         }
+       });
+    } else if (root) {
+       // The common ancestor is a specific block or element
+       blocksToUpdate.add(root);
+    }
+
+    blocksToUpdate.forEach(block => {
       block.style.lineHeight = val;
+    });
+
+    const editor = document.querySelector('[contenteditable="true"]');
+    if (editor) {
+      editor.dispatchEvent(new Event('input', { bubbles: true }));
     }
     
     setShowLineHeight(false);
@@ -274,7 +329,7 @@ const AssessmentEditor: React.FC = () => {
                  activeModule === 'TAT' ? 'IMAGE' : 'TEXT',
       content: activeModule === 'SRT' ? 'New situation...' :
                activeModule === 'WAT' ? 'WORD' : 'New Slide Content',
-      displayTime: activeModule === 'WAT' ? 15 : activeModule === 'TAT' ? 30 : 5,
+      displayTime: activeModule === 'WAT' ? 15 : activeModule === 'TAT' ? 30 : 240,
       order: 0, // Will be reassigned
     };
 
@@ -532,20 +587,20 @@ const AssessmentEditor: React.FC = () => {
                             width: '1280px', 
                             height: '720px', 
                             transform: 'scale(0.19)',
-                            padding: slide.slideType === 'TEXT' ? '40px' : '20px'
+                            containerType: 'inline-size'
                           }}
                         >
                            {slide.slideType === 'WORD' ? (
-                             <h3 
-                               style={{ fontSize: '100px' }}
-                               className="font-black tracking-tighter text-app-text-bright leading-none text-center font-sans break-words max-w-full"
-                               dangerouslySetInnerHTML={{ __html: slide.content || '' }}
-                             />
+                             <div className="w-full h-full flex items-center justify-center p-[6cqi]">
+                               <h3 
+                                 className="font-black tracking-tighter text-app-text-bright leading-none text-center font-sans break-words max-w-full text-[8cqi]"
+                                 dangerouslySetInnerHTML={{ __html: slide.content || '' }}
+                               />
+                             </div>
                            ) : (
-                             <div className="w-full h-full bg-app-sidebar rounded-3xl p-10 flex flex-col overflow-hidden">
+                             <div className="w-full h-full bg-app-sidebar rounded-3xl p-[6cqi] flex flex-col overflow-hidden">
                                <div 
-                                 style={{ fontSize: '32px', lineHeight: '1.6', width: '100%' }}
-                                 className="text-app-text-bright font-sans whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-12 [&_ol]:pl-12 text-left"
+                                 className="text-app-text-bright font-sans whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-12 [&_ol]:pl-12 text-left text-[1.1cqi] leading-relaxed w-full"
                                  dangerouslySetInnerHTML={{ __html: slide.content || '' }}
                                />
                              </div>
@@ -617,10 +672,10 @@ const AssessmentEditor: React.FC = () => {
                         onChange={(val) => updateSlide(activeSlide.id, { content: val })}
                         placeholder="ENTER CONTENT..."
                         className={cn(
-                          "flex-1 font-sans font-normal text-app-text-bright tracking-tight bg-transparent border-none outline-none w-full focus:ring-0 focus:outline-none custom-scrollbar p-10 md:p-16",
+                          "flex-1 font-sans font-normal text-app-text-bright tracking-tight bg-transparent border-none outline-none w-full focus:ring-0 focus:outline-none custom-scrollbar p-[6cqi]",
                           "[&_ul]:list-disc [&_ul]:pl-12 [&_ol]:list-decimal [&_ol]:pl-12 [&_li]:my-2",
                           activeSlide.slideType === 'WORD' ? "text-[8cqi] text-center font-black flex items-center justify-center" : 
-                          "text-2xl md:text-3xl lg:text-4xl leading-relaxed"
+                          "text-[1.1cqi] leading-relaxed"
                         )}
                         style={{ containerType: 'inline-size' }}
                       />
@@ -835,13 +890,13 @@ const AssessmentEditor: React.FC = () => {
                         <span className="text-xs font-black text-app-accent">{activeSlide.displayTime}s</span>
                       </div>
                       <input 
-                        type="range" min="1" max="900" 
+                        type="range" min="15" max="240" 
                         value={activeSlide.displayTime}
                         onChange={(e) => updateSlide(activeSlide.id, { displayTime: parseInt(e.target.value) })}
                         className="w-full accent-app-accent"
                       />
                       <div className="flex justify-between text-[8px] font-bold text-app-text-muted uppercase">
-                        <span>1s</span><span>15 min</span>
+                        <span>15s</span><span>240s</span>
                       </div>
                     </div>
                   )}

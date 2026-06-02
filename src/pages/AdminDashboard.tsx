@@ -4,7 +4,7 @@ import { UserProfile, Assessment, AssessmentSubmission } from '../types';
 import { useAuth } from '../components/AuthProvider';
 import { 
   Layers, Plus, Trash2, Edit2, UserPlus, Database, ArrowRight, Play,
-  Eye, X, CheckCircle, AlertCircle, Send, Lock, Unlock
+  Eye, X, CheckCircle, AlertCircle, Send, Lock, Unlock, Copy
 } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -131,6 +131,17 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const duplicateAssessment = async (id: string) => {
+    if (!window.confirm('Are you sure you want to duplicate this assessment?')) return;
+    try {
+      const newAssessment = await api.assessments.duplicate(id);
+      setAssessments(prev => [...prev, newAssessment]);
+    } catch (error) {
+      console.error('Failed to duplicate assessment:', error);
+      alert('Failed to duplicate assessment.');
+    }
+  };
+
   if (loading) return (
     <div className="flex justify-center items-center h-96">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-app-accent"></div>
@@ -198,6 +209,7 @@ const AdminDashboard: React.FC = () => {
                          <Link to={`/assessment/${a.id}`} className="p-2 text-app-accent hover:text-amber-500 transition-colors" title="Test Protocol">
                            <Play size={16} />
                          </Link>
+                         <button onClick={() => duplicateAssessment(a.id)} className="p-2 text-app-text-muted hover:text-green-400 transition-colors" title="Duplicate Protocol"><Copy size={16} /></button>
                          <button onClick={() => deleteAssessment(a.id)} className="p-2 text-app-text-muted hover:text-red-400 transition-colors" title="Delete Protocol"><Trash2 size={16} /></button>
                       </div>
                    </div>

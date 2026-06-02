@@ -29,6 +29,7 @@ export const api = {
     get: (id: string) => fetchWithAuth(`/assessments/${id}`),
     create: (data: any) => fetchWithAuth('/assessments', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) => fetchWithAuth(`/assessments/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    duplicate: (id: string) => fetchWithAuth(`/assessments/${id}/duplicate`, { method: 'POST' }),
     delete: (id: string) => fetchWithAuth(`/assessments/${id}`, { method: 'DELETE' }),
     slides: (id: string) => fetchWithAuth(`/assessments/${id}/slides`),
     slidesByModule: (id: string, module: string) => fetchWithAuth(`/assessments/${id}/slides?module=${module}`),

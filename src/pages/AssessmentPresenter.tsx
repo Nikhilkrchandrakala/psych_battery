@@ -142,7 +142,7 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
               {currentSlide.slideType === 'WORD' && currentSlide.content && (
                 <div className="w-full h-full flex flex-col overflow-hidden">
                   <div 
-                    className="flex-1 font-sans font-normal text-app-text-bright tracking-tight w-full p-10 md:p-16 text-[8cqi] text-center font-black flex items-center justify-center whitespace-pre-wrap break-words"
+                    className="flex-1 font-sans font-normal text-app-text-bright tracking-tight w-full p-[6cqi] text-[8cqi] text-center font-black flex items-center justify-center whitespace-pre-wrap break-words"
                     dangerouslySetInnerHTML={{ __html: currentSlide.content }}
                     style={{ containerType: 'inline-size' }}
                   />
@@ -150,7 +150,7 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
               )}
 
               {currentSlide.slideType === 'BREAK' && (
-                <div className="text-center space-y-6 group px-4 max-w-full">
+                <div className="text-center space-y-6 group p-[6cqi] max-w-full">
                   <div className="w-16 h-16 bg-app-card rounded-full flex items-center justify-center mx-auto border border-app-border">
                     <Clock className="text-app-text-muted w-8 h-8" />
                   </div>
@@ -166,7 +166,7 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
               {currentSlide.slideType === 'TEXT' && (
                 <div className="w-full h-full flex flex-col overflow-hidden">
                      <div 
-                       className="flex-1 font-sans font-normal text-app-text-bright tracking-tight w-full overflow-y-auto custom-scrollbar p-10 md:p-16 text-2xl md:text-3xl lg:text-4xl leading-relaxed whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-12 [&_ol]:pl-12 [&_li]:my-2"
+                       className="flex-1 font-sans font-normal text-app-text-bright tracking-tight w-full overflow-y-auto custom-scrollbar p-[6cqi] text-[1.1cqi] leading-relaxed whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-12 [&_ol]:pl-12 [&_li]:my-2"
                        dangerouslySetInnerHTML={{ __html: currentSlide.content || "" }}
                        style={{ containerType: 'inline-size' }}
                      />
