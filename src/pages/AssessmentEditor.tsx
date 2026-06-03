@@ -547,7 +547,10 @@ const AssessmentEditor: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="w-full aspect-video rounded-lg bg-black/40 border border-app-border overflow-hidden flex items-center justify-center relative">
+                  <div 
+                    className="w-full aspect-video rounded-lg bg-black/40 border border-app-border overflow-hidden flex items-center justify-center relative"
+                    style={{ filter: slide.inverted ? 'invert(1)' : 'none' }}
+                  >
                     {slide.slideType === 'IMAGE' ? (
                       slide.imageUrl ? (
                         <img src={slide.imageUrl} alt="" className="w-full h-full object-cover" />
@@ -649,7 +652,10 @@ const AssessmentEditor: React.FC = () => {
           <div className="flex-1 p-4 md:p-8 flex items-center justify-center bg-black/40 overflow-hidden">
             <div 
               className="w-full max-h-full bg-app-sidebar border border-app-border rounded-xl shadow-[0_30px_80px_-15px_rgba(0,0,0,0.5)] overflow-y-auto flex flex-col relative group"
-              style={{ aspectRatio: '16/9' }}
+              style={{ 
+                aspectRatio: '16/9',
+                filter: activeSlide?.inverted ? 'invert(1)' : 'none'
+              }}
             >
              {activeSlide ? (
                <>
@@ -911,6 +917,32 @@ const AssessmentEditor: React.FC = () => {
                       </p>
                     </div>
                   )}
+                </div>
+
+                {/* Invert Colors Toggle */}
+                <div className="pt-4 border-t border-app-border">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div 
+                      onClick={() => updateSlide(activeSlide.id, { inverted: !activeSlide.inverted })}
+                      className={cn(
+                        "w-8 h-5 rounded-full border transition-all relative",
+                        activeSlide.inverted
+                          ? "bg-app-accent border-app-accent"
+                          : "bg-app-card border-app-border"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-all",
+                        activeSlide.inverted ? "left-[14px]" : "left-[3px]"
+                      )} />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Shield size={12} className="text-app-text-muted" />
+                      <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest group-hover:text-app-text-bright transition-colors">
+                        Invert Colors
+                      </span>
+                    </div>
+                  </label>
                 </div>
 
                 {/* Delete */}

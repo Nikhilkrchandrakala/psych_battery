@@ -281,7 +281,7 @@ const AssessmentEngine: React.FC = () => {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 space-y-10 sm:space-y-16 pb-20 pt-6 sm:pt-10 animate-fade-in">
         <div className="space-y-4 sm:space-y-6">
           <button 
-            onClick={() => navigate('/')}
+            onClick={() => window.location.href = `${mainSiteUrl}/ProfileDashboard?tab=psycheTest`}
             className="text-[10px] font-black text-app-text-muted hover:text-app-text-bright flex items-center gap-2 transition-colors uppercase tracking-[0.2em]"
           >
             ← Cancel Session
@@ -440,6 +440,7 @@ const AssessmentEngine: React.FC = () => {
               exit={{ opacity: 0, scale: 1.05 }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="w-full max-w-6xl h-full flex flex-col items-center justify-center"
+              style={{ filter: currentSlide?.inverted ? 'invert(1)' : 'none' }}
             >
               {currentSlide.slideType === 'IMAGE' && currentSlide.imageUrl && (
                 <div className="relative w-full h-full max-h-[calc(100vh-14rem)] flex items-center justify-center">

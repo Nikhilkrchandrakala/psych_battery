@@ -216,6 +216,7 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
               exit={{ opacity: 0, scale: 1.02 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
               className="flex-1 w-full flex flex-col items-center justify-center"
+              style={{ filter: currentSlide?.inverted ? 'invert(1)' : 'none' }}
             >
               {currentSlide.slideType === 'IMAGE' && currentSlide.imageUrl && (
                 <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center">
