@@ -1009,6 +1009,36 @@ async function startServer() {
     }
   });
 
+  // --- UPLOAD ENDPOINT ---
+  const batteryUploadDir = path.join(process.cwd(), 'public/uploads');
+  if (!fs.existsSync(batteryUploadDir)) {
+    fs.mkdirSync(batteryUploadDir, { recursive: true });
+  }
+
+  const batteryStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, batteryUploadDir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+  });
+
+  const batteryUpload = multer({ storage: batteryStorage });
+
+  app.post('/api/upload', authenticate, batteryUpload.single('file'), (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+      const url = `/uploads/${req.file.filename}`;
+      res.json({ url });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Serve uploaded images/slides static directory
   app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
 
