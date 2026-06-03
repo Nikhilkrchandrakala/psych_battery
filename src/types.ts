@@ -51,6 +51,7 @@ export interface AssessmentSlide {
   displayTime: number; // in seconds
   order: number;
   typographyScale?: number; // scale multiplier for text sizing (default 1)
+  inverted?: boolean; // whether to invert colors on the slide
 }
 
 export type SubmissionStatus = 
