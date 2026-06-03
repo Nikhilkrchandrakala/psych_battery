@@ -1005,6 +1005,9 @@ async function startServer() {
                 html: `
                   <html>
                     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                      <div style="text-align: center; margin-bottom: 20px;">
+                        <img src="https://ssbwithisv.in/assets/logo-b9c1b3f8.png" alt="SSB With ISV Logo" style="max-height: 80px;" />
+                      </div>
                       <h2 style="color: #C5A028; border-bottom: 2px solid #C5A028; padding-bottom: 10px;">Meeting Scheduled</h2>
                       <p>Dear ${studentName},</p>
                       <p>Your feedback meeting with the <strong>${role.toUpperCase()} Assessor</strong> has been scheduled.</p>
