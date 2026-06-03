@@ -812,13 +812,20 @@ const AssessmentEditor: React.FC = () => {
                      {[
                       { id: 'TEXT', label: 'Text', icon: Type },
                       { id: 'IMAGE', label: 'Image', icon: ImageIcon },
-                      { id: 'WORD', label: 'Slide Title', icon: MessageSquare },
+                      { id: 'WORD', label: 'Word', icon: MessageSquare },
                       { id: 'BREAK', label: 'Break', icon: Clock },
                       { id: 'BLACKOUT', label: 'Blackout', icon: Shield }
                      ].map(type => (
                        <button
                         key={type.id}
-                        onClick={() => updateSlide(activeSlide.id, { slideType: type.id as SlideType })}
+                        onClick={() => {
+                          const updates: Partial<AssessmentSlide> = { slideType: type.id as SlideType };
+                          // If switching to WORD or clicking WORD again, strip HTML to standardise font size
+                          if (type.id === 'WORD' && activeSlide.content) {
+                            updates.content = activeSlide.content.replace(/<[^>]*>?/gm, '').trim();
+                          }
+                          updateSlide(activeSlide.id, updates);
+                        }}
                         className={cn(
                           "flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border transition-all",
                           activeSlide.slideType === type.id 
@@ -880,19 +887,19 @@ const AssessmentEditor: React.FC = () => {
                   {/* Duration (only for per-slide timing) */}
                   {currentModuleConfig.timingMode === 'per-slide' && (
                     <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Duration</label>
-                        <span className="text-xs font-black text-app-accent">{activeSlide.displayTime}s</span>
-                      </div>
+                      <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Duration (Seconds)</label>
                       <input 
-                        type="range" min="15" max="240" 
-                        value={activeSlide.displayTime}
-                        onChange={(e) => updateSlide(activeSlide.id, { displayTime: parseInt(e.target.value) })}
-                        className="w-full accent-app-accent"
+                        type="number" min="0" max="600" 
+                        value={activeSlide.displayTime || 0}
+                        onChange={(e) => {
+                          let val = parseInt(e.target.value) || 0;
+                          if (val > 600) val = 600;
+                          if (val < 0) val = 0;
+                          updateSlide(activeSlide.id, { displayTime: val });
+                        }}
+                        className="w-full bg-app-card border border-app-border rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-app-accent transition-all text-app-text-bright"
+                        placeholder="Enter duration (max 600)"
                       />
-                      <div className="flex justify-between text-[8px] font-bold text-app-text-muted uppercase">
-                        <span>15s</span><span>240s</span>
-                      </div>
                     </div>
                   )}
 
