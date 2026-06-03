@@ -50,6 +50,7 @@ export interface AssessmentSlide {
   content?: string; // Used for words, situations, or instructions
   displayTime: number; // in seconds
   order: number;
+  typographyScale?: number; // scale multiplier for text sizing (default 1)
 }
 
 export type SubmissionStatus = 

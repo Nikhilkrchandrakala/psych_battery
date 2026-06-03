@@ -1,9 +1,39 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useAssessmentData } from '../hooks/useAssessmentData';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, Clock, Maximize } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+
+const cleanHTML = (html: string) => {
+  if (!html) return "";
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    let lastChild = doc.body.lastChild;
+    while (lastChild) {
+      if (lastChild.nodeType === Node.TEXT_NODE && !lastChild.textContent?.trim()) {
+        const prev = lastChild.previousSibling;
+        lastChild.remove();
+        lastChild = prev;
+      } else if (lastChild.nodeType === Node.ELEMENT_NODE) {
+        const el = lastChild as HTMLElement;
+        if (el.tagName === 'BR' || (!el.textContent?.trim() && !el.querySelector('img'))) {
+          const prev = lastChild.previousSibling;
+          lastChild.remove();
+          lastChild = prev;
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+    return doc.body.innerHTML;
+  } catch (e) {
+    return html;
+  }
+};
 
 interface AssessmentPresenterProps {
   assessmentId?: string; // Can be passed directly or taken from route params
@@ -35,6 +65,13 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
     return count + currentSlideInModule;
   }, [currentModuleIndex, currentSlideInModule, activeModules, moduleSlideMap]);
 
+  const currentModuleConfig = assessment?.modules?.[currentModule as any] || { timingMode: 'per-slide', globalDuration: 0, navigable: false };
+
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSlideKeyRef = useRef<string>('');
+
   const advanceToNextModule = useCallback(() => {
     if (currentModuleIndex + 1 >= activeModules.length) {
       return; // End of assessment
@@ -62,6 +99,59 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
       setCurrentSlideInModule(Math.max(0, (moduleSlideMap[prevModule]?.length || 1) - 1));
     }
   }, [currentSlideInModule, currentModuleIndex, activeModules, moduleSlideMap]);
+
+  // Timer logic
+  useEffect(() => {
+    if (!currentSlide || !assessment) return;
+
+    const slideKey = `${currentModuleIndex}-${currentSlideInModule}`;
+
+    if (currentModuleConfig.timingMode === 'per-slide') {
+      if (lastSlideKeyRef.current !== slideKey) {
+        setTimeLeft(currentSlide.displayTime || 15);
+        lastSlideKeyRef.current = slideKey;
+      }
+
+      if (timerRef.current) clearInterval(timerRef.current);
+      
+      if (!isPaused) {
+        timerRef.current = setInterval(() => {
+          setTimeLeft((prev) => {
+            if (prev <= 1) {
+              handleNextSlide();
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
+    } else {
+      if (lastSlideKeyRef.current.split('-')[0] !== String(currentModuleIndex)) {
+        setTimeLeft(currentModuleConfig.globalDuration || 1800);
+        lastSlideKeyRef.current = slideKey;
+      } else {
+        lastSlideKeyRef.current = slideKey;
+      }
+
+      if (timerRef.current) clearInterval(timerRef.current);
+
+      if (!isPaused) {
+        timerRef.current = setInterval(() => {
+          setTimeLeft((prev) => {
+            if (prev <= 1) {
+              handleNextSlide();
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
+    }
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [currentSlide, currentModuleIndex, currentSlideInModule, currentModuleConfig, isPaused, handleNextSlide, assessment]);
 
   // Keyboard controls
   useEffect(() => {
@@ -96,10 +186,10 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
   const isAtEnd = currentModuleIndex === activeModules.length - 1 && currentSlideInModule === currentModuleSlides.length - 1;
 
   return (
-    <div className={cn("w-full h-full flex flex-col bg-app-bg overflow-hidden font-sans select-none relative", currentSlide?.slideType === 'BLACKOUT' && "bg-black")}>
+    <div className={cn("w-full h-screen flex flex-col bg-app-bg overflow-hidden font-sans select-none relative", currentSlide?.slideType === 'BLACKOUT' && "bg-black")}>
       
       {/* Progress Bar */}
-      <div className="absolute top-0 left-0 w-full h-[3px] bg-white/5 z-50">
+      <div className="w-full h-[3px] bg-white/5 z-50 shrink-0">
         <motion.div 
           className="h-full bg-app-accent"
           initial={{ width: 0 }}
@@ -109,10 +199,13 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
       </div>
 
       {/* Slide Content Area (WYSIWYG 16:9 Canvas) */}
-      <div className="absolute inset-0 flex items-center justify-center overflow-hidden bg-black/40">
+      <div className="flex-1 min-h-0 w-full flex items-center justify-center bg-black/40 relative overflow-hidden">
         <div 
-          className="w-full max-h-full flex flex-col relative"
-          style={{ aspectRatio: '16/9' }}
+          className="flex flex-col items-center justify-center relative w-full"
+          style={{ 
+            aspectRatio: '16/9', 
+            maxWidth: 'calc((100vh - 80px) * 16 / 9)'
+          }}
         >
         <AnimatePresence mode="wait">
           {currentSlide && (
@@ -122,7 +215,7 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 1.02 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              className="w-full h-full flex flex-col items-center justify-center relative"
+              className="flex-1 w-full flex flex-col items-center justify-center"
             >
               {currentSlide.slideType === 'IMAGE' && currentSlide.imageUrl && (
                 <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center">
@@ -142,9 +235,12 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
               {currentSlide.slideType === 'WORD' && currentSlide.content && (
                 <div className="w-full h-full flex flex-col overflow-hidden">
                   <div 
-                    className="flex-1 font-sans font-normal text-app-text-bright tracking-tight w-full p-[6cqi] text-[8cqi] text-center font-black flex items-center justify-center whitespace-pre-wrap break-words"
+                    className="flex-1 font-sans font-normal text-app-text-bright tracking-tight w-full p-[6cqi] text-center font-black flex items-center justify-center whitespace-pre-wrap break-words"
                     dangerouslySetInnerHTML={{ __html: currentSlide.content }}
-                    style={{ containerType: 'inline-size' }}
+                    style={{ 
+                      containerType: 'inline-size',
+                      fontSize: `calc(8cqi * ${currentSlide.typographyScale || 1})`
+                    }}
                   />
                 </div>
               )}
@@ -164,12 +260,15 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
               )}
 
               {currentSlide.slideType === 'TEXT' && (
-                <div className="w-full h-full flex flex-col overflow-hidden">
-                     <div 
-                       className="flex-1 font-sans font-normal text-app-text-bright tracking-tight w-full overflow-y-auto custom-scrollbar p-[6cqi] text-[1.1cqi] leading-relaxed whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-12 [&_ol]:pl-12 [&_li]:my-2"
-                       dangerouslySetInnerHTML={{ __html: currentSlide.content || "" }}
-                       style={{ containerType: 'inline-size' }}
-                     />
+                <div className="w-full h-full flex flex-col items-center justify-center overflow-hidden p-[6cqi]">
+                  <div 
+                    className="w-full my-auto font-sans font-normal text-app-text-bright tracking-tight text-left leading-relaxed whitespace-pre-wrap break-words [&_ul]:list-disc [&_ul]:pl-12 [&_ol]:list-decimal [&_ol]:pl-12 [&_li]:my-2"
+                    dangerouslySetInnerHTML={{ __html: cleanHTML(currentSlide.content || "") }}
+                    style={{ 
+                      containerType: 'inline-size',
+                      fontSize: `calc(1.1cqi * ${currentSlide.typographyScale || 1})`
+                    }}
+                  />
                 </div>
               )}
 
@@ -184,51 +283,70 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
         </div>
       </div>
 
-      {/* Bottom Presenter Toolbar (Floating Overlay) */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 h-14 bg-black/40 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-between px-6 z-50 shadow-2xl gap-8 transition-all hover:bg-black/80 opacity-60 hover:opacity-100 w-auto min-w-[500px]">
+      {/* Bottom Presenter Toolbar (Static Div Below) */}
+      <div className="shrink-0 h-20 bg-black flex items-center justify-between px-8 z-50 border-t border-white/5 w-full">
         
         {/* Module Info */}
-        <div className="flex flex-col">
-          <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40">Module</span>
-          <span className="text-app-text-bright font-black text-xs">{currentModule}</span>
+        <div className="flex flex-col w-[200px]">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Module</span>
+          <span className="text-app-text-bright font-black text-sm">{currentModule}</span>
         </div>
 
         {/* Navigation Controls */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 flex-1 justify-center">
           <button
             onClick={handlePrevSlide}
             disabled={isAtStart}
-            className="flex items-center gap-2 p-2 px-4 rounded-xl text-app-text-muted hover:bg-app-card hover:text-app-text-bright disabled:opacity-30 transition-all font-black uppercase tracking-widest text-[10px]"
+            className="flex items-center gap-2 p-2 px-6 rounded-xl text-app-text-muted hover:bg-app-card hover:text-app-text-bright disabled:opacity-30 transition-all font-black uppercase tracking-widest text-[12px]"
           >
-            <ChevronLeft size={16} /> Prev
+            <ChevronLeft size={18} /> Prev
           </button>
           
-          <div className="text-center min-w-[80px]">
-            <span className="text-sm font-black text-app-text-bright">{globalSlideIndex + 1}</span>
-            <span className="text-[10px] text-app-text-muted mx-1">/</span>
-            <span className="text-[10px] font-black text-app-text-muted">{totalSlides}</span>
+          <div className="text-center min-w-[100px] flex items-center justify-center gap-2">
+            <span className="text-base font-black text-app-text-bright">{globalSlideIndex + 1}</span>
+            <span className="text-[12px] text-app-text-muted">/</span>
+            <span className="text-[12px] font-black text-app-text-muted">{totalSlides}</span>
           </div>
 
           <button
             onClick={handleNextSlide}
             disabled={isAtEnd}
-            className="flex items-center gap-2 p-2 px-4 rounded-xl text-app-text-bright bg-app-accent/10 border border-app-accent/20 hover:bg-app-accent hover:text-white disabled:opacity-30 disabled:hover:bg-app-accent/10 disabled:hover:text-app-text-bright transition-all font-black uppercase tracking-widest text-[10px]"
+            className="flex items-center gap-2 p-2 px-6 rounded-xl text-app-text-bright bg-app-accent/10 border border-app-accent/20 hover:bg-app-accent hover:text-white disabled:opacity-30 disabled:hover:bg-app-accent/10 disabled:hover:text-app-text-bright transition-all font-black uppercase tracking-widest text-[12px]"
           >
-            Next <ChevronRight size={16} />
+            Next <ChevronRight size={18} />
           </button>
         </div>
 
-        {/* Utilities */}
-        <div className="flex items-center">
-             <button
-               onClick={() => {
-                 if (onExit) onExit();
-                 else navigate(-1);
-               }}
-               className="px-4 py-2 bg-red-500/10 text-red-400 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-500/20"
-             >
-               Exit Preview
-             </button>
+        {/* Counter and Utilities */}
+        <div className="flex items-center gap-6 justify-end w-auto min-w-[200px]">
+          <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/10 flex items-center gap-3">
+             <Clock className={cn("animate-pulse w-4 h-4", currentModuleConfig.timingMode === 'global' ? "text-amber-400" : "text-app-accent")} />
+             <span className="text-xl font-black text-app-text-bright font-mono tabular-nums leading-none">
+              {String(Math.floor(timeLeft / 60)).padStart(2, '0')}:{String(timeLeft % 60).padStart(2, '0')}
+            </span>
+          </div>
+
+          <button 
+            onClick={() => setIsPaused(!isPaused)}
+            className={cn(
+              "px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all border",
+              isPaused 
+                ? "bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500 hover:text-white" 
+                : "bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500 hover:text-white"
+            )}
+          >
+            {isPaused ? "Resume" : "Pause Timer"}
+          </button>
+
+          <button
+            onClick={() => {
+              if (onExit) onExit();
+              else navigate(-1);
+            }}
+            className="px-6 py-2.5 bg-red-500/10 text-red-400 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-500/20"
+          >
+            Exit Preview
+          </button>
         </div>
       </div>
     </div>

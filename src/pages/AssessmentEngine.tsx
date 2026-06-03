@@ -460,7 +460,7 @@ const AssessmentEngine: React.FC = () => {
                 <div className="relative max-w-full px-4">
                   <div className="absolute inset-0 bg-app-accent/10 rounded-full blur-[150px]" />
                   <h3 
-                    style={{ fontSize: 'clamp(2rem, 15vw, 10rem)' }}
+                    style={{ fontSize: `calc(clamp(2rem, 15vw, 10rem) * ${currentSlide.typographyScale || 1})` }}
                     className="font-black tracking-tighter text-app-text-bright leading-none relative z-10 text-center font-sans break-words max-w-full"
                     dangerouslySetInnerHTML={{ __html: currentSlide.content }}
                   />
@@ -488,11 +488,11 @@ const AssessmentEngine: React.FC = () => {
               )}
 
               {currentSlide.slideType === 'TEXT' && (
-                <div className="w-full h-full flex flex-col max-h-full overflow-hidden">
-                   <div className="flex-grow overflow-y-auto px-8 md:px-16 lg:px-24 py-6 md:py-10 custom-scrollbar">
+                <div className="w-full h-full flex flex-col items-center justify-center max-h-full overflow-hidden px-8 md:px-16 lg:px-24 py-6 md:py-10">
+                   <div className="w-full max-h-full overflow-y-auto custom-scrollbar">
                      <div 
-                       style={{ fontSize: 'clamp(1.125rem, 2vw, 1.75rem)', lineHeight: '1.7' }}
-                       className="text-app-text-bright font-sans whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-8 [&_ol]:pl-8"
+                       style={{ fontSize: `calc(clamp(1.125rem, 2vw, 1.75rem) * ${currentSlide.typographyScale || 1})`, lineHeight: '1.7' }}
+                       className="text-app-text-bright font-sans whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-8 [&_ol]:pl-8 text-left"
                        dangerouslySetInnerHTML={{ __html: currentSlide.content || "" }}
                      />
                    </div>

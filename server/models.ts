@@ -83,6 +83,7 @@ const SlideSchema = new mongoose.Schema({
   content: String,
   displayTime: { type: Number, default: 5 },
   order: { type: Number, default: 0 },
+  typographyScale: { type: Number, default: 1 },
 }, { timestamps: true });
 
 SlideSchema.set('toJSON', {

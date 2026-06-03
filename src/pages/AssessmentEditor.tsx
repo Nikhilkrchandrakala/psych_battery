@@ -17,7 +17,8 @@ const EditableContent: React.FC<{
   onChange: (val: string) => void;
   className?: string;
   placeholder?: string;
-}> = ({ value, onChange, className, placeholder }) => {
+  style?: React.CSSProperties;
+}> = ({ value, onChange, className, placeholder, style }) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,7 +41,7 @@ const EditableContent: React.FC<{
       onPaste={handlePaste}
       className={className}
       data-placeholder={placeholder}
-      style={{ minHeight: '1em' }}
+      style={{ minHeight: '1em', ...style }}
     />
   );
 };
@@ -193,24 +194,6 @@ const TextFormattingToolbar: React.FC = () => {
       <button onMouseDown={(e) => { e.preventDefault(); applyCommand('insertUnorderedList'); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors" title="Bullet List"><List size={16} /></button>
       <button onMouseDown={(e) => { e.preventDefault(); applyCommand('insertOrderedList'); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors" title="Numbered List"><ListOrdered size={16} /></button>
       
-      <div className="w-px h-4 bg-app-border mx-1" />
-
-      {/* Line Height Toggle */}
-      <div className="relative">
-        <button onMouseDown={(e) => { e.preventDefault(); setShowLineHeight(!showLineHeight); }} className="p-2 text-app-text-muted hover:text-app-text-bright hover:bg-white/5 rounded-lg transition-colors flex items-center gap-1" title="Line Spacing">
-          <Layout size={16} />
-        </button>
-        {showLineHeight && (
-          <div className="absolute top-full left-0 mt-1 bg-app-card border border-app-border rounded-lg shadow-xl p-1 z-50 flex flex-col min-w-[80px]">
-            {[1.0, 1.5, 2.0].map(lh => (
-              <button key={lh} onMouseDown={(e) => { e.preventDefault(); handleLineHeight(lh.toString()); }} className="text-xs text-app-text-muted hover:text-app-text-bright hover:bg-white/5 p-2 rounded text-left transition-colors">
-                {lh}x
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
       <div className="w-px h-4 bg-app-border mx-1" />
 
       {/* Color Swatches */}
@@ -598,9 +581,9 @@ const AssessmentEditor: React.FC = () => {
                                />
                              </div>
                            ) : (
-                             <div className="w-full h-full bg-app-sidebar rounded-3xl p-[6cqi] flex flex-col overflow-hidden">
+                             <div className="w-full h-full bg-app-sidebar rounded-3xl p-[6cqi] flex flex-col items-center justify-center overflow-hidden">
                                <div 
-                                 className="text-app-text-bright font-sans whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-12 [&_ol]:pl-12 text-left text-[1.1cqi] leading-relaxed w-full"
+                                 className="text-app-text-bright font-sans whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-12 [&_ol]:pl-12 text-left leading-relaxed w-full"
                                  dangerouslySetInnerHTML={{ __html: slide.content || '' }}
                                />
                              </div>
@@ -642,7 +625,25 @@ const AssessmentEditor: React.FC = () => {
                <span>Canvas Editor</span>
             </div>
             
-            <TextFormattingToolbar />
+            <div className="flex items-center gap-4">
+              {activeSlide && (activeSlide.slideType === 'WORD' || activeSlide.slideType === 'TEXT') && (
+                <div className="flex items-center gap-2 bg-app-sidebar border border-app-border rounded-xl px-3 py-1.5 shadow-xl">
+                  <Type size={14} className="text-app-text-muted" />
+                  <input 
+                    type="range" 
+                    min="0.2" max="4" step="0.05" 
+                    value={activeSlide.typographyScale || 1}
+                    onChange={(e) => updateSlide(activeSlide.id, { typographyScale: parseFloat(e.target.value) })}
+                    className="w-24 accent-app-accent cursor-pointer"
+                    title={`Text Scale: ${Math.round((activeSlide.typographyScale || 1) * 100)}%`}
+                  />
+                  <span className="text-[10px] font-bold text-app-text-muted w-8 text-right">
+                    {Math.round((activeSlide.typographyScale || 1) * 100)}%
+                  </span>
+                </div>
+              )}
+              <TextFormattingToolbar />
+            </div>
           </div>
 
           <div className="flex-1 p-4 md:p-8 flex items-center justify-center bg-black/40 overflow-hidden">
@@ -666,18 +667,21 @@ const AssessmentEditor: React.FC = () => {
                  )}
 
                   {(activeSlide.slideType === 'WORD' || activeSlide.slideType === 'TEXT') && (
-                    <div className="w-full h-full flex flex-col overflow-hidden">
+                    <div className="w-full h-full flex flex-col items-center justify-center overflow-hidden p-[6cqi]">
                       <EditableContent 
                         value={activeSlide.content || ''}
                         onChange={(val) => updateSlide(activeSlide.id, { content: val })}
                         placeholder="ENTER CONTENT..."
                         className={cn(
-                          "flex-1 font-sans font-normal text-app-text-bright tracking-tight bg-transparent border-none outline-none w-full focus:ring-0 focus:outline-none custom-scrollbar p-[6cqi]",
+                          "w-full font-sans font-normal text-app-text-bright tracking-tight bg-transparent border-none outline-none focus:ring-0 focus:outline-none custom-scrollbar",
                           "[&_ul]:list-disc [&_ul]:pl-12 [&_ol]:list-decimal [&_ol]:pl-12 [&_li]:my-2",
-                          activeSlide.slideType === 'WORD' ? "text-[8cqi] text-center font-black flex items-center justify-center" : 
-                          "text-[1.1cqi] leading-relaxed"
+                          activeSlide.slideType === 'WORD' ? "text-center font-black flex items-center justify-center h-full" : 
+                          "leading-relaxed text-left"
                         )}
-                        style={{ containerType: 'inline-size' }}
+                        style={{ 
+                          containerType: 'inline-size',
+                          fontSize: `calc(${activeSlide.slideType === 'WORD' ? '8cqi' : '1.1cqi'} * ${activeSlide.typographyScale || 1})`
+                        }}
                       />
                     </div>
                  )}
@@ -696,15 +700,6 @@ const AssessmentEditor: React.FC = () => {
                    </div>
                  )}
 
-                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/5 opacity-0 group-hover:opacity-100 transition-all duration-500">
-                    <Clock size={14} className="text-app-accent" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-app-text-bright">
-                      {currentModuleConfig.timingMode === 'global' 
-                        ? `Global: ${Math.floor(currentModuleConfig.globalDuration / 60)}min`
-                        : `${activeSlide.displayTime}s per slide`
-                      }
-                    </span>
-                 </div>
                </>
              ) : (
                <div className="text-app-text-muted font-black uppercase tracking-widest text-sm flex h-full items-center justify-center">
