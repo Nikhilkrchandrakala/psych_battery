@@ -34,6 +34,7 @@ export const api = {
     slides: (id: string) => fetchWithAuth(`/assessments/${id}/slides`),
     slidesByModule: (id: string, module: string) => fetchWithAuth(`/assessments/${id}/slides?module=${module}`),
     saveSlidesBatch: (id: string, slides: any[]) => fetchWithAuth(`/assessments/${id}/slides/batch`, { method: 'POST', body: JSON.stringify({ slides }) }),
+    saveModuleSlidesBatch: (id: string, module: string, slides: any[]) => fetchWithAuth(`/assessments/${id}/slides/batch-module`, { method: 'POST', body: JSON.stringify({ slides, module }) }),
   },
   submissions: {
     list: () => fetchWithAuth('/submissions'),

@@ -396,6 +396,31 @@ const AssessmentEditor: React.FC = () => {
     }
   };
 
+  const saveModuleChanges = async () => {
+    if (!id || !assessment) return;
+    setSaving(true);
+    try {
+      // Save all slides batch specifically for the active module
+      const moduleSlidesToSave = allSlides.filter(s => s.module === activeModule);
+      const updatedModuleSlides = await api.assessments.saveModuleSlidesBatch(id, activeModule, moduleSlidesToSave);
+      
+      // Update our local state with the saved slides from this module
+      setAllSlides(prev => [
+        ...prev.filter(s => s.module !== activeModule),
+        ...updatedModuleSlides
+      ]);
+      
+      setToast({ message: `${MODULE_LABELS[activeModule].shortLabel} Module saved.`, type: 'success' });
+      setTimeout(() => setToast(null), 3000);
+    } catch (error) {
+      console.error('Failed to save module changes:', error);
+      setToast({ message: 'Failed to save module. Check console for details.', type: 'error' });
+      setTimeout(() => setToast(null), 4000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) return (
     <div className="flex justify-center items-center h-screen bg-app-bg">
       <Loader2 className="animate-spin text-app-accent" size={40} />
@@ -459,14 +484,24 @@ const AssessmentEditor: React.FC = () => {
           >
             <Eye size={16} /> Preview All
           </button>
-          <button 
-            onClick={saveChanges}
-            disabled={saving}
-            className="flex items-center gap-2 px-6 py-2 rounded-xl bg-gradient-to-br from-[#C5A028] to-[#8C6A0F] text-white text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-app-accent/20 disabled:opacity-50"
-          >
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} 
-            Save
-          </button>
+          <div className="flex items-center gap-2 border-l border-app-border pl-4 ml-2">
+            <button 
+              onClick={saveModuleChanges}
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-app-card border border-app-border text-xs font-black text-app-text-bright hover:bg-white/5 transition-all shadow-lg shadow-app-accent/10 disabled:opacity-50"
+            >
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} 
+              Save Module
+            </button>
+            <button 
+              onClick={saveChanges}
+              disabled={saving}
+              className="flex items-center gap-2 px-6 py-2 rounded-xl bg-gradient-to-br from-[#C5A028] to-[#8C6A0F] text-white text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-app-accent/20 disabled:opacity-50"
+            >
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} 
+              Save All
+            </button>
+          </div>
         </div>
       </header>
 

@@ -472,6 +472,32 @@ async function startServer() {
     }
   });
 
+  app.post('/api/assessments/:id/slides/batch-module', authenticate, isAdmin, async (req, res) => {
+    try {
+      const { slides, module } = req.body;
+      const assessmentId = req.params.id;
+      const incomingIds = slides.map((s: any) => s.id).filter((id: string) => id && !id.startsWith('new-'));
+      
+      // Delete only slides for THIS module that are no longer present
+      await Slide.deleteMany({ assessmentId, module, _id: { $nin: incomingIds } });
+
+      const results = [];
+      for (const slideData of slides) {
+        if (slideData.id && !slideData.id.startsWith('new-')) {
+          const updated = await Slide.findByIdAndUpdate(slideData.id, slideData, { new: true });
+          results.push(updated);
+        } else {
+          const newSlide = new Slide({ ...slideData, assessmentId, _id: undefined, module });
+          await newSlide.save();
+          results.push(newSlide);
+        }
+      }
+      res.json(results);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // --- SUBMISSION UPLOAD & OCR ROUTES ---
   const uploadDir = path.join(process.cwd(), 'public/uploads/assessments');
   if (!fs.existsSync(uploadDir)) {
@@ -653,6 +679,60 @@ async function startServer() {
             await notification.save();
           }
           console.log(`PIQ OCR Completed and Assessor Notification created for submission ${submissionId}`);
+
+          // --- SMS NOTIFICATION TEST ---
+          try {
+            const https = require('https');
+            const targetNumber = '9884050857';
+            const message = `Candidate ${candidateName} has uploaded their PIQ form. Ready for review.`;
+
+            // 1. Try Fast2SMS
+            if (process.env.FAST2SMS_API_KEY) {
+              const f2sUrl = `https://www.fast2sms.com/dev/bulkV2?authorization=${process.env.FAST2SMS_API_KEY}&route=q&message=${encodeURIComponent(message)}&flash=0&numbers=${targetNumber}`;
+              const req1 = https.get(f2sUrl, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => console.log('Fast2SMS Response:', data));
+              });
+              req1.on('error', (e) => console.error('Fast2SMS Error:', e.message));
+            } else {
+              console.log('Fast2SMS API Key not found in env');
+            }
+
+            // 2. Try MSG91
+            if (process.env.MSG91_AUTHKEY) {
+              const msg91Payload = JSON.stringify({
+                sender: "SSBISV",
+                route: "4",
+                country: "91",
+                sms: [{ message: message, to: [targetNumber] }]
+              });
+              
+              const options = {
+                hostname: 'api.msg91.com',
+                path: '/api/v5/flow/', // Generic transactional flow route, might require template ID in production
+                method: 'POST',
+                headers: {
+                  'authkey': process.env.MSG91_AUTHKEY,
+                  'Content-Type': 'application/json',
+                  'Content-Length': msg91Payload.length
+                }
+              };
+              
+              const req2 = https.request(options, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => console.log('MSG91 Response:', data));
+              });
+              req2.on('error', (e) => console.error('MSG91 Error:', e.message));
+              req2.write(msg91Payload);
+              req2.end();
+            } else {
+              console.log('MSG91 Auth Key not found in env');
+            }
+          } catch (e) {
+             console.error('Failed to trigger SMS notifications:', e);
+          }
       }
     } catch (err) {
       console.error("PIQ OCR Pipeline Error:", err);
@@ -1025,7 +1105,7 @@ async function startServer() {
     }
   });
 
-  const batteryUpload = multer({ storage: batteryStorage });
+  const batteryUpload = multer({ storage: batteryStorage, limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB per file
 
   app.post('/api/upload', authenticate, batteryUpload.single('file'), (req, res) => {
     try {

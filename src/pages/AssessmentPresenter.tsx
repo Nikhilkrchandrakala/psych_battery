@@ -56,7 +56,7 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
   const currentModuleSlides = moduleSlideMap[currentModule] || [];
   const currentSlide = currentModuleSlides[currentSlideInModule];
 
-  const totalSlides = allSlides.length;
+  const totalSlides = previewModule ? (moduleSlideMap[previewModule as any]?.length || 0) : allSlides.length;
   const globalSlideIndex = useMemo(() => {
     let count = 0;
     for (let i = 0; i < currentModuleIndex; i++) {
@@ -227,9 +227,6 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
                     className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl border border-app-border relative z-10"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute bottom-4 left-4 bg-black/80 backdrop-blur px-4 py-2 rounded-xl text-lg font-black text-white border border-white/10 z-20">
-                    {currentSlide.order}
-                  </div>
                 </div>
               )}
 
