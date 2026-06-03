@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import nodemailer from 'nodemailer';
 import path from 'path';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
@@ -970,7 +971,61 @@ async function startServer() {
     }
 
     try {
-      const submission = await Submission.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      const oldSubmission = await Submission.findById(req.params.id).populate('userId', 'name email');
+      const submission = await Submission.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('userId', 'name email');
+      
+      // Check for meeting link changes and send email if necessary
+      const roles = ['psych', 'gto', 'io', 'to'];
+      for (const role of roles) {
+        const linkField = `${role}MeetingLink`;
+        const dateField = `${role}MeetingDate`;
+        
+        if (req.body[linkField] && req.body[linkField] !== (oldSubmission as any)[linkField]) {
+          const studentEmail = (submission.userId as any)?.email;
+          const studentName = (submission.userId as any)?.name || 'Candidate';
+          const meetingLink = req.body[linkField];
+          const meetingDate = req.body[dateField] || (submission as any)[dateField];
+          
+          if (studentEmail && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+            try {
+              const transporter = nodemailer.createTransport({
+                host: "smtp.zoho.in",
+                port: 465,
+                secure: true,
+                auth: {
+                  user: process.env.EMAIL_USER,
+                  pass: process.env.EMAIL_PASS
+                }
+              });
+
+              await transporter.sendMail({
+                from: '"SSB With ISV" <info@ssbwithisv.in>',
+                to: studentEmail,
+                subject: `SSB Feedback Meeting Scheduled (${role.toUpperCase()} Assessor)`,
+                html: `
+                  <html>
+                    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+                      <h2 style="color: #C5A028; border-bottom: 2px solid #C5A028; padding-bottom: 10px;">Meeting Scheduled</h2>
+                      <p>Dear ${studentName},</p>
+                      <p>Your feedback meeting with the <strong>${role.toUpperCase()} Assessor</strong> has been scheduled.</p>
+                      <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #C5A028; margin: 20px 0;">
+                        <p style="margin: 0 0 10px 0;"><strong>Date & Time:</strong> ${meetingDate ? new Date(meetingDate).toLocaleString() : 'TBA'}</p>
+                        <p style="margin: 0;"><strong>Meeting Link:</strong> <a href="${meetingLink}" style="color: #C5A028; font-weight: bold; text-decoration: none;">Click here to join</a></p>
+                      </div>
+                      <p>Please ensure you join the meeting on time.</p>
+                      <p>Best Regards,<br/><strong>SSB With ISV Evaluation Team</strong></p>
+                    </body>
+                  </html>
+                `
+              });
+              console.log(`Sent meeting email to ${studentEmail} for ${role.toUpperCase()}`);
+            } catch (emailErr) {
+              console.error("Failed to send meeting email:", emailErr);
+            }
+          }
+        }
+      }
+
       res.json(submission);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
