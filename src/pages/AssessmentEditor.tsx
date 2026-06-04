@@ -215,15 +215,17 @@ const TextFormattingToolbar: React.FC = () => {
 
 
 
-const MODULE_ORDER: ModuleId[] = ['INTRO', 'TAT', 'WAT', 'SRT', 'SDT', 'CLOSING'];
+const MODULE_ORDER: ModuleId[] = ['INTRO', 'TAT', 'WAT', 'SRT_INST', 'SRT', 'SDT_INST', 'SDT', 'CLOSING'];
 
 const MODULE_LABELS: Record<ModuleId, { label: string; shortLabel: string; color: string }> = {
-  INTRO:   { label: 'Introduction',  shortLabel: 'Intro',  color: 'text-blue-400' },
-  TAT:     { label: 'TAT',           shortLabel: 'TAT',    color: 'text-purple-400' },
-  WAT:     { label: 'WAT',           shortLabel: 'WAT',    color: 'text-emerald-400' },
-  SRT:     { label: 'SRT',           shortLabel: 'SRT',    color: 'text-amber-400' },
-  SDT:     { label: 'SDT',           shortLabel: 'SDT',    color: 'text-rose-400' },
-  CLOSING: { label: 'Closing',       shortLabel: 'Close',  color: 'text-zinc-400' },
+  INTRO:    { label: 'Introduction',   shortLabel: 'Intro',    color: 'text-blue-400' },
+  TAT:      { label: 'TAT',            shortLabel: 'TAT',      color: 'text-purple-400' },
+  WAT:      { label: 'WAT',            shortLabel: 'WAT',      color: 'text-emerald-400' },
+  SRT_INST: { label: 'SRT Instructions', shortLabel: 'SRT Inst', color: 'text-amber-300' },
+  SRT:      { label: 'SRT',            shortLabel: 'SRT',      color: 'text-amber-400' },
+  SDT_INST: { label: 'SDT Instructions', shortLabel: 'SDT Inst', color: 'text-rose-300' },
+  SDT:      { label: 'SDT',            shortLabel: 'SDT',      color: 'text-rose-400' },
+  CLOSING:  { label: 'Closing',        shortLabel: 'Close',    color: 'text-zinc-400' },
 };
 
 const DEFAULT_MODULE_CONFIG: ModuleConfig = { timingMode: 'per-slide', globalDuration: 0, navigable: false };
@@ -941,7 +943,7 @@ const AssessmentEditor: React.FC = () => {
                           if (val < 0) val = 0;
                           updateSlide(activeSlide.id, { displayTime: val });
                         }}
-                        className="w-full bg-app-card border border-app-border rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-app-accent transition-all text-app-text-bright"
+                        className="w-full bg-app-card border border-app-border rounded-xl p-4 text-base font-bold focus:outline-none focus:border-app-accent transition-all text-app-text-bright"
                         placeholder="Enter duration (max 600)"
                       />
                     </div>
@@ -951,41 +953,10 @@ const AssessmentEditor: React.FC = () => {
                     <div className="p-3 bg-app-accent/5 border border-app-accent/20 rounded-xl">
                       <p className="text-[10px] font-bold text-app-accent italic">
                         ⏱ This module uses a global timer ({Math.floor(currentModuleConfig.globalDuration / 60)} min). 
-                        Per-slide durations are ignored during the test, unless marked as an Instruction Slide.
+                        Per-slide durations are ignored.
                       </p>
                     </div>
                   )}
-                </div>
-
-                {/* Instruction Slide Toggle */}
-                <div className="pt-4 border-t border-app-border">
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <div 
-                      onClick={() => updateSlide(activeSlide.id, { isInstruction: !activeSlide.isInstruction })}
-                      className={cn(
-                        "w-8 h-5 rounded-full border transition-all relative",
-                        activeSlide.isInstruction
-                          ? "bg-app-accent border-app-accent"
-                          : "bg-app-card border-app-border"
-                      )}
-                    >
-                      <div className={cn(
-                        "w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-all",
-                        activeSlide.isInstruction ? "left-[14px]" : "left-[3px]"
-                      )} />
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Settings size={12} className="text-app-text-muted" />
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest group-hover:text-app-text-bright transition-colors">
-                          Is Instruction Slide
-                        </span>
-                        <span className="text-[8px] text-app-text-muted">
-                          Uses Per-Slide Timer (exempt from Global Timer)
-                        </span>
-                      </div>
-                    </div>
-                  </label>
                 </div>
 
                 {/* Invert Colors Toggle */}

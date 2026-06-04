@@ -23,7 +23,7 @@ export interface UserProfile {
 
 export type SlideType = 'IMAGE' | 'WORD' | 'TEXT' | 'BLACKOUT' | 'BREAK';
 
-export type ModuleId = 'INTRO' | 'TAT' | 'WAT' | 'SRT' | 'SDT' | 'CLOSING';
+export type ModuleId = 'INTRO' | 'TAT' | 'WAT' | 'SRT_INST' | 'SRT' | 'SDT_INST' | 'SDT' | 'CLOSING';
 
 export interface ModuleConfig {
   timingMode: 'per-slide' | 'global';

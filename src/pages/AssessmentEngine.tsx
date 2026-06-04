@@ -28,12 +28,13 @@ const AssessmentEngine: React.FC = () => {
   const [currentSlideInModule, setCurrentSlideInModule] = useState(0);
   
   // Timers
-  const [timeLeft, setTimeLeft] = useState(0); // per-slide countdown OR global countdown
+  const [timeLeft, setTimeLeft] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastSlideKeyRef = useRef<string>('');
+  const globalTimerInitializedRef = useRef<number>(-1);
 
   const currentModule = activeModules[currentModuleIndex] || 'INTRO';
   const currentModuleSlides = moduleSlideMap[currentModule] || [];
@@ -80,27 +81,18 @@ const AssessmentEngine: React.FC = () => {
   // Advance to next slide (or next module if at end of current module)
   const handleNextSlide = useCallback(() => {
     if (currentSlideInModule + 1 >= currentModuleSlides.length) {
-      // At end of module
-      if (currentModuleConfig.timingMode === 'global') {
-        // In global mode, next slide just wraps or stays — advancing to next module is timer-driven
-        // But if user clicks next at the last slide, advance to next module
-        advanceToNextModule();
-      } else {
-        advanceToNextModule();
-      }
+      advanceToNextModule();
       return;
     }
     setCurrentSlideInModule(prev => prev + 1);
-  }, [currentSlideInModule, currentModuleSlides.length, currentModuleConfig, advanceToNextModule]);
+  }, [currentSlideInModule, currentModuleSlides.length, advanceToNextModule]);
 
   // Go to previous slide
   const handlePrevSlide = useCallback(() => {
-    // Cannot navigate backwards into an instruction slide from a global timer slide
-    const prevSlide = currentModuleSlides[currentSlideInModule - 1];
-    if (currentModuleConfig.navigable && currentSlideInModule > 0 && !prevSlide?.isInstruction) {
+    if (currentModuleConfig.navigable && currentSlideInModule > 0) {
       setCurrentSlideInModule(prev => prev - 1);
     }
-  }, [currentModuleConfig, currentSlideInModule, currentModuleSlides]);
+  }, [currentModuleConfig, currentSlideInModule]);
 
   // Timer logic
   useEffect(() => {
@@ -108,15 +100,14 @@ const AssessmentEngine: React.FC = () => {
 
     const slideKey = `${currentModuleIndex}-${currentSlideInModule}`;
 
-    if (currentModuleConfig.timingMode === 'per-slide' || currentSlide.isInstruction) {
-      // Per-slide timer: reset on every new slide
+    if (currentModuleConfig.timingMode === 'per-slide') {
       if (lastSlideKeyRef.current !== slideKey) {
         setTimeLeft(currentSlide.displayTime || 30);
         lastSlideKeyRef.current = slideKey;
       }
 
       if (timerRef.current) clearInterval(timerRef.current);
-      
+
       if (!isPaused) {
         timerRef.current = setInterval(() => {
           setTimeLeft((prev) => {
@@ -128,14 +119,11 @@ const AssessmentEngine: React.FC = () => {
           });
         }, 1000);
       }
-    } else {
-      // Global timer logic
-      // Global timer: set once when entering the first non-instruction slide
-      const globalPhaseStartKey = `${currentModuleIndex}-global-started`;
-      if (lastSlideKeyRef.current !== globalPhaseStartKey) {
-        // If we haven't started the global timer yet for this module
+    } else if (currentModuleConfig.timingMode === 'global') {
+      // Initialize global timer exactly ONCE per module
+      if (globalTimerInitializedRef.current !== currentModuleIndex) {
         setTimeLeft(currentModuleConfig.globalDuration);
-        lastSlideKeyRef.current = globalPhaseStartKey; // lock it in so we don't reset it on further slide changes
+        globalTimerInitializedRef.current = currentModuleIndex;
       }
 
       if (timerRef.current) clearInterval(timerRef.current);
@@ -144,7 +132,6 @@ const AssessmentEngine: React.FC = () => {
         timerRef.current = setInterval(() => {
           setTimeLeft((prev) => {
             if (prev <= 1) {
-              // Global timer expired — advance to next module
               advanceToNextModule();
               return 0;
             }
@@ -414,7 +401,7 @@ const AssessmentEngine: React.FC = () => {
             {assessment.title}
           </h2>
           <span className="text-[8px] font-black text-app-accent uppercase tracking-widest mt-0.5">
-            {currentModuleConfig.timingMode === 'global' && !currentSlide.isInstruction
+            {currentModuleConfig.timingMode === 'global'
               ? 'Free Navigation Mode' 
               : 'Auto-Advance Mode'}
           </span>
@@ -519,13 +506,11 @@ const AssessmentEngine: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* SRT Slide Pagination Strip (only for navigable global-timed modules) */}
+      {/* Slide Pagination Strip */}
       {currentModuleConfig.navigable && currentModuleConfig.timingMode === 'global' && (
         <div className="absolute bottom-20 md:bottom-24 left-1/2 -translate-x-1/2 z-[120] flex items-center gap-1.5 bg-app-card/80 backdrop-blur-md px-4 py-2 rounded-full border border-app-border shadow-lg">
           {currentModuleSlides.map((slide, idx) => {
-            if (slide.isInstruction) return null;
-            // Calculate display index by subtracting the number of instruction slides before it
-            const displayIdx = idx - currentModuleSlides.slice(0, idx).filter(s => s.isInstruction).length + 1;
+            const displayIdx = idx + 1;
             return (
               <button
                 key={idx}
@@ -580,7 +565,7 @@ const AssessmentEngine: React.FC = () => {
 
       {/* Progress Monitor */}
       <div className="h-2 w-full bg-app-card relative shrink-0">
-        {currentModuleConfig.timingMode === 'per-slide' || currentSlide.isInstruction ? (
+        {currentModuleConfig.timingMode === 'per-slide' ? (
           <div 
             className="h-full bg-app-accent shadow-[0_0_20px_#C5A028] transition-all duration-1000 ease-linear"
             style={{ width: `${(timeLeft / (currentSlide?.displayTime || 1)) * 100}%` }}

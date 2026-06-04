@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { api } from '../lib/api';
 import { Assessment, AssessmentSlide, ModuleId } from '../types';
 
-export const MODULE_ORDER: ModuleId[] = ['INTRO', 'TAT', 'WAT', 'SRT', 'SDT', 'CLOSING'];
+export const MODULE_ORDER: ModuleId[] = ['INTRO', 'TAT', 'WAT', 'SRT_INST', 'SRT', 'SDT_INST', 'SDT', 'CLOSING'];
 
 export function useAssessmentData(id?: string, previewModule?: string | null) {
   const [assessment, setAssessment] = useState<Assessment | null>(null);
@@ -22,7 +22,12 @@ export function useAssessmentData(id?: string, previewModule?: string | null) {
         setAssessment(assessmentData);
         
         const slidesList = await api.assessments.slides(id);
-        setAllSlides(slidesList);
+        // Normalize isInstruction to a strict boolean — legacy slides may have undefined/null
+        const normalizedSlides = slidesList.map((s: AssessmentSlide) => ({
+          ...s,
+          isInstruction: s.isInstruction === true, // coerce undefined/null to false
+        }));
+        setAllSlides(normalizedSlides);
       } catch (err) {
         console.error('Failed to fetch assessment:', err);
         setError('Failed to load assessment data');
@@ -36,7 +41,7 @@ export function useAssessmentData(id?: string, previewModule?: string | null) {
 
   // Group slides by module
   const moduleSlideMap = useMemo(() => {
-    const map: Record<ModuleId, AssessmentSlide[]> = { INTRO: [], TAT: [], WAT: [], SRT: [], SDT: [], CLOSING: [] };
+    const map: Record<ModuleId, AssessmentSlide[]> = { INTRO: [], TAT: [], WAT: [], SRT_INST: [], SRT: [], SDT_INST: [], SDT: [], CLOSING: [] };
     allSlides.forEach(s => {
       if (map[s.module]) map[s.module].push(s);
     });
