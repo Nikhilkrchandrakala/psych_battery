@@ -57,7 +57,8 @@ export const api = {
       const formData = new FormData();
       formData.append('file', file);
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`${API_BASE}/upload`, {
+      // Direct upload to VPS backend because Vercel serverless environment does not support persistent disk writes
+      const response = await fetch(`https://api.ssbwithisv.in/api/uploadBatteryImage`, {
         method: 'POST',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         body: formData,

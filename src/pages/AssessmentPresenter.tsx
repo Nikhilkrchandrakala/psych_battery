@@ -215,7 +215,7 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 1.02 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              className="flex-1 w-full flex flex-col items-center justify-center"
+              className="flex-1 w-full flex flex-col items-center justify-center bg-app-sidebar"
               style={{ filter: currentSlide?.inverted ? 'invert(1)' : 'none' }}
             >
               {currentSlide.slideType === 'IMAGE' && currentSlide.imageUrl && (

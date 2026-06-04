@@ -439,7 +439,7 @@ const AssessmentEngine: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 1.05 }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-6xl h-full flex flex-col items-center justify-center"
+              className="flex-1 w-full flex flex-col items-center justify-center bg-app-sidebar"
               style={{ filter: currentSlide?.inverted ? 'invert(1)' : 'none' }}
             >
               {currentSlide.slideType === 'IMAGE' && currentSlide.imageUrl && (
