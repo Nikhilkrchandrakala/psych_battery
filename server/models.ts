@@ -32,6 +32,8 @@ const ModuleConfigSchema = new mongoose.Schema({
   timingMode: { type: String, enum: ['per-slide', 'global'], default: 'per-slide' },
   globalDuration: { type: Number, default: 0 },
   navigable: { type: Boolean, default: false },
+  timerStartSlide: { type: Number, default: 1 },
+  instructionDuration: { type: Number, default: 30 }
 }, { _id: false });
 
 const AssessmentSchema = new mongoose.Schema({

@@ -801,21 +801,57 @@ const AssessmentEditor: React.FC = () => {
 
               {/* Global Duration (only when global) */}
               {currentModuleConfig.timingMode === 'global' && (
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Total Duration</label>
-                    <span className="text-xs font-black text-app-accent">{Math.floor(currentModuleConfig.globalDuration / 60)} min</span>
+                <>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Total Duration</label>
+                      <span className="text-xs font-black text-app-accent">{Math.floor(currentModuleConfig.globalDuration / 60)} min</span>
+                    </div>
+                    <input 
+                      type="range" min="60" max="3600" step="60"
+                      value={currentModuleConfig.globalDuration}
+                      onChange={(e) => updateModuleConfig({ globalDuration: parseInt(e.target.value) })}
+                      className="w-full accent-app-accent"
+                    />
+                    <div className="flex justify-between text-[8px] font-bold text-app-text-muted uppercase">
+                      <span>1 min</span><span>60 min</span>
+                    </div>
                   </div>
-                  <input 
-                    type="range" min="60" max="3600" step="60"
-                    value={currentModuleConfig.globalDuration}
-                    onChange={(e) => updateModuleConfig({ globalDuration: parseInt(e.target.value) })}
-                    className="w-full accent-app-accent"
-                  />
-                  <div className="flex justify-between text-[8px] font-bold text-app-text-muted uppercase">
-                    <span>1 min</span><span>60 min</span>
+
+                  {/* Instruction Slide Offset */}
+                  <div className="space-y-2 mt-4 pt-4 border-t border-app-border/50">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Global Timer Starts At Slide #</label>
+                      <span className="text-xs font-black text-app-accent">{currentModuleConfig.timerStartSlide || 1}</span>
+                    </div>
+                    <input 
+                      type="range" min="1" max="10" step="1"
+                      value={currentModuleConfig.timerStartSlide || 1}
+                      onChange={(e) => updateModuleConfig({ timerStartSlide: parseInt(e.target.value) })}
+                      className="w-full accent-app-accent"
+                    />
+                    <div className="flex justify-between text-[8px] font-bold text-app-text-muted uppercase">
+                      <span>Slide 1</span><span>Slide 10</span>
+                    </div>
                   </div>
-                </div>
+
+                  {/* Instruction Slide Duration */}
+                  <div className="space-y-2 mt-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Instruction Slide Duration</label>
+                      <span className="text-xs font-black text-app-accent">{currentModuleConfig.instructionDuration || 30} sec</span>
+                    </div>
+                    <input 
+                      type="range" min="5" max="120" step="5"
+                      value={currentModuleConfig.instructionDuration || 30}
+                      onChange={(e) => updateModuleConfig({ instructionDuration: parseInt(e.target.value) })}
+                      className="w-full accent-app-accent"
+                    />
+                    <div className="flex justify-between text-[8px] font-bold text-app-text-muted uppercase">
+                      <span>5s</span><span>120s</span>
+                    </div>
+                  </div>
+                </>
               )}
 
               {/* Navigable Toggle */}
