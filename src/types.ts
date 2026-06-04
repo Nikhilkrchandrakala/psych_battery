@@ -1,7 +1,9 @@
 export type UserRole = 'student' | 'assessor' | 'admin';
 
 export interface UserProfile {
-  uid: string;
+  id?: string;
+  _id?: string;
+  uid?: string;
   name: string;
   email: string;
   role: UserRole;
@@ -11,6 +13,7 @@ export interface UserProfile {
   assessorType?: 'GTO' | 'TO' | 'Psych' | 'IO' | null;
   clinicalStage?: string;
   chestNo?: string;
+  batch?: string;
   assignedGTO?: string | null;
   assignedTO?: string | null;
   assignedPsych?: string | null;
@@ -29,7 +32,8 @@ export interface ModuleConfig {
 }
 
 export interface Assessment {
-  id: string;
+  id?: string;
+  _id?: string;
   title: string;
   description: string;
   type: 'TAT' | 'WAT' | 'SRT' | 'SDT' | 'GENERAL';
@@ -64,18 +68,27 @@ export type SubmissionStatus =
   | 'UNDER_REVIEW' 
   | 'MEETING_SCHEDULED' 
   | 'REPORT_PENDING' 
-  | 'COMPLETED';
+  | 'COMPLETED'
+  | 'REVIEW_PENDING'
+  | 'TEST_COMPLETED'
+  | 'REPORT_RELEASED'
+  | 'PENDING';
 
 export interface AssessmentSubmission {
-  id: string;
-  userId: string;
-  assessmentId: string;
+  id?: string;
+  _id?: string;
+  userId?: any; // Populated by mongoose
+  student?: any; // Populated by mongoose
+  assessmentId: string | Assessment;
   status: SubmissionStatus;
   startedAt?: any;
   completedAt?: any;
   uploadedFiles?: string[];
+  piqFiles?: string[];
   assessorId?: string;
   assessorRemarks?: string;
+  psychStatus?: string;
+  psychRemarks?: string;
   evaluation?: string;
   scores?: Record<string, number>;
   score?: number;
