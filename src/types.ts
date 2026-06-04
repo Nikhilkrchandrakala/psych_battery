@@ -26,8 +26,6 @@ export interface ModuleConfig {
   timingMode: 'per-slide' | 'global';
   globalDuration: number; // seconds, only used when timingMode='global'
   navigable: boolean;
-  timerStartSlide?: number; // 1-indexed slide number to start the timer (default: 1)
-  instructionDuration?: number; // duration (in seconds) for each slide before timerStartSlide (default: 30)
 }
 
 export interface Assessment {
@@ -54,6 +52,7 @@ export interface AssessmentSlide {
   order: number;
   typographyScale?: number; // scale multiplier for text sizing (default 1)
   inverted?: boolean; // whether to invert colors on the slide
+  isInstruction?: boolean;
 }
 
 export type SubmissionStatus = 

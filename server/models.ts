@@ -31,9 +31,7 @@ UserSchema.set('toJSON', {
 const ModuleConfigSchema = new mongoose.Schema({
   timingMode: { type: String, enum: ['per-slide', 'global'], default: 'per-slide' },
   globalDuration: { type: Number, default: 0 },
-  navigable: { type: Boolean, default: false },
-  timerStartSlide: { type: Number, default: 1 },
-  instructionDuration: { type: Number, default: 30 }
+  navigable: { type: Boolean, default: false }
 }, { _id: false });
 
 const AssessmentSchema = new mongoose.Schema({
@@ -87,6 +85,7 @@ const SlideSchema = new mongoose.Schema({
   order: { type: Number, default: 0 },
   typographyScale: { type: Number, default: 1 },
   inverted: { type: Boolean, default: false },
+  isInstruction: { type: Boolean, default: false },
 }, { timestamps: true });
 
 SlideSchema.set('toJSON', {

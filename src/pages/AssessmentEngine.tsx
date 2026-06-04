@@ -95,11 +95,12 @@ const AssessmentEngine: React.FC = () => {
 
   // Go to previous slide
   const handlePrevSlide = useCallback(() => {
-    const minSlide = currentModuleConfig.timingMode === 'global' ? (currentModuleConfig.timerStartSlide || 1) - 1 : 0;
-    if (currentModuleConfig.navigable && currentSlideInModule > minSlide) {
+    // Cannot navigate backwards into an instruction slide from a global timer slide
+    const prevSlide = currentModuleSlides[currentSlideInModule - 1];
+    if (currentModuleConfig.navigable && currentSlideInModule > 0 && !prevSlide?.isInstruction) {
       setCurrentSlideInModule(prev => prev - 1);
     }
-  }, [currentModuleConfig, currentSlideInModule]);
+  }, [currentModuleConfig, currentSlideInModule, currentModuleSlides]);
 
   // Timer logic
   useEffect(() => {
@@ -107,10 +108,10 @@ const AssessmentEngine: React.FC = () => {
 
     const slideKey = `${currentModuleIndex}-${currentSlideInModule}`;
 
-    if (currentModuleConfig.timingMode === 'per-slide') {
+    if (currentModuleConfig.timingMode === 'per-slide' || currentSlide.isInstruction) {
       // Per-slide timer: reset on every new slide
       if (lastSlideKeyRef.current !== slideKey) {
-        setTimeLeft(currentSlide.displayTime);
+        setTimeLeft(currentSlide.displayTime || 30);
         lastSlideKeyRef.current = slideKey;
       }
 
@@ -129,52 +130,27 @@ const AssessmentEngine: React.FC = () => {
       }
     } else {
       // Global timer logic
-      const timerStartSlide = currentModuleConfig.timerStartSlide || 1;
-      const isInstructionPhase = currentSlideInModule < timerStartSlide - 1;
+      // Global timer: set once when entering the first non-instruction slide
+      const globalPhaseStartKey = `${currentModuleIndex}-global-started`;
+      if (lastSlideKeyRef.current !== globalPhaseStartKey) {
+        // If we haven't started the global timer yet for this module
+        setTimeLeft(currentModuleConfig.globalDuration);
+        lastSlideKeyRef.current = globalPhaseStartKey; // lock it in so we don't reset it on further slide changes
+      }
 
-      if (isInstructionPhase) {
-        // Treat instruction slides exactly like per-slide, but using instructionDuration
-        if (lastSlideKeyRef.current !== slideKey) {
-          setTimeLeft(currentModuleConfig.instructionDuration || 30);
-          lastSlideKeyRef.current = slideKey;
-        }
+      if (timerRef.current) clearInterval(timerRef.current);
 
-        if (timerRef.current) clearInterval(timerRef.current);
-        
-        if (!isPaused) {
-          timerRef.current = setInterval(() => {
-            setTimeLeft((prev) => {
-              if (prev <= 1) {
-                handleNextSlide();
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-        }
-      } else {
-        // Global timer: set once when entering the first non-instruction slide
-        const globalPhaseStartKey = `${currentModuleIndex}-global-started`;
-        if (lastSlideKeyRef.current !== globalPhaseStartKey) {
-          // If we haven't started the global timer yet for this module
-          setTimeLeft(currentModuleConfig.globalDuration);
-          lastSlideKeyRef.current = globalPhaseStartKey; // lock it in so we don't reset it on further slide changes
-        }
-
-        if (timerRef.current) clearInterval(timerRef.current);
-
-        if (!isPaused) {
-          timerRef.current = setInterval(() => {
-            setTimeLeft((prev) => {
-              if (prev <= 1) {
-                // Global timer expired — advance to next module
-                advanceToNextModule();
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-        }
+      if (!isPaused) {
+        timerRef.current = setInterval(() => {
+          setTimeLeft((prev) => {
+            if (prev <= 1) {
+              // Global timer expired — advance to next module
+              advanceToNextModule();
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
       }
     }
 
@@ -542,9 +518,10 @@ const AssessmentEngine: React.FC = () => {
       {/* SRT Slide Pagination Strip (only for navigable global-timed modules) */}
       {currentModuleConfig.navigable && currentModuleConfig.timingMode === 'global' && (
         <div className="absolute bottom-20 md:bottom-24 left-1/2 -translate-x-1/2 z-[120] flex items-center gap-1.5 bg-app-card/80 backdrop-blur-md px-4 py-2 rounded-full border border-app-border shadow-lg">
-          {currentModuleSlides.map((_, idx) => {
-            const isInstruction = idx < (currentModuleConfig.timerStartSlide || 1) - 1;
-            if (isInstruction) return null;
+          {currentModuleSlides.map((slide, idx) => {
+            if (slide.isInstruction) return null;
+            // Calculate display index by subtracting the number of instruction slides before it
+            const displayIdx = idx - currentModuleSlides.slice(0, idx).filter(s => s.isInstruction).length + 1;
             return (
               <button
                 key={idx}
@@ -556,7 +533,7 @@ const AssessmentEngine: React.FC = () => {
                     : "bg-app-card border border-app-border text-app-text-muted hover:text-app-text-bright hover:scale-105"
                 )}
               >
-                {idx + 1 - ((currentModuleConfig.timerStartSlide || 1) - 1)}
+                {displayIdx}
               </button>
             );
           })}
@@ -599,10 +576,10 @@ const AssessmentEngine: React.FC = () => {
 
       {/* Progress Monitor */}
       <div className="h-2 w-full bg-app-card relative shrink-0">
-        {currentModuleConfig.timingMode === 'per-slide' || (currentModuleConfig.timingMode === 'global' && currentSlideInModule < (currentModuleConfig.timerStartSlide || 1) - 1) ? (
+        {currentModuleConfig.timingMode === 'per-slide' || currentSlide.isInstruction ? (
           <div 
             className="h-full bg-app-accent shadow-[0_0_20px_#C5A028] transition-all duration-1000 ease-linear"
-            style={{ width: `${(timeLeft / (currentModuleConfig.timingMode === 'global' ? (currentModuleConfig.instructionDuration || 30) : (currentSlide?.displayTime || 1))) * 100}%` }}
+            style={{ width: `${(timeLeft / (currentSlide?.displayTime || 1)) * 100}%` }}
           />
         ) : (
           <div 

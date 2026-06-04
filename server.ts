@@ -376,7 +376,13 @@ async function startServer() {
 
   app.put('/api/assessments/:id', authenticate, isAdmin, async (req, res) => {
     try {
-      const assessment = await Assessment.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      const assessment = await Assessment.findById(req.params.id);
+      if (!assessment) return res.status(404).json({ message: 'Not found' });
+      
+      // Manually apply updates and save to trigger full schema validation and Map processing
+      Object.assign(assessment, req.body);
+      await assessment.save();
+      
       res.json(assessment);
     } catch (error: any) {
       res.status(400).json({ message: error.message });

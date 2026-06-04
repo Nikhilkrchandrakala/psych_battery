@@ -818,39 +818,6 @@ const AssessmentEditor: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Instruction Slide Offset */}
-                  <div className="space-y-2 mt-4 pt-4 border-t border-app-border/50">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Global Timer Starts At Slide #</label>
-                      <span className="text-xs font-black text-app-accent">{currentModuleConfig.timerStartSlide || 1}</span>
-                    </div>
-                    <input 
-                      type="range" min="1" max="10" step="1"
-                      value={currentModuleConfig.timerStartSlide || 1}
-                      onChange={(e) => updateModuleConfig({ timerStartSlide: parseInt(e.target.value) })}
-                      className="w-full accent-app-accent"
-                    />
-                    <div className="flex justify-between text-[8px] font-bold text-app-text-muted uppercase">
-                      <span>Slide 1</span><span>Slide 10</span>
-                    </div>
-                  </div>
-
-                  {/* Instruction Slide Duration */}
-                  <div className="space-y-2 mt-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Instruction Slide Duration</label>
-                      <span className="text-xs font-black text-app-accent">{currentModuleConfig.instructionDuration || 30} sec</span>
-                    </div>
-                    <input 
-                      type="range" min="5" max="120" step="5"
-                      value={currentModuleConfig.instructionDuration || 30}
-                      onChange={(e) => updateModuleConfig({ instructionDuration: parseInt(e.target.value) })}
-                      className="w-full accent-app-accent"
-                    />
-                    <div className="flex justify-between text-[8px] font-bold text-app-text-muted uppercase">
-                      <span>5s</span><span>120s</span>
-                    </div>
-                  </div>
                 </>
               )}
 
@@ -984,10 +951,41 @@ const AssessmentEditor: React.FC = () => {
                     <div className="p-3 bg-app-accent/5 border border-app-accent/20 rounded-xl">
                       <p className="text-[10px] font-bold text-app-accent italic">
                         ⏱ This module uses a global timer ({Math.floor(currentModuleConfig.globalDuration / 60)} min). 
-                        Per-slide durations are ignored during the test.
+                        Per-slide durations are ignored during the test, unless marked as an Instruction Slide.
                       </p>
                     </div>
                   )}
+                </div>
+
+                {/* Instruction Slide Toggle */}
+                <div className="pt-4 border-t border-app-border">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div 
+                      onClick={() => updateSlide(activeSlide.id, { isInstruction: !activeSlide.isInstruction })}
+                      className={cn(
+                        "w-8 h-5 rounded-full border transition-all relative",
+                        activeSlide.isInstruction
+                          ? "bg-app-accent border-app-accent"
+                          : "bg-app-card border-app-border"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-all",
+                        activeSlide.isInstruction ? "left-[14px]" : "left-[3px]"
+                      )} />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Settings size={12} className="text-app-text-muted" />
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest group-hover:text-app-text-bright transition-colors">
+                          Is Instruction Slide
+                        </span>
+                        <span className="text-[8px] text-app-text-muted">
+                          Uses Per-Slide Timer (exempt from Global Timer)
+                        </span>
+                      </div>
+                    </div>
+                  </label>
                 </div>
 
                 {/* Invert Colors Toggle */}
