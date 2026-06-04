@@ -246,12 +246,8 @@ const AssessmentEngine: React.FC = () => {
     }
 
     if (document.fullscreenElement) {
-      document.exitFullscreen();
+      document.exitFullscreen().catch(e => console.log(e));
     }
-    
-    setTimeout(() => {
-      window.location.href = `${mainSiteUrl}/ProfileDashboard?tab=psycheTest&submissionId=${submissionId}`;
-    }, 2500);
   };
 
   if (loading) return (
@@ -273,7 +269,15 @@ const AssessmentEngine: React.FC = () => {
           <Zap size={48} className="fill-current" />
         </motion.div>
         <h1 className="text-5xl font-black text-app-text-bright tracking-tight">Test Complete</h1>
-        <p className="text-xl text-app-text-muted font-serif italic">The battery is complete. Initializing secure upload portal...</p>
+        <p className="text-xl text-app-text-muted font-serif italic max-w-lg mx-auto">
+          The test is complete. You will now return to your profile. Upload the Dossier in the profile.
+        </p>
+        <button
+          onClick={() => window.location.href = `${mainSiteUrl}/ProfileDashboard?tab=psycheTest&submissionId=${submissionId}`}
+          className="mt-8 px-12 py-4 bg-app-accent text-white font-bold rounded-xl shadow-lg shadow-app-accent/30 hover:scale-105 active:scale-95 transition-all uppercase tracking-widest"
+        >
+          Continue to Profile
+        </button>
       </div>
     );
   }
@@ -410,7 +414,7 @@ const AssessmentEngine: React.FC = () => {
             {assessment.title}
           </h2>
           <span className="text-[8px] font-black text-app-accent uppercase tracking-widest mt-0.5">
-            {currentModuleConfig.timingMode === 'global' && currentSlideInModule >= (currentModuleConfig.timerStartSlide || 1) - 1 
+            {currentModuleConfig.timingMode === 'global' && !currentSlide.isInstruction
               ? 'Free Navigation Mode' 
               : 'Auto-Advance Mode'}
           </span>
