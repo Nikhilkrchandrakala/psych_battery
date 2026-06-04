@@ -12,16 +12,27 @@ async function send() {
   });
 
   const emails = [
-    { to: 'info@ssbwithisv.in', role: 'INTERVIEWING OFFICER' },
-    { to: 'isvclub2021@gmail.com', role: 'PSYCH ASSESSOR' },
-    { to: 'juncando@gmail.com', role: 'TECHNICAL OFFICER' }
+    { to: 'isvclub2021@gmail.com', role: 'io' },
+    { to: 'isvclub2021@gmail.com', role: 'psych' },
+    { to: 'isvclub2021@gmail.com', role: 'to' }
   ];
 
   for (const { to, role } of emails) {
+    let meetingMessage = "";
+    if (role.toLowerCase() === 'io') {
+      meetingMessage = "your mock interview with the Interviewing Officer has been scheduled.";
+    } else if (role.toLowerCase() === 'psych') {
+      meetingMessage = "Your Psych Test feedback has been scheduled.";
+    } else if (role.toLowerCase() === 'to') {
+      meetingMessage = "Your TO Test feedback has been scheduled.";
+    } else {
+      meetingMessage = `Your ${role.toUpperCase()} Test feedback has been scheduled.`;
+    }
+
     await transporter.sendMail({
       from: '"SSB With ISV" <info@ssbwithisv.in>',
       to: to,
-      subject: `SSB Feedback Meeting Scheduled (${role})`,
+      subject: `SSB Feedback Meeting Scheduled (${role.toUpperCase()} Assessor)`,
       html: `
         <html>
           <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -31,7 +42,7 @@ async function send() {
             </div>
             <h2 style="color: #C5A028; border-bottom: 2px solid #C5A028; padding-bottom: 10px;">Meeting Scheduled</h2>
             <p>Dear Candidate,</p>
-            <p>Your feedback meeting with the <strong>${role}</strong> has been scheduled.</p>
+            <p>${meetingMessage}</p>
             <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #C5A028; margin: 20px 0;">
               <p style="margin: 0 0 10px 0;"><strong>Date & Time:</strong> ${new Date().toLocaleString()}</p>
               <p style="margin: 0;"><strong>Meeting Link:</strong> <a href="https://meet.google.com/test-link" style="color: #C5A028; font-weight: bold; text-decoration: none;">Click here to join</a></p>

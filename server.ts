@@ -1004,6 +1004,17 @@ async function startServer() {
                 }
               });
 
+              let meetingMessage = "";
+              if (role.toLowerCase() === 'io') {
+                meetingMessage = "your mock interview with the Interviewing Officer has been scheduled.";
+              } else if (role.toLowerCase() === 'psych') {
+                meetingMessage = "Your Psych Test feedback has been scheduled.";
+              } else if (role.toLowerCase() === 'to') {
+                meetingMessage = "Your TO Test feedback has been scheduled.";
+              } else {
+                meetingMessage = `Your ${role.toUpperCase()} Test feedback has been scheduled.`;
+              }
+
               await transporter.sendMail({
                 from: '"SSB With ISV" <info@ssbwithisv.in>',
                 to: studentEmail,
@@ -1016,7 +1027,7 @@ async function startServer() {
                       </div>
                       <h2 style="color: #C5A028; border-bottom: 2px solid #C5A028; padding-bottom: 10px;">Meeting Scheduled</h2>
                       <p>Dear ${studentName},</p>
-                      <p>Your feedback meeting with the <strong>${role.toUpperCase()} Assessor</strong> has been scheduled.</p>
+                      <p>${meetingMessage}</p>
                       <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #C5A028; margin: 20px 0;">
                         <p style="margin: 0 0 10px 0;"><strong>Date & Time:</strong> ${meetingDate ? new Date(meetingDate).toLocaleString() : 'TBA'}</p>
                         <p style="margin: 0;"><strong>Meeting Link:</strong> <a href="${meetingLink}" style="color: #C5A028; font-weight: bold; text-decoration: none;">Click here to join</a></p>
