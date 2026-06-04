@@ -656,14 +656,14 @@ const AssessmentEditor: React.FC = () => {
 
         {/* Center — Workspace Canvas */}
         <main className="flex-1 bg-black/30 flex flex-col overflow-hidden relative">
-          <div className="flex items-center justify-between px-6 py-3 shrink-0 z-10 bg-black/20 border-b border-app-border">
-            <div className="flex items-center gap-6 text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em]">
+          <div className="flex flex-wrap items-center justify-center md:justify-between px-4 md:px-6 py-3 shrink-0 z-10 bg-black/20 border-b border-app-border gap-4 md:gap-0">
+            <div className="flex items-center gap-4 md:gap-6 text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em]">
                <span className={MODULE_LABELS[activeModule].color}>{MODULE_LABELS[activeModule].label} Module</span>
-               <div className="h-px w-16 bg-app-border" />
+               <div className="h-px w-8 md:w-16 bg-app-border" />
                <span>Canvas Editor</span>
             </div>
             
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 w-full md:w-auto">
               {activeSlide && (activeSlide.slideType === 'WORD' || activeSlide.slideType === 'TEXT') && (
                 <div className="flex items-center gap-2 bg-app-sidebar border border-app-border rounded-xl px-3 py-1.5 shadow-xl">
                   <Type size={14} className="text-app-text-muted" />
