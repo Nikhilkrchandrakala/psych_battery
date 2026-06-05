@@ -269,19 +269,27 @@ const AssessmentEngine: React.FC = () => {
     );
   }
 
+  const getWelcomeName = () => {
+    const rawName = profile?.name || user?.name || user?.email || 'Candidate';
+    if (rawName.includes('@')) {
+      return rawName.split('@')[0];
+    }
+    return rawName.split(' ')[0];
+  };
+
   // Pre-start screen
   if (!isStarted) {
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 space-y-10 sm:space-y-16 pb-20 pt-6 sm:pt-10 animate-fade-in">
         <div className="space-y-4 sm:space-y-6">
           <button 
-            onClick={() => window.location.href = `${mainSiteUrl}/ProfileDashboard?tab=psycheTest`}
+            onClick={() => window.location.href = `${mainSiteUrl}/ProfileDashboard`}
             className="text-[10px] font-black text-app-text-muted hover:text-app-text-bright flex items-center gap-2 transition-colors uppercase tracking-[0.2em]"
           >
-            ← Cancel Session
+            ← Back to Profile
           </button>
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tighter text-app-text-bright leading-[0.9]">
-            {assessment.title}
+            Welcome, {getWelcomeName()}
           </h1>
           <p className="text-lg sm:text-2xl text-app-text-muted font-serif italic leading-relaxed max-w-3xl">
             {assessment.description}

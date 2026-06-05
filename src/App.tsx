@@ -4,7 +4,7 @@ import { useAuth } from './components/AuthProvider';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
-import Dashboard from './pages/Dashboard';
+import StudentEntry from './pages/StudentEntry';
 import AssessmentEngine from './pages/AssessmentEngine';
 import SubmissionUpload from './pages/SubmissionUpload';
 import AssessorDashboard from './pages/AssessorDashboard';
@@ -17,13 +17,13 @@ import { AssessmentPresenter } from './pages/AssessmentPresenter';
  * Redirects users to their role-appropriate home page on root visit.
  * - Admins    → /admin
  * - Assessors → /assessor
- * - Students  → student test dashboard (rendered in-place)
+ * - Students  → auto-routed to assessment via StudentEntry
  */
 const RoleRedirect: React.FC = () => {
   const { profile } = useAuth();
   if (profile?.role === 'admin') return <Navigate to="/admin" replace />;
   if (profile?.role === 'assessor') return <Navigate to="/assessor" replace />;
-  return <Dashboard />;
+  return <StudentEntry />;
 };
 
 export default function App() {

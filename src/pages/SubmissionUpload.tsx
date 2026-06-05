@@ -8,8 +8,8 @@ import { cn } from '../lib/utils';
 
 const SubmissionUpload: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const { user, profile, mainSiteUrl } = useAuth();
 
   const [submission, setSubmission] = useState<AssessmentSubmission | null>(null);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
@@ -155,10 +155,10 @@ const SubmissionUpload: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-10">
       <div className="space-y-4">
         <button 
-          onClick={() => navigate('/')}
+          onClick={() => window.location.href = `${mainSiteUrl}/ProfileDashboard?tab=psycheTest`}
           className="text-[10px] font-black text-app-text-muted hover:text-app-text-bright flex items-center gap-2 transition-colors uppercase tracking-[0.2em]"
         >
-          <ArrowLeft size={14} /> Back to Dashboard
+          <ArrowLeft size={14} /> Back to Profile
         </button>
         <div className="flex items-center gap-3">
            <h1 className="text-5xl font-black tracking-tighter text-app-text-bright">Dossier Upload</h1>
