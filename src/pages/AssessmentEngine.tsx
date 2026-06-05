@@ -61,12 +61,18 @@ const AssessmentEngine: React.FC = () => {
     return count + currentSlideInModule;
   }, [currentModuleIndex, currentSlideInModule, activeModules, moduleSlideMap]);
 
-  // Data fetch auto-start for admin
+  const autoStart = searchParams.get('autoStart') === 'true';
+
+  // Data fetch auto-start for admin and candidate
   useEffect(() => {
-    if (!loading && assessment && profile?.role === 'admin') {
-      setIsStarted(true);
+    if (!loading && assessment) {
+      if (profile?.role === 'admin') {
+        setIsStarted(true);
+      } else if (autoStart && !isStarted) {
+        startAssessment();
+      }
     }
-  }, [loading, assessment, profile]);
+  }, [loading, assessment, profile, autoStart]);
 
   // Advance to next module
   const advanceToNextModule = useCallback(() => {
@@ -180,24 +186,34 @@ const AssessmentEngine: React.FC = () => {
   const startAssessment = async () => {
     if (!user || !assessment) return;
     
+    // Lock screen only if requested directly (not usually possible from useEffect without click)
+    // We already try to lock screen in StudentEntry before navigation
     try {
-      const submissionData = {
-        assessmentId: assessment.id,
-        status: 'IN_PROGRESS',
-        startedAt: new Date().toISOString(),
-        assessorId: profile?.assignedAssessor || undefined,
-        ...(profile?.assignedAssessor ? { status: 'ASSIGNED' as const } : {})
-      };
-      
-      const created = await api.submissions.create(submissionData);
-      setSubmissionId(created.id);
-      
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch (err) {
+      console.warn("Fullscreen request failed", err);
+    }
+
+    if (isAdminPreview) {
       setIsStarted(true);
-      setCurrentModuleIndex(0);
-      setCurrentSlideInModule(0);
-      toggleFullscreen();
+      return;
+    }
+
+    if (submissionId) {
+      setIsStarted(true);
+      return;
+    }
+
+    try {
+      const sub = await api.submissions.create(assessment?._id || assessment?.id as string);
+      setSubmissionId(sub._id);
+      setIsStarted(true);
     } catch (error) {
       console.error('Failed to create submission:', error);
+      // Even if it fails, try to start so they don't get stuck
+      setIsStarted(true);
     }
   };
 
@@ -269,83 +285,11 @@ const AssessmentEngine: React.FC = () => {
     );
   }
 
-  const getWelcomeName = () => {
-    const rawName = profile?.name || user?.name || user?.email || 'Candidate';
-    if (rawName.includes('@')) {
-      return rawName.split('@')[0];
-    }
-    return rawName.split(' ')[0];
-  };
-
-  // Pre-start screen
+  // Pre-start screen (fallback just in case)
   if (!isStarted) {
     return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 space-y-10 sm:space-y-16 pb-20 pt-6 sm:pt-10 animate-fade-in">
-        <div className="space-y-4 sm:space-y-6">
-          <button 
-            onClick={() => window.location.href = `${mainSiteUrl}/ProfileDashboard`}
-            className="text-[10px] font-black text-app-text-muted hover:text-app-text-bright flex items-center gap-2 transition-colors uppercase tracking-[0.2em]"
-          >
-            ← Back to Profile
-          </button>
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tighter text-app-text-bright leading-[0.9]">
-            Welcome, {getWelcomeName()}
-          </h1>
-          <p className="text-lg sm:text-2xl text-app-text-muted font-serif italic leading-relaxed max-w-3xl">
-            {assessment.description}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-          <div className="bg-app-sidebar p-6 sm:p-10 rounded-[1.5rem] sm:rounded-[2.5rem] border border-app-border shadow-2xl flex flex-col items-center text-center space-y-4 sm:space-y-6">
-            <div className="p-3 sm:p-4 bg-app-accent/10 rounded-2xl sm:rounded-3xl text-app-accent border border-app-accent/20">
-              <Timer className="w-8 h-8 sm:w-10 sm:h-10" />
-            </div>
-            <div className="space-y-2">
-               <h3 className="text-lg sm:text-xl font-black text-app-text-bright tracking-tight">TIMED CADENCE</h3>
-               <p className="text-xs sm:text-sm text-app-text-muted leading-relaxed">Each probe appears for a fixed duration. There is no manual override.</p>
-            </div>
-          </div>
-          <div className="bg-app-sidebar p-6 sm:p-10 rounded-[1.5rem] sm:rounded-[2.5rem] border border-app-border shadow-2xl flex flex-col items-center text-center space-y-4 sm:space-y-6">
-            <div className="p-3 sm:p-4 bg-amber-500/10 rounded-2xl sm:rounded-3xl text-amber-500 border border-amber-500/20">
-              <AlertTriangle className="w-8 h-8 sm:w-10 sm:h-10" />
-            </div>
-             <div className="space-y-2">
-              <h3 className="text-lg sm:text-xl font-black text-app-text-bright tracking-tight">TEMPORAL LOCK</h3>
-              <p className="text-xs sm:text-sm text-app-text-muted leading-relaxed">The session is persistent. Navigation away will be flagged for review.</p>
-            </div>
-          </div>
-          <div className="bg-app-sidebar p-6 sm:p-10 rounded-[1.5rem] sm:rounded-[2.5rem] border border-app-border shadow-2xl flex flex-col items-center text-center space-y-4 sm:space-y-6">
-            <div className="p-3 sm:p-4 bg-amber-500/10 rounded-2xl sm:rounded-3xl text-amber-500 border border-amber-500/20">
-              <Maximize className="w-8 h-8 sm:w-10 sm:h-10" />
-            </div>
-             <div className="space-y-2">
-              <h3 className="text-lg sm:text-xl font-black text-app-text-bright tracking-tight">TOTAL FOCUS</h3>
-              <p className="text-xs sm:text-sm text-app-text-muted leading-relaxed">Fullscreen execution is mandatory to ensure environmental consistency.</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-app-accent text-white rounded-[1.5rem] sm:rounded-[3.5rem] p-6 sm:p-12 md:p-20 relative overflow-hidden shadow-[0_30px_100px_rgba(99,101,241,0.15)]">
-          <div className="relative z-10 grid md:grid-cols-2 gap-8 sm:gap-12 items-center">
-            <div className="space-y-4 sm:space-y-8">
-              <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-none italic">Final Protocol Check</h2>
-              <div className="space-y-2 sm:space-y-4 text-white/80 font-medium text-sm sm:text-base">
-                <p>• Have your answer sheets and dark pen ready.</p>
-                <p>• Ensure adequate lighting for writing.</p>
-                <p>• Silence all notifications and distractions.</p>
-              </div>
-            </div>
-            <button
-              onClick={startAssessment}
-              className="w-full h-16 sm:h-24 flex items-center justify-center gap-3 sm:gap-4 bg-white text-app-accent rounded-2xl sm:rounded-3xl font-black text-lg sm:text-2xl hover:scale-[1.02] transition-all active:scale-95 group shadow-2xl shadow-white/10"
-            >
-              <Play className="fill-current w-5 h-5 sm:w-7 sm:h-7" />
-              COMMENCE TEST
-            </button>
-          </div>
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48 blur-[80px]" />
-        </div>
+      <div className="flex justify-center items-center h-screen bg-app-bg">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-app-accent"></div>
       </div>
     );
   }
