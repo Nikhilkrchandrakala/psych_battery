@@ -337,7 +337,7 @@ async function startServer() {
         if (studentUser && (studentUser as any).assignedAssessments && (studentUser as any).assignedAssessments.length > 0) {
           query = { _id: { $in: (studentUser as any).assignedAssessments } };
         } else {
-          return res.json([]); // Return empty list if no assessments are assigned yet
+          query = { active: true };
         }
       }
       const assessments = await Assessment.find(query);
