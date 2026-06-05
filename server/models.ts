@@ -107,6 +107,12 @@ const SubmissionSchema = new mongoose.Schema({
   completedAt: Date,
   uploadedFiles: [String],
   piqFiles: [String],
+  piqFileData: [{
+    filename: String,
+    mimetype: String,
+    data: String, // base64-encoded file content
+    uploadedAt: { type: Date, default: Date.now }
+  }],
   piqParsedData: String,
   piqStatus: { type: String, enum: ['PENDING', 'PROCESSING', 'PARSED', 'FAILED'], default: 'PENDING' },
   assessorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

@@ -636,14 +636,16 @@ async function startServer() {
       }
 
       const files = req.files as any[];
-      const filePaths: string[] = [];
-      const token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : (req.headers.token as string);
+      const fileEntries = files.map(f => ({
+        filename: f.originalname,
+        mimetype: f.mimetype,
+        data: f.buffer.toString('base64'),
+        uploadedAt: new Date()
+      }));
+      const filePaths = files.map(f => `db://${submissionId}/${f.originalname}`);
 
-      for (const file of files) {
-        const url = await forwardToMainBackend(file, token);
-        filePaths.push(url);
-      }
-
+      // Store file data directly in MongoDB (works on Vercel's read-only filesystem)
+      submission.piqFileData = [...(submission.piqFileData || []), ...fileEntries];
       submission.piqFiles = [...(submission.piqFiles || []), ...filePaths];
       submission.piqStatus = 'PROCESSING';
       await submission.save();
@@ -652,6 +654,29 @@ async function startServer() {
       runPiqOCR(submissionId, filePaths);
 
       res.json({ message: 'PIQ files uploaded and processing started', files: filePaths });
+    } catch (error: any) {
+      console.error('PIQ upload error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Serve PIQ files stored in MongoDB
+  app.get('/api/submissions/:id/piq-file/:index', authenticate, async (req: any, res: any) => {
+    try {
+      const submission = await Submission.findById(req.params.id);
+      if (!submission) return res.status(404).json({ message: 'Submission not found' });
+
+      const index = parseInt(req.params.index, 10);
+      const fileData = submission.piqFileData?.[index];
+      if (!fileData) return res.status(404).json({ message: 'File not found' });
+
+      const buffer = Buffer.from(fileData.data, 'base64');
+      res.set({
+        'Content-Type': fileData.mimetype || 'application/octet-stream',
+        'Content-Disposition': `inline; filename="${fileData.filename}"`,
+        'Content-Length': buffer.length.toString()
+      });
+      res.send(buffer);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
