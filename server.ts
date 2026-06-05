@@ -875,7 +875,7 @@ async function startServer() {
       }
 
       const submissions = await Submission.find(query)
-        .populate('userId', 'name email assignedGTO assignedTO assignedPsych assignedIO clinicalStage profileImage chestNo batch')
+        .select('-piqFileData').populate('userId', 'name email assignedGTO assignedTO assignedPsych assignedIO clinicalStage profileImage chestNo batch')
         .populate('assessmentId', 'title type')
         .sort({ updatedAt: -1 });
 
@@ -970,7 +970,7 @@ async function startServer() {
 
     try {
       const submission = await Submission.findById(req.params.id)
-        .populate('userId', 'name email profileImage')
+        .select('-piqFileData').populate('userId', 'name email profileImage')
         .populate('assessmentId', 'title');
       res.json(submission);
     } catch (error: any) {
@@ -1036,8 +1036,8 @@ async function startServer() {
     }
 
     try {
-      const oldSubmission = await Submission.findById(req.params.id).populate('userId', 'name email');
-      const submission = await Submission.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('userId', 'name email');
+      const oldSubmission = await Submission.findById(req.params.id).select('-piqFileData').populate('userId', 'name email');
+      const submission = await Submission.findByIdAndUpdate(req.params.id, req.body, { new: true }).select('-piqFileData').populate('userId', 'name email');
       
       // Check for meeting link changes and send email if necessary
       const roles = ['psych', 'gto', 'io', 'to'];
