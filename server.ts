@@ -230,6 +230,15 @@ const authenticate = async (req: any, res: any, next: any) => {
       return res.status(401).json({ message: 'User not found' });
     }
     req.user = foundUser;
+    
+    // Enforce "evaluations" permission for admins globally in PsychBattery (except for /api/auth/me so frontend can redirect)
+    if (req.user.role === 'admin' && req.path !== '/api/auth/me') {
+      const perms = req.user.permissions || [];
+      if (!perms.includes('super_admin') && !perms.includes('evaluations')) {
+        return res.status(403).json({ message: 'Access Denied: You do not have the Candidate Evaluations permission.' });
+      }
+    }
+
     next();
   } catch (err: any) {
     console.error("[AUTH] Authentication failed with error:", err.message);
@@ -645,7 +654,7 @@ async function startServer() {
       const filePaths = files.map(f => `db://${submissionId}/${f.originalname}`);
 
       // Store file data directly in MongoDB (works on Vercel's read-only filesystem)
-      submission.piqFileData = [...(submission.piqFileData || []), ...fileEntries];
+      submission.piqFileData = [...(submission.piqFileData || []), ...fileEntries] as any;
       submission.piqFiles = [...(submission.piqFiles || []), ...filePaths];
       submission.piqStatus = 'PROCESSING';
       await submission.save();
@@ -724,7 +733,9 @@ async function startServer() {
               recipientIds.push(adminId);
             }
           });
-          const superAdmins = await AdminUser.find({});
+          const superAdmins = await AdminUser.find({
+            permissions: { $in: ['evaluations', 'super_admin'] }
+          });
           superAdmins.forEach(sa => {
             const adminId = sa._id.toString();
             if (!recipientIds.includes(adminId)) {

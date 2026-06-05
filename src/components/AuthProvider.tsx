@@ -59,7 +59,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userData = await api.auth.me();
       setUser(userData);
       setProfile(userData);
-      setIsAdminUser(userData.role === 'admin');
+      setIsAdminUser(
+        userData.role === 'admin' && 
+        (userData.permissions?.includes('super_admin') || userData.permissions?.includes('evaluations'))
+      );
 
       // Role-based auto-routing after SSO or bypass entry
       if (urlToken || urlBypass) {
