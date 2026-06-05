@@ -51,6 +51,7 @@ export const api = {
   notifications: {
     list: () => fetchWithAuth('/notifications'),
     markAsRead: (id: string) => fetchWithAuth(`/notifications/${id}/read`, { method: 'PUT' }),
+    markAllAsRead: () => fetchWithAuth('/notifications/read-all', { method: 'PUT' }),
   },
   upload: {
     file: async (file: File) => {

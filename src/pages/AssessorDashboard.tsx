@@ -143,7 +143,15 @@ const AssessorDashboard: React.FC = () => {
           {/* Notifications Toggle */}
           <div className="relative shrink-0 z-50">
             <button 
-              onClick={() => setShowNotifications(!showNotifications)}
+              onClick={() => {
+                const isOpening = !showNotifications;
+                setShowNotifications(isOpening);
+                if (isOpening && notifications.some(n => !n.isRead)) {
+                  (api as any).notifications.markAllAsRead().then(() => {
+                    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+                  }).catch(console.error);
+                }
+              }}
               className="relative p-3 bg-app-card border border-app-border rounded-xl hover:bg-white/5 transition-all text-app-text-muted hover:text-app-text-bright"
             >
               <Bell size={20} />

@@ -843,6 +843,18 @@ async function startServer() {
     }
   });
 
+  app.put('/api/notifications/read-all', authenticate, async (req: any, res) => {
+    try {
+      await Notification.updateMany(
+        { recipientId: req.user._id, isRead: false },
+        { $set: { isRead: true } }
+      );
+      res.json({ message: 'All notifications marked as read' });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
 
   // --- SUBMISSION ROUTES ---
   app.get('/api/submissions', authenticate, async (req: any, res) => {
