@@ -10,6 +10,11 @@ import { User, Assessment, Slide, Submission, AdminUser, Notification } from './
 import multer from 'multer';
 import fs from 'fs';
 import { GoogleGenAI } from '@google/genai';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 dotenv.config();
 
@@ -506,7 +511,7 @@ async function startServer() {
   });
 
   // --- SUBMISSION UPLOAD & OCR ROUTES ---
-  const uploadDir = path.join(process.cwd(), 'public/uploads/assessments');
+  const uploadDir = path.join(__dirname, 'public/uploads/assessments');
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
@@ -1165,7 +1170,7 @@ async function startServer() {
   });
 
   // --- UPLOAD ENDPOINT ---
-  const batteryUploadDir = path.join(process.cwd(), 'public/uploads');
+  const batteryUploadDir = path.join(__dirname, 'public/uploads');
   if (!fs.existsSync(batteryUploadDir)) {
     fs.mkdirSync(batteryUploadDir, { recursive: true });
   }
@@ -1195,7 +1200,7 @@ async function startServer() {
   });
 
   // Serve uploaded images/slides static directory
-  app.use('/uploads', express.static(path.join(process.cwd(), 'public/uploads')));
+  app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
   // Vite Middleware for development
   if (process.env.NODE_ENV !== 'production') {
@@ -1206,7 +1211,7 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    const distPath = path.join(__dirname, 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
@@ -1214,6 +1219,16 @@ async function startServer() {
   }
 
   if (!process.env.VERCEL) {
+    // Global Error Handler to catch unhandled errors (like Multer)
+    app.use((err: any, req: any, res: any, next: any) => {
+      console.error("GLOBAL ERROR HANDLER:", err);
+      res.status(500).json({ 
+        error: err.message || 'Internal Server Error', 
+        code: err.code,
+        stack: err.stack 
+      });
+    });
+
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
