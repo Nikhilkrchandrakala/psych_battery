@@ -539,7 +539,7 @@ const SubmissionReview: React.FC = () => {
                 </div>
 
                 {/* Bottom: Psych Battery details */}
-                {(activeAssessorType === 'Psych' || activeAssessorType === 'TO' || profile?.role === 'admin') && (
+                {(activeAssessorType === 'Psych' || activeAssessorType === 'TO') && (
                   <div className="w-full space-y-4">
                     <div className="flex items-center justify-between px-2 text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em]">
                       <div className="flex items-center gap-2">
