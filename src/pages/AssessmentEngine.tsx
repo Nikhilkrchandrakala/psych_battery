@@ -319,8 +319,8 @@ const AssessmentEngine: React.FC = () => {
         currentSlide?.slideType === 'BLACKOUT' && "bg-black border-transparent text-zinc-900"
       )}>
         <div className="flex items-center gap-4 md:gap-8">
-          <div className="flex items-center gap-3 md:gap-4">
-            <div className="flex flex-col">
+          <div className="flex items-center gap-2 md:gap-4 ml-auto mr-4">
+            <div className="flex flex-col text-right">
               <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] opacity-40">Module</span>
               <span className="text-app-text-bright font-black text-[10px] md:text-xs">{currentModule}</span>
             </div>
@@ -339,13 +339,15 @@ const AssessmentEngine: React.FC = () => {
             </div>
           )}
 
-          <button 
-            onClick={() => setIsPaused(!isPaused)}
-            className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center rounded-full bg-app-card border border-app-border hover:bg-app-sidebar transition-colors"
-            title={isPaused ? "Resume" : "Pause"}
-          >
-            {isPaused ? <Play size={12} className="text-green-500 fill-current ml-0.5" /> : <Pause size={12} className="text-app-accent fill-current" />}
-          </button>
+          {isAdminPreview && (
+            <button 
+              onClick={() => setIsPaused(!isPaused)}
+              className="w-6 h-6 md:w-8 md:h-8 flex items-center justify-center rounded-full bg-app-card border border-app-border hover:bg-app-sidebar transition-colors ml-2"
+              title={isPaused ? "Resume" : "Pause"}
+            >
+              {isPaused ? <Play size={12} className="text-green-500 fill-current ml-0.5" /> : <Pause size={12} className="text-app-accent fill-current" />}
+            </button>
+          )}
         </div>
 
         <div className="hidden md:flex flex-col items-center absolute left-1/2 -translate-x-1/2">
@@ -495,13 +497,15 @@ const AssessmentEngine: React.FC = () => {
               <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
             </button>
 
-            <button
-              onClick={() => setIsPaused((prev) => !prev)}
-              className="p-2 md:p-3 bg-app-accent/15 border border-app-accent/20 rounded-full text-app-accent hover:bg-app-accent/35 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-              title={isPaused ? "Play Timer (Spacebar)" : "Pause Timer (Spacebar)"}
-            >
-              {isPaused ? <Play size={16} className="fill-current md:w-5 md:h-5" /> : <Pause size={16} className="fill-current md:w-5 md:h-5" />}
-            </button>
+            {isAdminPreview && (
+              <button
+                onClick={() => setIsPaused((prev) => !prev)}
+                className="p-2 md:p-3 bg-app-accent/15 border border-app-accent/20 rounded-full text-app-accent hover:bg-app-accent/35 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                title={isPaused ? "Play Timer (Spacebar)" : "Pause Timer (Spacebar)"}
+              >
+                {isPaused ? <Play size={16} className="fill-current md:w-5 md:h-5" /> : <Pause size={16} className="fill-current md:w-5 md:h-5" />}
+              </button>
+            )}
 
             {/* Next — always visible but behavior depends on module config */}
             <button
