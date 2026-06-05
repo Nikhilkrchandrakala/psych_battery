@@ -13,8 +13,16 @@ import { GoogleGenAI } from '@google/genai';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// Robust __dirname definition for both ESM (dev) and CJS (prod)
+const getDirname = () => {
+  if (typeof __dirname !== 'undefined') return __dirname;
+  try {
+    return dirname(fileURLToPath(import.meta.url));
+  } catch (e) {
+    return process.cwd();
+  }
+};
+const __dirnameSafe = getDirname();
 
 dotenv.config();
 
@@ -511,16 +519,24 @@ async function startServer() {
   });
 
   // --- SUBMISSION UPLOAD & OCR ROUTES ---
-  const uploadDir = path.join(__dirname, 'public/uploads/assessments');
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
-  const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadDir),
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.]/g, '')}`)
-  });
+  const storage = multer.memoryStorage();
   const upload = multer({ storage, limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB per file to support high-res scans
+
+  // Helper to forward files to the main VPS backend
+  async function forwardToMainBackend(file: any, token: string) {
+    const blob = new Blob([file.buffer], { type: file.mimetype });
+    const formData = new FormData();
+    formData.append('file', blob, file.originalname);
+    
+    const res = await fetch('https://api.ssbwithisv.in/api/uploadBatteryImage', {
+      method: 'POST',
+      headers: { 'token': token || '' },
+      body: formData
+    });
+    if (!res.ok) throw new Error(`Main backend upload failed: ${res.statusText}`);
+    const data = await res.json();
+    return data.url; // Returns the absolute URL hosted on the VPS
+  }
 
   app.post('/api/submissions/:id/upload', authenticate, upload.array('files', 20), async (req: any, res: any) => {
     try {
@@ -538,7 +554,13 @@ async function startServer() {
       }
 
       const files = req.files as any[];
-      const filePaths = files.map(f => `/uploads/assessments/${f.filename}`);
+      const filePaths: string[] = [];
+      const token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : (req.headers.token as string);
+
+      for (const file of files) {
+        const url = await forwardToMainBackend(file, token);
+        filePaths.push(url);
+      }
 
       // Add files to submission
       submission.uploadedFiles = [...(submission.uploadedFiles || []), ...filePaths];
@@ -614,7 +636,13 @@ async function startServer() {
       }
 
       const files = req.files as any[];
-      const filePaths = files.map(f => `/uploads/assessments/${f.filename}`);
+      const filePaths: string[] = [];
+      const token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : (req.headers.token as string);
+
+      for (const file of files) {
+        const url = await forwardToMainBackend(file, token);
+        filePaths.push(url);
+      }
 
       submission.piqFiles = [...(submission.piqFiles || []), ...filePaths];
       submission.piqStatus = 'PROCESSING';
@@ -629,13 +657,14 @@ async function startServer() {
     }
   });
 
-  app.post('/api/upload', authenticate, isAdmin, upload.single('file'), (req: any, res: any) => {
+  app.post('/api/upload', authenticate, isAdmin, upload.single('file'), async (req: any, res: any) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
       }
-      const filePath = `/uploads/assessments/${req.file.filename}`;
-      res.json({ url: filePath });
+      const token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : (req.headers.token as string);
+      const fileUrl = await forwardToMainBackend(req.file, token);
+      res.json({ url: fileUrl });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -1170,37 +1199,23 @@ async function startServer() {
   });
 
   // --- UPLOAD ENDPOINT ---
-  const batteryUploadDir = path.join(__dirname, 'public/uploads');
-  if (!fs.existsSync(batteryUploadDir)) {
-    fs.mkdirSync(batteryUploadDir, { recursive: true });
-  }
+  const batteryUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
-  const batteryStorage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, batteryUploadDir);
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-  });
-
-  const batteryUpload = multer({ storage: batteryStorage, limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB per file
-
-  app.post('/api/upload', authenticate, batteryUpload.single('file'), (req, res) => {
+  app.post('/api/uploadBatteryImage', authenticate, batteryUpload.single('file'), async (req: any, res: any) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
       }
-      const url = `/uploads/${req.file.filename}`;
-      res.json({ url });
+      const token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : (req.headers.token as string);
+      const url = await forwardToMainBackend(req.file, token);
+      res.json({ url, message: 'File uploaded successfully via main backend' });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   });
 
   // Serve uploaded images/slides static directory
-  app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+  app.use('/uploads', express.static(path.join(__dirnameSafe, 'public/uploads')));
 
   // Vite Middleware for development
   if (process.env.NODE_ENV !== 'production') {
@@ -1211,7 +1226,7 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(__dirname, 'dist');
+    const distPath = path.join(__dirnameSafe, 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
