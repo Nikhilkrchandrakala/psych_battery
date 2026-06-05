@@ -226,7 +226,9 @@ const SubmissionReview: React.FC = () => {
 
     if (dateField) {
       const date = new Date(dateField);
-      setMeetingDate(date.toISOString().slice(0, 16));
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const localDateStr = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+      setMeetingDate(localDateStr);
     } else {
       setMeetingDate('');
     }
@@ -294,6 +296,11 @@ const SubmissionReview: React.FC = () => {
       const prefix = activeAssessorType.toLowerCase();
       if (meetingDate) updateData[`${prefix}MeetingDate`] = new Date(meetingDate).toISOString();
       if (meetingLink) updateData[`${prefix}MeetingLink`] = meetingLink;
+      
+      if (status === 'MEETING_SCHEDULED') {
+        updateData.triggerEmail = true;
+        updateData.meetingRole = prefix;
+      }
 
       await api.submissions.update(id, updateData);
       setSubmission(prev => prev ? { ...prev, ...updateData } : null);

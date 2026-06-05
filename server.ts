@@ -1070,7 +1070,11 @@ async function startServer() {
         const linkField = `${role}MeetingLink`;
         const dateField = `${role}MeetingDate`;
         
-        if (req.body[linkField] && req.body[linkField] !== (oldSubmission as any)[linkField]) {
+        const linkChanged = req.body[linkField] && req.body[linkField] !== (oldSubmission as any)[linkField];
+        const dateChanged = req.body[dateField] && new Date(req.body[dateField]).getTime() !== new Date((oldSubmission as any)[dateField] || 0).getTime();
+        const explicitlyTriggered = req.body.triggerEmail && req.body.meetingRole === role;
+        
+        if (explicitlyTriggered || linkChanged || dateChanged) {
           const studentEmail = (submission.userId as any)?.email;
           const studentName = (submission.userId as any)?.name || 'Candidate';
           const meetingLink = req.body[linkField];
