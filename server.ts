@@ -95,6 +95,8 @@ const authenticate = async (req: any, res: any, next: any) => {
     token = authHeader.split(' ')[1];
   } else if (req.headers.token) {
     token = req.headers.token;
+  } else if (req.query.token) {
+    token = req.query.token;
   }
 
   const isBypass = process.env.BYPASS_AUTH === 'true' ||

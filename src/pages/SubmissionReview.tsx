@@ -307,7 +307,13 @@ const SubmissionReview: React.FC = () => {
     }
   };
 
-  const buildFileUrl = (path: string) => {
+  const buildFileUrl = (path: string, fileIndex?: number) => {
+    if (path.startsWith('db://')) {
+      const token = localStorage.getItem('auth_token');
+      // Always fallback to activePiqIndex if fileIndex is not provided
+      const idx = fileIndex !== undefined ? fileIndex : activePiqIndex;
+      return `${SERVER_BASE}/api/submissions/${id}/piq-file/${idx}?token=${token}`;
+    }
     if (path.startsWith('http')) return path;
     return `${SERVER_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
   };
@@ -533,7 +539,7 @@ const SubmissionReview: React.FC = () => {
                 </div>
 
                 {/* Bottom: Psych Battery details */}
-                {activeAssessorType !== 'IO' && (
+                {(activeAssessorType === 'Psych' || activeAssessorType === 'TO' || profile?.role === 'admin') && (
                   <div className="w-full space-y-4">
                     <div className="flex items-center justify-between px-2 text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em]">
                       <div className="flex items-center gap-2">
