@@ -1079,9 +1079,7 @@ async function startServer() {
           if (studentEmail && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
             try {
               const transporter = nodemailer.createTransport({
-                host: "smtp.zoho.in",
-                port: 465,
-                secure: true,
+                service: "gmail",
                 auth: {
                   user: process.env.EMAIL_USER,
                   pass: process.env.EMAIL_PASS

@@ -107,6 +107,7 @@ const SubmissionReview: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'dossier' | 'evaluation' | 'meeting' | 'feedback'>('dossier');
   const [showEthicsModal, setShowEthicsModal] = useState(true);
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
   
   // Attempted Psych Battery details state
   const [loadingSlides, setLoadingSlides] = useState(false);
@@ -299,6 +300,8 @@ const SubmissionReview: React.FC = () => {
 
       if (isCompleted) {
         navigate('/assessor');
+      } else if (status === 'MEETING_SCHEDULED') {
+        setShowMeetingModal(true);
       }
     } catch (error) {
       console.error('Failed to update submission:', error);
@@ -869,6 +872,34 @@ const SubmissionReview: React.FC = () => {
               </div>
             </div>
             <div className="absolute top-0 left-0 w-64 h-64 bg-app-accent/5 rounded-full blur-[100px] -ml-32 -mt-32" />
+          </div>
+        </div>
+      )}
+
+      {/* Meeting Link Sent Success Modal */}
+      {showMeetingModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-app-sidebar border border-app-border rounded-[2.5rem] p-8 max-w-sm w-full text-center relative overflow-hidden shadow-2xl animate-in scale-in-95 duration-300">
+            <div className="relative z-10 space-y-6">
+              <div className="w-16 h-16 bg-green-500/10 rounded-3xl border border-green-500/20 flex items-center justify-center mx-auto text-green-500 shadow-inner">
+                <CheckCircle2 size={32} />
+              </div>
+              
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black tracking-tight text-app-text-bright">Meeting Link Sent</h2>
+                <p className="text-app-text-muted text-sm font-serif italic">
+                  The candidate's dashboard has been updated and an email notification has been dispatched.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowMeetingModal(false)}
+                className="w-full py-4 bg-app-card border border-app-border text-app-text-bright rounded-2xl text-[11px] font-black uppercase tracking-widest hover:border-app-accent hover:text-app-accent transition-all shadow-lg active:scale-95 cursor-pointer"
+              >
+                Continue
+              </button>
+            </div>
+            <div className="absolute top-0 right-0 w-48 h-48 bg-green-500/5 rounded-full blur-[80px] -mr-24 -mt-24" />
           </div>
         </div>
       )}
