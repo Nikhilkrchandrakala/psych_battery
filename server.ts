@@ -1076,13 +1076,15 @@ async function startServer() {
           const meetingLink = req.body[linkField];
           const meetingDate = req.body[dateField] || (submission as any)[dateField];
           
-          if (studentEmail && process.env.WEB_HEAD_EMAIL && process.env.WEB_HEAD_PASSWORD) {
+          if (studentEmail && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
             try {
               const transporter = nodemailer.createTransport({
-                service: "gmail",
+                host: "smtp.zoho.in",
+                port: 465,
+                secure: true,
                 auth: {
-                  user: process.env.WEB_HEAD_EMAIL,
-                  pass: process.env.WEB_HEAD_PASSWORD
+                  user: process.env.EMAIL_USER,
+                  pass: process.env.EMAIL_PASS
                 }
               });
 
@@ -1098,7 +1100,7 @@ async function startServer() {
               }
 
               await transporter.sendMail({
-                from: `"SSB With ISV" <${process.env.WEB_HEAD_EMAIL}>`,
+                from: '"SSB With ISV" <info@ssbwithisv.in>',
                 to: studentEmail,
                 subject: `SSB Feedback Meeting Scheduled (${role.toUpperCase()} Assessor)`,
                 html: `

@@ -12,9 +12,7 @@ async function send() {
   });
 
   const emails = [
-    { to: 'isvclub2021@gmail.com', role: 'io' },
-    { to: 'isvclub2021@gmail.com', role: 'psych' },
-    { to: 'isvclub2021@gmail.com', role: 'to' }
+    { to: 'qcquantumclimb@gmail.com', role: 'psych' }
   ];
 
   for (const { to, role } of emails) {
