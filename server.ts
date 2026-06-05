@@ -1076,13 +1076,13 @@ async function startServer() {
           const meetingLink = req.body[linkField];
           const meetingDate = req.body[dateField] || (submission as any)[dateField];
           
-          if (studentEmail && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+          if (studentEmail && process.env.WEB_HEAD_EMAIL && process.env.WEB_HEAD_PASSWORD) {
             try {
               const transporter = nodemailer.createTransport({
                 service: "gmail",
                 auth: {
-                  user: process.env.EMAIL_USER,
-                  pass: process.env.EMAIL_PASS
+                  user: process.env.WEB_HEAD_EMAIL,
+                  pass: process.env.WEB_HEAD_PASSWORD
                 }
               });
 
@@ -1098,7 +1098,7 @@ async function startServer() {
               }
 
               await transporter.sendMail({
-                from: '"SSB With ISV" <info@ssbwithisv.in>',
+                from: `"SSB With ISV" <${process.env.WEB_HEAD_EMAIL}>`,
                 to: studentEmail,
                 subject: `SSB Feedback Meeting Scheduled (${role.toUpperCase()} Assessor)`,
                 html: `
