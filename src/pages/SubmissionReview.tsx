@@ -464,7 +464,12 @@ const SubmissionReview: React.FC = () => {
       </div>
 
       {/* Main Content Area: 2-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_500px] xl:grid-cols-[1fr_600px] gap-8 items-start">
+      <div className={cn(
+        "grid gap-8 items-start",
+        (activeTab === 'dossier' && (activeAssessorType === 'Psych' || activeAssessorType === 'TO') && assessment)
+          ? "grid-cols-1 lg:grid-cols-[1fr_500px] xl:grid-cols-[1fr_600px]" 
+          : "grid-cols-1"
+      )}>
         
         {/* LEFT COLUMN: Tabs Content */}
         <div className="space-y-8 min-w-0">
@@ -830,7 +835,7 @@ const SubmissionReview: React.FC = () => {
         </div>
 
         {/* RIGHT COLUMN: Presenter Sticky Panel */}
-        {(activeAssessorType === 'Psych' || activeAssessorType === 'TO') && assessment && (
+        {activeTab === 'dossier' && (activeAssessorType === 'Psych' || activeAssessorType === 'TO') && assessment && (
           <div className="flex flex-col w-full h-full">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3 text-app-accent">
