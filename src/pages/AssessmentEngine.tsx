@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Maximize, Timer, AlertTriangle, Play, BookOpen, Clock, Zap, ChevronLeft, ChevronRight, Pause } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAssessmentData } from '../hooks/useAssessmentData';
+import { SlideRenderer } from '../components/SlideRenderer';
 
 const DEFAULT_MODULE_CONFIG: ModuleConfig = { timingMode: 'per-slide', globalDuration: 0, navigable: false };
 
@@ -388,85 +389,8 @@ const AssessmentEngine: React.FC = () => {
         </div>
       </div>
 
-      {/* Slide Content Area */}
-      <div className="flex-grow flex items-center justify-center relative px-4 py-4 md:px-12 md:py-8 lg:px-20 lg:py-10">
-        <AnimatePresence mode="wait">
-          {currentSlide && (
-            <motion.div
-              key={currentSlide.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className="flex-1 w-full flex flex-col items-center justify-center bg-app-sidebar"
-              style={{ filter: currentSlide?.inverted ? 'invert(1)' : 'none' }}
-            >
-              {currentSlide.slideType === 'IMAGE' && currentSlide.imageUrl && (
-                <div className="relative w-full h-full max-h-[calc(100vh-14rem)] flex items-center justify-center">
-                  <div className="absolute inset-0 bg-app-accent/5 rounded-full blur-[200px]" />
-                  <img 
-                    src={currentSlide.imageUrl} 
-                    alt="Evaluation Stimulus" 
-                    className="max-w-full max-h-full object-contain rounded-[1.5rem] md:rounded-[2rem] shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-app-border relative z-10"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute bottom-4 left-4 md:bottom-10 md:left-10 bg-black/80 backdrop-blur px-3 py-1.5 md:px-5 md:py-3 rounded-xl md:rounded-2xl text-lg md:text-3xl font-black text-white border border-white/10 z-20 shadow-2xl">
-                    {currentSlide.order}
-                  </div>
-                </div>
-              )}
-
-              {currentSlide.slideType === 'WORD' && currentSlide.content && (
-                <div className="relative max-w-full px-4">
-                  <div className="absolute inset-0 bg-app-accent/10 rounded-full blur-[150px]" />
-                  <h3 
-                    style={{ fontSize: `calc(clamp(2rem, 15vw, 10rem) * ${currentSlide.typographyScale || 1})` }}
-                    className="font-black tracking-tighter text-app-text-bright leading-none relative z-10 text-center font-sans break-words max-w-full"
-                    dangerouslySetInnerHTML={{ __html: currentSlide.content }}
-                  />
-                </div>
-              )}
-
-              {currentSlide.slideType === 'BREAK' && (
-                <div className="text-center space-y-6 sm:space-y-10 group px-4 max-w-full">
-                   <div className="w-20 h-20 sm:w-32 sm:h-32 bg-app-card rounded-full flex items-center justify-center mx-auto border border-app-border group-hover:scale-110 transition-transform duration-700 shadow-2xl">
-                    <Clock className="text-app-text-muted w-10 h-10 sm:w-16 sm:h-16" />
-                  </div>
-                  <h3 
-                    style={{ fontSize: 'clamp(2rem, 8vw, 5rem)' }}
-                    className="font-black text-app-text-bright uppercase tracking-tighter italic font-sans"
-                  >
-                    BREAK
-                  </h3>
-                  <p 
-                    style={{ fontSize: 'clamp(1rem, 2.5vw, 1.5rem)' }}
-                    className="text-app-text-muted font-sans italic max-w-md mx-auto"
-                  >
-                    Deep breaths encouraged. Next section loading shortly.
-                  </p>
-                </div>
-              )}
-
-              {currentSlide.slideType === 'TEXT' && (
-                <div className="w-full h-full flex flex-col items-center justify-center max-h-full overflow-hidden px-8 md:px-16 lg:px-24 py-6 md:py-10">
-                   <div className="w-full max-h-full overflow-y-auto custom-scrollbar">
-                     <div 
-                       style={{ fontSize: `calc(clamp(1.125rem, 2vw, 1.75rem) * ${currentSlide.typographyScale || 1})`, lineHeight: '1.7' }}
-                       className="text-app-text-bright font-sans whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-8 [&_ol]:pl-8 text-left"
-                       dangerouslySetInnerHTML={{ __html: currentSlide.content || "" }}
-                     />
-                   </div>
-                </div>
-              )}
-
-              {currentSlide.slideType === 'BLACKOUT' && (
-                <div className="text-white/5 text-[15vw] font-black italic select-none pointer-events-none uppercase tracking-tighter animate-pulse">
-                  WRITE
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div className="@container flex-grow flex items-center justify-center relative px-4 py-4 md:px-12 md:py-8 lg:px-20 lg:py-10">
+        <SlideRenderer slide={currentSlide} invertContentOnly={false} animated={true} />
       </div>
 
       {/* Slide Pagination Strip */}
@@ -493,7 +417,7 @@ const AssessmentEngine: React.FC = () => {
       )}
 
       {/* Floating Presenter Controls */}
-      {isStarted && (
+      {isStarted && isAdminPreview && (
         <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-[120] flex items-center gap-3 md:gap-6 bg-app-card/85 backdrop-blur-md px-4 md:px-8 py-2 md:py-3.5 rounded-full border border-app-border shadow-[0_15px_30px_rgba(0,0,0,0.4)] transition-opacity duration-300 hover:opacity-100 opacity-60 max-w-[95vw] md:max-w-none">
           <div className="flex items-center gap-1 md:gap-2">
             {/* Prev — only if navigable */}

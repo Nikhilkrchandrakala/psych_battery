@@ -11,7 +11,7 @@ import {
   Loader2, Users
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { AssessmentPresenter } from './AssessmentPresenter';
+import { AssessmentMiniViewer } from './AssessmentMiniViewer';
 
 // Base URL for serving uploaded files from the PsychBattery server
 // The PsychBattery server (tsx server.ts) serves /uploads at the same port as the Vite dev server (5173)
@@ -106,7 +106,10 @@ const SubmissionReview: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'dossier' | 'evaluation' | 'meeting' | 'feedback'>('dossier');
-  const [showEthicsModal, setShowEthicsModal] = useState(true);
+  const [showEthicsModal, setShowEthicsModal] = useState(() => {
+    return localStorage.getItem('ssb_ethics_agreed') !== 'true';
+  });
+  const [doNotShowEthics, setDoNotShowEthics] = useState(false);
   const [showMeetingModal, setShowMeetingModal] = useState(false);
   
   // Attempted Psych Battery details state
@@ -460,8 +463,14 @@ const SubmissionReview: React.FC = () => {
         ))}
       </div>
 
-      {/* ── DOSSIER VIEWER TAB ─────────────────────────────────────────── */}
-      {activeTab === 'dossier' && (
+      {/* Main Content Area: 2-Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_500px] xl:grid-cols-[1fr_600px] gap-8 items-start">
+        
+        {/* LEFT COLUMN: Tabs Content */}
+        <div className="space-y-8 min-w-0">
+          
+          {/* ── DOSSIER VIEWER TAB ─────────────────────────────────────────── */}
+          {activeTab === 'dossier' && (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
           {/* PIQ Section */}
@@ -509,7 +518,7 @@ const SubmissionReview: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="bg-app-card rounded-3xl border border-app-border overflow-hidden shadow-2xl" style={{ height: '680px' }}>
+                  <div className="bg-app-card rounded-3xl border border-app-border overflow-hidden shadow-2xl" style={{ height: '1100px' }}>
                     {isPdf(piqFiles[activePiqIndex]) ? (
                       <iframe
                         key={activePiqIndex}
@@ -548,21 +557,6 @@ const SubmissionReview: React.FC = () => {
                   )}
                 </div>
 
-                {/* Bottom: Psych Battery details */}
-                {(activeAssessorType === 'Psych' || activeAssessorType === 'TO') && (
-                  <div className="w-full space-y-4">
-                    <div className="flex items-center justify-between px-2 text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em]">
-                      <div className="flex items-center gap-2">
-                        <Sparkles size={12} className="text-app-accent animate-pulse" />
-                        <span>Assessment Preview</span>
-                      </div>
-                    </div>
-                  
-                    <div className="bg-app-card/60 border border-app-border rounded-3xl overflow-hidden shadow-inner flex flex-col relative" style={{ height: '75vh', minHeight: '600px' }}>
-                      <AssessmentPresenter assessmentId={assessment._id || assessment.id} />
-                    </div>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="bg-app-sidebar border border-app-border border-dashed rounded-[3rem] p-20 text-center opacity-50 space-y-4">
@@ -833,6 +827,34 @@ const SubmissionReview: React.FC = () => {
           </div>
         </div>
       )}
+        </div>
+
+        {/* RIGHT COLUMN: Presenter Sticky Panel */}
+        {(activeAssessorType === 'Psych' || activeAssessorType === 'TO') && assessment && (
+          <div className="flex flex-col w-full h-full">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3 text-app-accent">
+                <Sparkles size={24} className="fill-current" />
+                <h3 className="text-xl font-black text-app-text-bright tracking-tight uppercase">
+                  ASSESSMENT PREVIEW
+                </h3>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 flex items-center gap-2">
+                  <span className="opacity-0">Placeholder</span>
+                </h4>
+              </div>
+            
+              <div className="@container bg-app-card/60 border border-app-border rounded-3xl overflow-hidden shadow-2xl flex flex-col relative" style={{ height: '1100px' }}>
+                <AssessmentMiniViewer assessmentId={assessment._id || assessment.id} />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Ethics & Integrity Consent Modal */}
       {showEthicsModal && (
@@ -869,9 +891,25 @@ const SubmissionReview: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-4">
+              <div className="pt-4 space-y-4">
+                <label className="flex items-center gap-2 cursor-pointer group w-fit mx-auto">
+                  <input
+                    type="checkbox"
+                    checked={doNotShowEthics}
+                    onChange={(e) => setDoNotShowEthics(e.target.checked)}
+                    className="w-4 h-4 rounded border-app-border bg-app-card text-app-accent focus:ring-app-accent focus:ring-offset-app-sidebar cursor-pointer"
+                  />
+                  <span className="text-xs font-bold text-app-text-muted group-hover:text-app-text-bright transition-colors uppercase tracking-widest">
+                    Do not show this again
+                  </span>
+                </label>
                 <button
-                  onClick={() => setShowEthicsModal(false)}
+                  onClick={() => {
+                    if (doNotShowEthics) {
+                      localStorage.setItem('ssb_ethics_agreed', 'true');
+                    }
+                    setShowEthicsModal(false);
+                  }}
                   className="w-full py-4 bg-gradient-to-br from-[#C5A028] to-[#8C6A0F] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-app-accent/30 active:scale-95 cursor-pointer"
                 >
                   I Agree & Continue

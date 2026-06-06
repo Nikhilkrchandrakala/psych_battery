@@ -4,43 +4,16 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ChevronLeft, ChevronRight, Clock, Maximize } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { SlideRenderer } from '../components/SlideRenderer';
 
-const cleanHTML = (html: string) => {
-  if (!html) return "";
-  try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    let lastChild = doc.body.lastChild;
-    while (lastChild) {
-      if (lastChild.nodeType === Node.TEXT_NODE && !lastChild.textContent?.trim()) {
-        const prev = lastChild.previousSibling;
-        lastChild.remove();
-        lastChild = prev;
-      } else if (lastChild.nodeType === Node.ELEMENT_NODE) {
-        const el = lastChild as HTMLElement;
-        if (el.tagName === 'BR' || (!el.textContent?.trim() && !el.querySelector('img'))) {
-          const prev = lastChild.previousSibling;
-          lastChild.remove();
-          lastChild = prev;
-        } else {
-          break;
-        }
-      } else {
-        break;
-      }
-    }
-    return doc.body.innerHTML;
-  } catch (e) {
-    return html;
-  }
-};
+
 
 interface AssessmentPresenterProps {
   assessmentId?: string; // Can be passed directly or taken from route params
   onExit?: () => void;
 }
 
-export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assessmentId: propId, onExit }) => {
+export const AssessmentAdminPreview: React.FC<AssessmentPresenterProps> = ({ assessmentId: propId, onExit }) => {
   const { id: routeId } = useParams<{ id: string }>();
   const id = propId || routeId;
   const navigate = useNavigate();
@@ -199,85 +172,15 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
       </div>
 
       {/* Slide Content Area (WYSIWYG 16:9 Canvas) */}
-      <div className="flex-1 min-h-0 w-full flex items-center justify-center bg-black/40 relative overflow-hidden">
+      <div className="@container flex-1 min-h-0 w-full flex items-center justify-center bg-black/40 relative overflow-hidden p-8">
         <div 
-          className="flex flex-col items-center justify-center relative w-full"
+          className="flex flex-col items-center justify-center relative w-full bg-app-bg border border-app-border rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]"
           style={{ 
             aspectRatio: '16/9', 
-            maxWidth: 'calc((100vh - 80px) * 16 / 9)'
+            maxWidth: 'calc((100vh - 120px) * 16 / 9)'
           }}
         >
-        <AnimatePresence mode="wait">
-          {currentSlide && (
-            <motion.div
-              key={currentSlide.id || `${currentModuleIndex}-${currentSlideInModule}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 1.02 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="flex-1 w-full flex flex-col items-center justify-center bg-app-sidebar"
-              style={{ filter: currentSlide?.inverted ? 'invert(1)' : 'none' }}
-            >
-              {currentSlide.slideType === 'IMAGE' && currentSlide.imageUrl && (
-                <div className="relative w-full h-full max-h-[85vh] flex items-center justify-center">
-                  <div className="absolute inset-0 bg-app-accent/5 rounded-full blur-[200px]" />
-                  <img 
-                    src={currentSlide.imageUrl} 
-                    alt="Evaluation Stimulus" 
-                    className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl border border-app-border relative z-10"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-              )}
-
-              {currentSlide.slideType === 'WORD' && currentSlide.content && (
-                <div className="w-full h-full flex flex-col overflow-hidden">
-                  <div 
-                    className="flex-1 font-sans font-normal text-app-text-bright tracking-tight w-full p-[6cqi] text-center font-black flex items-center justify-center whitespace-pre-wrap break-words"
-                    dangerouslySetInnerHTML={{ __html: currentSlide.content }}
-                    style={{ 
-                      containerType: 'inline-size',
-                      fontSize: `calc(8cqi * ${currentSlide.typographyScale || 1})`
-                    }}
-                  />
-                </div>
-              )}
-
-              {currentSlide.slideType === 'BREAK' && (
-                <div className="text-center space-y-6 group p-[6cqi] max-w-full">
-                  <div className="w-16 h-16 bg-app-card rounded-full flex items-center justify-center mx-auto border border-app-border">
-                    <Clock className="text-app-text-muted w-8 h-8" />
-                  </div>
-                  <h3 
-                    style={{ fontSize: 'clamp(2rem, 6vw, 4rem)' }}
-                    className="font-black text-app-text-bright uppercase tracking-tighter italic font-sans"
-                  >
-                    BREAK
-                  </h3>
-                </div>
-              )}
-
-              {currentSlide.slideType === 'TEXT' && (
-                <div className="w-full h-full flex flex-col items-center justify-center overflow-hidden p-[6cqi]">
-                  <div 
-                    className="w-full my-auto font-sans font-normal text-app-text-bright tracking-tight text-left leading-relaxed whitespace-pre-wrap break-words [&_ul]:list-disc [&_ul]:pl-12 [&_ol]:list-decimal [&_ol]:pl-12 [&_li]:my-2"
-                    dangerouslySetInnerHTML={{ __html: cleanHTML(currentSlide.content || "") }}
-                    style={{ 
-                      containerType: 'inline-size',
-                      fontSize: `calc(1.1cqi * ${currentSlide.typographyScale || 1})`
-                    }}
-                  />
-                </div>
-              )}
-
-              {currentSlide.slideType === 'BLACKOUT' && (
-                <div className="text-white/10 text-[10vw] font-black italic select-none pointer-events-none uppercase tracking-tighter">
-                  WRITE
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+          <SlideRenderer slide={currentSlide} invertContentOnly={false} animated={true} />
         </div>
       </div>
 
@@ -315,26 +218,8 @@ export const AssessmentPresenter: React.FC<AssessmentPresenterProps> = ({ assess
           </button>
         </div>
 
-        {/* Counter and Utilities */}
+        {/* Utilities */}
         <div className="flex items-center gap-6 justify-end w-auto min-w-[200px]">
-          <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/10 flex items-center gap-3">
-             <Clock className={cn("animate-pulse w-4 h-4", currentModuleConfig.timingMode === 'global' ? "text-amber-400" : "text-app-accent")} />
-             <span className="text-xl font-black text-app-text-bright font-mono tabular-nums leading-none">
-              {String(Math.floor(timeLeft / 60)).padStart(2, '0')}:{String(timeLeft % 60).padStart(2, '0')}
-            </span>
-          </div>
-
-          <button 
-            onClick={() => setIsPaused(!isPaused)}
-            className={cn(
-              "px-4 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition-all border",
-              isPaused 
-                ? "bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500 hover:text-white" 
-                : "bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500 hover:text-white"
-            )}
-          >
-            {isPaused ? "Resume" : "Pause Timer"}
-          </button>
 
           <button
             onClick={() => {

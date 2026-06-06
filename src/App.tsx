@@ -11,7 +11,7 @@ import AssessorDashboard from './pages/AssessorDashboard';
 import SubmissionReview from './pages/SubmissionReview';
 import AdminDashboard from './pages/AdminDashboard';
 import AssessmentEditor from './pages/AssessmentEditor';
-import { AssessmentPresenter } from './pages/AssessmentPresenter';
+import { AssessmentAdminPreview } from './pages/AssessmentAdminPreview';
 import Meetings from './pages/Meetings';
 
 /**
@@ -68,7 +68,7 @@ export default function App() {
       {/* Fullscreen Routes (No Sidebar) */}
       <Route element={<ProtectedRoute />}>
         <Route path="/assessment/:id" element={<AssessmentEngine />} />
-        <Route path="/presentation/:id" element={<div className="h-screen w-screen"><AssessmentPresenter /></div>} />
+        <Route path="/presentation/:id" element={<div className="h-screen w-screen"><AssessmentAdminPreview /></div>} />
       </Route>
 
       <Route element={<ProtectedRoute requireAdmin />}>

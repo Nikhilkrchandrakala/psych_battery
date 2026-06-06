@@ -160,7 +160,7 @@ const StudentEntry: React.FC = () => {
           className="w-full py-6 md:py-8 px-6 bg-app-accent hover:bg-app-accent/90 text-white rounded-[1.5rem] md:rounded-[2rem] font-black text-xl md:text-3xl uppercase tracking-widest transition-all shadow-xl shadow-app-accent/30 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-4 border border-white/10"
         >
           <Play className="fill-current w-8 h-8 md:w-10 md:h-10" />
-          {assessmentState === 'IN_PROGRESS' ? 'Resume Test' : 'Commence Test'}
+          Commence Test
         </button>
       </div>
     </div>
