@@ -12,6 +12,7 @@ import SubmissionReview from './pages/SubmissionReview';
 import AdminDashboard from './pages/AdminDashboard';
 import AssessmentEditor from './pages/AssessmentEditor';
 import { AssessmentPresenter } from './pages/AssessmentPresenter';
+import Meetings from './pages/Meetings';
 
 /**
  * Redirects users to their role-appropriate home page on root visit.
@@ -52,6 +53,7 @@ export default function App() {
 
         <Route element={<ProtectedRoute allowedRoles={['assessor']} />}>
           <Route path="/assessor" element={<AssessorDashboard />} />
+          <Route path="/meetings" element={<Meetings />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={['assessor', 'admin']} />}>

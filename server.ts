@@ -581,6 +581,50 @@ async function startServer() {
       runOCR(submissionId, filePaths);
 
       await submission.save();
+
+      // --- Notify Assessors of Dossier Upload ---
+      try {
+        const student = await User.findById(submission.userId);
+        const recipientIds: string[] = [];
+        if (student) {
+          if (student.assignedIO) recipientIds.push(student.assignedIO.toString());
+          if (student.assignedTO) recipientIds.push(student.assignedTO.toString());
+          if (student.assignedPsych) recipientIds.push(student.assignedPsych.toString());
+        }
+
+        const admins = await User.find({ role: 'admin' });
+        admins.forEach(a => {
+          const adminId = a._id.toString();
+          if (!recipientIds.includes(adminId)) {
+            recipientIds.push(adminId);
+          }
+        });
+        const superAdmins = await AdminUser.find({
+          permissions: { $in: ['evaluations', 'super_admin'] }
+        });
+        superAdmins.forEach(sa => {
+          const adminId = sa._id.toString();
+          if (!recipientIds.includes(adminId)) {
+            recipientIds.push(adminId);
+          }
+        });
+
+        const candidateName = student ? student.name : 'Candidate';
+        for (const recipientId of recipientIds) {
+          const notification = new Notification({
+            recipientId,
+            studentId: submission.userId,
+            submissionId: submission._id,
+            title: 'Dossier Uploaded',
+            message: `Candidate ${candidateName} has uploaded their Dossier.`,
+            isRead: false
+          });
+          await notification.save();
+        }
+      } catch (notifErr) {
+        console.error('Failed to create Dossier notification:', notifErr);
+      }
+
       res.json({ message: 'Files uploaded successfully', files: filePaths });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -751,8 +795,8 @@ async function startServer() {
               recipientId,
               studentId: submission.userId,
               submissionId: submission._id,
-              title: 'PIQ & Dossier Ready for Review',
-              message: `Candidate ${candidateName} has completed their timed psychological test battery and uploaded their PIQ files. Dossier parsed successfully and is ready for assessment.`,
+              title: 'PIQ Uploaded',
+              message: `Candidate ${candidateName} has uploaded their PIQ files.`,
               isRead: false
             });
             await notification.save();
@@ -1046,6 +1090,48 @@ async function startServer() {
       res.status(201).json(submission);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post('/api/submissions/:id/complete', authenticate, async (req: any, res) => {
+    try {
+      const submission = await Submission.findById(req.params.id);
+      if (!submission) return res.status(404).json({ message: 'Submission not found' });
+      
+      submission.workflowStage = 'EVALUATION_COMPLETED';
+      await submission.save();
+
+      // Send Candidate Evaluation Completed notification
+      const student = await User.findById(submission.userId);
+      const recipientIds: string[] = [];
+      if (student) {
+        if (student.assignedIO) recipientIds.push(student.assignedIO.toString());
+        if (student.assignedTO) recipientIds.push(student.assignedTO.toString());
+        if (student.assignedPsych) recipientIds.push(student.assignedPsych.toString());
+      }
+      
+      const admins = await User.find({ role: 'admin' });
+      admins.forEach(a => { if (!recipientIds.includes(a._id.toString())) recipientIds.push(a._id.toString()); });
+      
+      const superAdmins = await AdminUser.find({ permissions: { $in: ['evaluations', 'super_admin'] } });
+      superAdmins.forEach(sa => { if (!recipientIds.includes(sa._id.toString())) recipientIds.push(sa._id.toString()); });
+
+      const candidateName = student ? student.name : 'Candidate';
+      for (const recipientId of recipientIds) {
+        const notification = new Notification({
+          recipientId,
+          studentId: submission.userId,
+          submissionId: submission._id,
+          title: 'Candidate Evaluation Completed',
+          message: `Candidate ${candidateName} has completed their Evaluation.`,
+          isRead: false
+        });
+        await notification.save();
+      }
+
+      res.json({ message: 'Evaluation marked as complete', submission });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 

@@ -33,6 +33,7 @@ const Layout: React.FC = () => {
     { label: 'My Dashboard', path: '/', icon: LayoutDashboard, show: profile?.role === 'student' },
     // Assessors only: candidate dossier list
     { label: 'Candidates', path: '/assessor', icon: Users, show: profile?.role === 'assessor' },
+    { label: 'Meetings', path: '/meetings', icon: Calendar, show: profile?.role === 'assessor' },
     // Admin only: admin hub
     { label: 'Admin Hub', path: '/admin?tab=progress', icon: Shield, show: isAdminUser },
     // Admin only: assessment catalogue
@@ -115,7 +116,7 @@ const Layout: React.FC = () => {
               </div>
               <div className="flex-grow min-w-0">
                 <div className="text-xs font-bold text-app-text-bright truncate">{profile?.name}</div>
-                <div className="text-[10px] text-app-text-muted uppercase font-black tracking-widest truncate">{profile?.role}</div>
+                <div className="text-[10px] text-app-text-muted uppercase font-black tracking-widest truncate">{profile?.role === 'admin' ? 'SUPER ADMIN' : profile?.role}</div>
               </div>
               <button
                 onClick={handleLogout}
@@ -152,7 +153,7 @@ const Layout: React.FC = () => {
                 <div className="text-right">
                   <div className="text-xs font-bold text-app-text-bright leading-tight">{profile?.name}</div>
                   <div className="text-[9px] text-[#8fa0b5] font-black uppercase tracking-widest leading-none mt-1">
-                    {profile?.assessorType ? `${profile.assessorType} Assessor` : (profile?.role === 'admin' ? 'Admin' : 'Assessor')}
+                    {profile?.assessorType ? `${profile.assessorType} Assessor` : (profile?.role === 'admin' ? 'SUPER ADMIN' : 'Assessor')}
                   </div>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-app-sidebar border border-app-border flex items-center justify-center overflow-hidden shrink-0">

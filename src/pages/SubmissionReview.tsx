@@ -61,10 +61,10 @@ const SPECIALIZED_TRAITS = {
 
 const PSYCH_GRID_CONFIG = {
   factors: [
-    { label: 'Factor I: Planning & Organizing', colSpan: 4 },
-    { label: 'Factor II: Social Adjustment', colSpan: 3 },
-    { label: 'Factor III: Social Effectiveness', colSpan: 5 },
-    { label: 'Factor IV: Dynamic', colSpan: 3 }
+    { label: <>FACTOR I:<br/>PLANNING & ORGANIZING</>, colSpan: 4 },
+    { label: <>FACTOR II:<br/>SOCIAL ADJUSTMENT</>, colSpan: 3 },
+    { label: <>FACTOR III:<br/>SOCIAL EFFECTIVENESS</>, colSpan: 5 },
+    { label: <>FACTOR IV:<br/>DYNAMIC</>, colSpan: 3 }
   ],
   traits: [
     { id: 'effective_intelligence', code: 'EI', num: 1, name: 'Effective Intelligence', factor: 'Factor I' },
@@ -438,8 +438,8 @@ const SubmissionReview: React.FC = () => {
       <div className="flex gap-1 bg-app-sidebar/50 p-1 rounded-2xl border border-app-border w-fit shadow-inner">
         {[
           { id: 'dossier', label: 'Document Viewer', icon: FileSearch },
-          { id: 'evaluation', label: 'Assessment', icon: MessageSquare },
           { id: 'meeting', label: 'Feedback Scheduler', icon: Calendar },
+          { id: 'evaluation', label: 'Assessment', icon: MessageSquare },
           ...(submission.status === 'REPORT_RELEASED' ? [{ id: 'feedback', label: 'All Assessor Feedback', icon: Users }] : [])
         ].filter(tab => {
           if (activeAssessorType === 'GTO' && tab.id === 'dossier') return false;
@@ -664,7 +664,7 @@ const SubmissionReview: React.FC = () => {
                               <tr className="bg-black/30 border-b border-app-border divide-x divide-app-border/40 text-[9px] font-black text-app-accent uppercase tracking-widest text-center">
                                 <th className="px-2 py-3 text-left overflow-hidden text-ellipsis whitespace-nowrap">Trainee / Chest No</th>
                                 {gridConfig.factors.map((f, i) => (
-                                  <th key={i} colSpan={f.colSpan} className="px-1 py-3 overflow-hidden text-ellipsis whitespace-nowrap">
+                                  <th key={i} colSpan={f.colSpan} className="px-1 py-2 leading-tight">
                                     {f.label}
                                   </th>
                                 ))}

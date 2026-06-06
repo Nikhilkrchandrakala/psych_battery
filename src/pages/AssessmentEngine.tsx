@@ -276,7 +276,16 @@ const AssessmentEngine: React.FC = () => {
           The test is complete. You will now return to your profile. Upload the Dossier in the profile.
         </p>
         <button
-          onClick={() => window.location.href = `${mainSiteUrl}/ProfileDashboard?tab=psycheTest&submissionId=${submissionId}`}
+          onClick={async () => {
+            if (submissionId) {
+              try {
+                await api.submissions.complete(submissionId);
+              } catch (e) {
+                console.error("Failed to mark evaluation as complete", e);
+              }
+            }
+            window.location.href = `${mainSiteUrl}/ProfileDashboard?tab=psycheTest&submissionId=${submissionId}`;
+          }}
           className="mt-8 px-12 py-4 bg-app-accent text-white font-bold rounded-xl shadow-lg shadow-app-accent/30 hover:scale-105 active:scale-95 transition-all uppercase tracking-widest"
         >
           Continue to Profile

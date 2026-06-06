@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { AssessmentSubmission, UserProfile } from '../types';
 import { useAuth } from '../components/AuthProvider';
-import { Users, Search, Filter, ExternalLink, Shield, ArrowRight, User as UserIcon, Bell, Check } from 'lucide-react';
+import { Users, Search, Filter, ExternalLink, Shield, ArrowRight, User as UserIcon, Bell, Check, Eye } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface NotificationItem {
@@ -201,7 +201,7 @@ const AssessorDashboard: React.FC = () => {
              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-app-text-muted" size={18} />
              <input 
               type="text" 
-              placeholder="Search candidate dossiers..." 
+              placeholder="Search" 
               className="w-full bg-app-card border border-app-border rounded-xl py-2.5 pl-12 pr-4 text-xs font-medium focus:outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent/20 transition-all text-app-text-bright"
              />
           </div>
@@ -318,9 +318,10 @@ const AssessorDashboard: React.FC = () => {
                                   "inline-flex items-center gap-2 text-[10px] font-black transition-all uppercase tracking-widest group/btn",
                                   sub.status === 'REPORT_RELEASED' ? "text-green-400 hover:text-green-300" : "text-app-accent hover:text-white"
                                 )}
+                                title={sub.status === 'REPORT_RELEASED' ? 'View Finalized Report' : 'Initialize Review'}
                               >
-                                {sub.status === 'REPORT_RELEASED' ? 'View Finalized Report' : 'Initialize Review'} 
-                                <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                                {sub.status === 'REPORT_RELEASED' ? 'View Finalized Report' : <Eye size={18} />} 
+                                {sub.status === 'REPORT_RELEASED' && <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />}
                             </Link>
                           )}
                        </td>

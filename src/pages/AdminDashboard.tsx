@@ -383,6 +383,16 @@ const AdminDashboard: React.FC = () => {
           TO: psychTraits
         };
 
+        const gridConfig = {
+          factors: [
+            { label: <>FACTOR I:<br/>PLANNING & ORGANIZING</>, colSpan: 4 },
+            { label: <>FACTOR II:<br/>SOCIAL ADJUSTMENT</>, colSpan: 3 },
+            { label: <>FACTOR III:<br/>SOCIAL EFFECTIVENESS</>, colSpan: 5 },
+            { label: <>FACTOR IV:<br/>DYNAMIC</>, colSpan: 3 }
+          ],
+          traits: psychTraits
+        };
+
         const renderAuditAssessorCard = (type: 'Psych' | 'GTO' | 'IO' | 'TO', title: string, assignedId: any, statusVal: string, remarksVal: string) => {
           if (!assignedId) return null;
 
@@ -418,19 +428,49 @@ const AdminDashboard: React.FC = () => {
               <div className="space-y-2">
                 <span className="text-[9px] font-black uppercase text-app-accent tracking-widest block">Scorecard Ticks & Marks</span>
                 {traitsScoreEntries.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-2 bg-black/10 border border-app-border p-3 rounded-2xl">
-                    {traitsScoreEntries.map(t => (
-                      <div key={t.id} className="text-center bg-app-card border border-app-border/40 py-1.5 px-2 rounded-xl">
-                        <div className="text-[8px] font-black text-app-text-muted uppercase tracking-wider">{t.code}</div>
-                        <div className="text-xs font-black text-app-text-bright mt-0.5 font-mono">{scoresMap[t.id]}/10</div>
-                      </div>
-                    ))}
-                    {finalMarks > 0 && (
-                      <div className="text-center bg-app-accent/10 border border-app-accent/30 py-1.5 px-2 rounded-xl col-span-3">
-                        <div className="text-[8px] font-black text-app-accent uppercase tracking-wider">Overall Rating</div>
-                        <div className="text-sm font-black text-app-accent mt-0.5 font-mono">MARKS: {finalMarks}</div>
-                      </div>
-                    )}
+                  <div className="bg-app-sidebar border border-app-border rounded-xl overflow-x-auto shadow-2xl hide-scrollbar">
+                    <table className="w-full border-collapse text-left table-fixed min-w-[700px]">
+                      <thead>
+                        {/* Factor Headers Row */}
+                        <tr className="bg-black/30 border-b border-app-border divide-x divide-app-border/40 text-[9px] font-black text-app-accent uppercase tracking-widest text-center">
+                          {gridConfig.factors.map((f, i) => (
+                            <th key={i} colSpan={f.colSpan} className="px-1 py-2 leading-tight">
+                              {f.label}
+                            </th>
+                          ))}
+                          <th rowSpan={2} className="w-[12%] px-1 py-3 text-center align-middle font-bold text-app-accent bg-app-accent/10 overflow-hidden text-ellipsis whitespace-nowrap">
+                            MARKS
+                          </th>
+                        </tr>
+                        {/* OLQ Codes Row */}
+                        <tr className="bg-black/10 border-b border-app-border divide-x divide-app-border/40 text-[10px] font-black text-app-text-bright uppercase tracking-wider text-center">
+                          {gridConfig.traits.map((t) => (
+                            <td key={t.id} className="w-[5.8%] px-1 py-2 font-mono text-[9px] hover:bg-black/20 group relative cursor-help overflow-hidden text-ellipsis whitespace-nowrap">
+                              <span className="underline decoration-dotted decoration-app-text-muted/50">{t.code}</span>
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-black border border-app-border text-white text-[9px] font-bold py-1.5 px-3 rounded-lg shadow-2xl whitespace-nowrap z-50">
+                                {t.name}
+                              </div>
+                            </td>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="divide-x divide-app-border/40 hover:bg-black/10 transition-colors">
+                          {gridConfig.traits.map((t) => (
+                            <td key={t.id} className="p-0.5 text-center">
+                              <div className="w-full text-center text-xs font-black text-app-text-bright py-2 px-0.5">
+                                {scoresMap[t.id] ?? 0}
+                              </div>
+                            </td>
+                          ))}
+                          <td className="p-0.5 text-center bg-app-accent/5">
+                            <div className="w-full text-center text-xs font-black text-app-accent py-2 px-1 font-mono">
+                              {finalMarks}
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 ) : (
                   <div className="text-[10px] italic text-app-text-muted bg-black/10 p-4 rounded-2xl text-center">
@@ -439,35 +479,7 @@ const AdminDashboard: React.FC = () => {
                 )}
               </div>
 
-              {/* Admin Audit Unlock / Correction Controls */}
-              {statusVal === 'COMPLETED' && !isBroadcasted && (
-                <div className="pt-4 border-t border-app-border space-y-3">
-                  <span className="text-[9px] font-black uppercase text-red-400 tracking-widest block">Audit Revision Panel</span>
-                  <input
-                    type="text"
-                    placeholder="Enter correction notes to unlock assessor's panel..."
-                    value={revisionNotes[type] || ''}
-                    onChange={(e) => setRevisionNotes(prev => ({ ...prev, [type]: e.target.value }))}
-                    className="w-full bg-black/40 border border-app-border rounded-xl py-2 px-3 text-xs placeholder:text-app-text-muted/20 focus:outline-none focus:border-red-400/50 text-app-text-bright"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleAuditAssessor(s.id!, type, 'REJECT')}
-                      disabled={auditing}
-                      className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-[9px] font-black uppercase tracking-wider transition-colors cursor-pointer"
-                    >
-                      Unlock & Request Revision
-                    </button>
-                    <button
-                      onClick={() => handleAuditAssessor(s.id!, type, 'APPROVE')}
-                      disabled={auditing}
-                      className="px-4 py-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl text-[9px] font-black uppercase tracking-wider transition-colors cursor-pointer"
-                    >
-                      Approve Report
-                    </button>
-                  </div>
-                </div>
-              )}
+
             </div>
           );
         };
@@ -501,7 +513,7 @@ const AdminDashboard: React.FC = () => {
               {/* Modal Body */}
               <div className="p-8 space-y-8 overflow-y-auto flex-grow">
                 {/* Scorecards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-6">
                   {renderAuditAssessorCard('Psych', 'Psychology Evaluation Report', student?.assignedPsych, s.psychStatus || 'PENDING', s.psychRemarks || '')}
                   {renderAuditAssessorCard('GTO', 'GTO Outdoor Case Report', student?.assignedGTO, (s as any).gtoStatus || 'PENDING', (s as any).gtoRemarks || '')}
                   {renderAuditAssessorCard('IO', 'IO Personal Interview Report', student?.assignedIO, (s as any).ioStatus || 'PENDING', (s as any).ioRemarks || '')}
