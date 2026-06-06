@@ -8,7 +8,8 @@ coverage/
 !.env.example
 .vercel
 
-# Local helper scripts — never committed
+# Local helper scripts — stored in root DBQUERY/ folder outside this repo
+# (K:/H DRIVE/Quantum Climb/APPS/SSB/DBQUERY/PsychBattery/)
 seed-*.cjs
 seed-*.js
 fix_*.cjs
@@ -19,7 +20,6 @@ simulate*.cjs
 test_*.cjs
 test_*.js
 assign-*.cjs
-scripts/DBQUERY/
 
 # Uploads
 public/uploads/assessments/*
