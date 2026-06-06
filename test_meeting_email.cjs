@@ -1,58 +1,78 @@
-const nodemailer = require('nodemailer');
+const https = require('https');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 async function send() {
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.zoho.in',
-    port: 465,
-    secure: true,
-    auth: {
-      user: 'info@ssbwithisv.in',
-      pass: 'bcJeyAsYYrAF'
+  const MSG91_AUTHKEY = process.env.MSG91_AUTHKEY;
+  if (!MSG91_AUTHKEY) {
+    console.error("Please set MSG91_AUTHKEY in your .env file");
+    return;
+  }
+
+  // Example mock candidate and assessor details
+  const studentName = "John Doe";
+  const studentEmail = "qcquantumclimb@gmail.com"; 
+  const assessorName = "Test Assessor";
+  const assessorEmail = "qcquantumclimb@gmail.com"; // Set to the same for testing
+
+  const meetingDate = new Date();
+  meetingDate.setHours(meetingDate.getHours() + 2); // 2 hours from now
+
+  const formattedDate = meetingDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
+  const formattedTime = meetingDate.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true });
+
+  const recipients = [
+    { name: studentName, email: studentEmail },
+    { name: assessorName, email: assessorEmail }
+  ];
+
+  const msg91Payload = JSON.stringify({
+    to: recipients,
+    from: {
+      name: "Integrated SSB Virtuosos",
+      email: "noreply@ssbwithisv.in"
+    },
+    domain: "noreply.ssbwithisv.in",
+    template_id: "interview_template_6",
+    variables: {
+      candidate_name: studentName,
+      date: formattedDate,
+      time: formattedTime,
+      meeting_link: "https://meet.google.com/abc-defg-hij"
     }
   });
 
-  const emails = [
-    { to: 'qcquantumclimb@gmail.com', role: 'psych' }
-  ];
-
-  for (const { to, role } of emails) {
-    let meetingMessage = "";
-    if (role.toLowerCase() === 'io') {
-      meetingMessage = "your mock interview with the Interviewing Officer has been scheduled.";
-    } else if (role.toLowerCase() === 'psych') {
-      meetingMessage = "Your Psych Test feedback has been scheduled.";
-    } else if (role.toLowerCase() === 'to') {
-      meetingMessage = "Your TO Test feedback has been scheduled.";
-    } else {
-      meetingMessage = `Your ${role.toUpperCase()} Test feedback has been scheduled.`;
+  const options = {
+    hostname: 'api.msg91.com',
+    path: '/api/v5/email/send',
+    method: 'POST',
+    headers: {
+      'authkey': MSG91_AUTHKEY,
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(msg91Payload)
     }
+  };
 
-    await transporter.sendMail({
-      from: '"SSB With ISV" <info@ssbwithisv.in>',
-      to: to,
-      subject: `SSB Feedback Meeting Scheduled (${role.toUpperCase()} Assessor)`,
-      html: `
-        <html>
-          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="text-align: center; margin-bottom: 20px;">
-              <!-- Using the public logo URL from the main site so it shows up in emails -->
-              <img src="https://ssbwithisv.in/assets/logo-b9c1b3f8.png" alt="SSB With ISV Logo" style="max-height: 80px;" />
-            </div>
-            <h2 style="color: #C5A028; border-bottom: 2px solid #C5A028; padding-bottom: 10px;">Meeting Scheduled</h2>
-            <p>Dear Candidate,</p>
-            <p>${meetingMessage}</p>
-            <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #C5A028; margin: 20px 0;">
-              <p style="margin: 0 0 10px 0;"><strong>Date & Time:</strong> ${new Date().toLocaleString()}</p>
-              <p style="margin: 0;"><strong>Meeting Link:</strong> <a href="https://meet.google.com/test-link" style="color: #C5A028; font-weight: bold; text-decoration: none;">Click here to join</a></p>
-            </div>
-            <p>Please ensure you join the meeting on time.</p>
-            <p>Best Regards,<br/><strong>SSB With ISV Evaluation Team</strong></p>
-          </body>
-        </html>
-      `
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        console.log(`\nMSG91 Test Email Dispatched!`);
+        console.log(`Response: ${data}\n`);
+        resolve();
+      });
     });
-    console.log(`Sent successfully to ${to}`);
-  }
+    
+    req.on('error', (e) => {
+      console.error('MSG91 Email Error:', e.message);
+      reject(e);
+    });
+    
+    req.write(msg91Payload);
+    req.end();
+  });
 }
 
 send().catch(console.error);

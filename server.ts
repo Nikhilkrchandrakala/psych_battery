@@ -1166,53 +1166,73 @@ async function startServer() {
           const meetingLink = req.body[linkField];
           const meetingDate = req.body[dateField] || (submission as any)[dateField];
           
-          if (studentEmail && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+          let assessorEmail = '';
+          let assessorName = '';
+          try {
+            if (req.user && req.user._id) {
+              const assessorUser = await User.findById(req.user._id);
+              if (assessorUser) {
+                assessorEmail = assessorUser.email;
+                assessorName = assessorUser.name;
+              }
+            }
+          } catch (err) {
+            console.error("Failed to fetch assessor for email:", err);
+          }
+          
+          if (studentEmail && process.env.MSG91_AUTHKEY) {
             try {
-              const transporter = nodemailer.createTransport({
-                host: "smtp.zoho.in",
-                port: 465,
-                secure: true,
-                auth: {
-                  user: process.env.EMAIL_USER,
-                  pass: process.env.EMAIL_PASS
+              const https = require('https');
+              const recipients = [
+                { name: studentName, email: studentEmail }
+              ];
+              if (assessorEmail) {
+                recipients.push({ name: assessorName || 'Assessor', email: assessorEmail });
+              }
+
+              let formattedDate = 'TBA';
+              let formattedTime = 'TBA';
+              if (meetingDate) {
+                const d = new Date(meetingDate);
+                formattedDate = d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
+                formattedTime = d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true });
+              }
+
+              const msg91Payload = JSON.stringify({
+                to: recipients,
+                from: {
+                  name: "Integrated SSB Virtuosos",
+                  email: "noreply@ssbwithisv.in"
+                },
+                domain: "noreply.ssbwithisv.in",
+                template_id: "interview_template_6",
+                variables: {
+                  candidate_name: studentName,
+                  date: formattedDate,
+                  time: formattedTime,
+                  meeting_link: meetingLink || '#'
                 }
               });
 
-              let meetingMessage = "";
-              if (role.toLowerCase() === 'io') {
-                meetingMessage = "your mock interview with the Interviewing Officer has been scheduled.";
-              } else if (role.toLowerCase() === 'psych') {
-                meetingMessage = "Your Psych Test feedback has been scheduled.";
-              } else if (role.toLowerCase() === 'to') {
-                meetingMessage = "Your TO Test feedback has been scheduled.";
-              } else {
-                meetingMessage = `Your ${role.toUpperCase()} Test feedback has been scheduled.`;
-              }
+              const options = {
+                hostname: 'api.msg91.com',
+                path: '/api/v5/email/send',
+                method: 'POST',
+                headers: {
+                  'authkey': process.env.MSG91_AUTHKEY,
+                  'Content-Type': 'application/json',
+                  'Content-Length': Buffer.byteLength(msg91Payload)
+                }
+              };
 
-              await transporter.sendMail({
-                from: '"SSB With ISV" <info@ssbwithisv.in>',
-                to: studentEmail,
-                subject: `SSB Feedback Meeting Scheduled (${role.toUpperCase()} Assessor)`,
-                html: `
-                  <html>
-                    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-                      <div style="text-align: center; margin-bottom: 20px;">
-                        <img src="https://ssbwithisv.in/assets/logo-b9c1b3f8.png" alt="SSB With ISV Logo" style="max-height: 80px;" />
-                      </div>
-                      <h2 style="color: #C5A028; border-bottom: 2px solid #C5A028; padding-bottom: 10px;">Meeting Scheduled</h2>
-                      <p>Dear ${studentName},</p>
-                      <p>${meetingMessage}</p>
-                      <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #C5A028; margin: 20px 0;">
-                        <p style="margin: 0 0 10px 0;"><strong>Date & Time:</strong> ${meetingDate ? new Date(meetingDate).toLocaleString() : 'TBA'}</p>
-                        <p style="margin: 0;"><strong>Meeting Link:</strong> <a href="${meetingLink}" style="color: #C5A028; font-weight: bold; text-decoration: none;">Click here to join</a></p>
-                      </div>
-                      <p>Please ensure you join the meeting on time.</p>
-                      <p>Best Regards,<br/><strong>SSB With ISV Evaluation Team</strong></p>
-                    </body>
-                  </html>
-                `
+              const reqEmail = https.request(options, (resEmail: any) => {
+                let data = '';
+                resEmail.on('data', (chunk: string) => data += chunk);
+                resEmail.on('end', () => console.log(`Sent meeting email via MSG91 for ${role.toUpperCase()}. Response: ${data}`));
               });
-              console.log(`Sent meeting email to ${studentEmail} for ${role.toUpperCase()}`);
+              reqEmail.on('error', (e: any) => console.error('MSG91 Email Error:', e.message));
+              reqEmail.write(msg91Payload);
+              reqEmail.end();
             } catch (emailErr) {
               console.error("Failed to send meeting email:", emailErr);
             }
