@@ -83,8 +83,11 @@ const mockSubmissions: any[] = [];
 const authenticate = async (req: any, res: any, next: any) => {
   if (mongoose.connection.readyState !== 1) {
     try {
-      const fallbackUri = 'mongodb+srv://isvclub2021:ddtIDjbRII76huv8@ssbwithisvleads.3fu0m.mongodb.net/?appName=SsbWithIsvLeads';
-      await mongoose.connect(process.env.MONGODB_URI || fallbackUri);
+      if (!process.env.MONGODB_URI) {
+        console.error('MONGODB_URI is not set in environment variables.');
+        return next();
+      }
+      await mongoose.connect(process.env.MONGODB_URI);
     } catch (err) {
       console.error("Failed to connect to MongoDB in authenticate middleware:", err);
     }
@@ -258,7 +261,7 @@ const isAdmin = (req: any, res: any, next: any) => {
 
 async function startServer() {
   // MongoDB Connection
-  const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://isvclub2021:ddtIDjbRII76huv8@ssbwithisvleads.3fu0m.mongodb.net/?appName=SsbWithIsvLeads';
+  const MONGODB_URI = process.env.MONGODB_URI;
 
   if (MONGODB_URI) {
     mongoose.connect(MONGODB_URI)
@@ -286,8 +289,11 @@ async function startServer() {
   app.get('/api/debug-auth', async (req: any, res: any) => {
     if (mongoose.connection.readyState !== 1) {
       try {
-        const fallbackUri = 'mongodb+srv://isvclub2021:ddtIDjbRII76huv8@ssbwithisvleads.3fu0m.mongodb.net/?appName=SsbWithIsvLeads';
-        await mongoose.connect(process.env.MONGODB_URI || fallbackUri);
+        if (!process.env.MONGODB_URI) {
+          console.error('MONGODB_URI is not set in environment variables.');
+        } else {
+          await mongoose.connect(process.env.MONGODB_URI);
+        }
       } catch (err) {
         console.error("Failed to connect to MongoDB in route:", err);
       }
