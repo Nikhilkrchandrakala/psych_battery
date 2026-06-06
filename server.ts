@@ -1169,8 +1169,8 @@ async function startServer() {
           let assessorEmail = '';
           let assessorName = '';
           try {
-            if (req.user && req.user._id) {
-              const assessorUser = await User.findById(req.user._id);
+            if ((req as any).user && (req as any).user._id) {
+              const assessorUser = await User.findById((req as any).user._id);
               if (assessorUser) {
                 assessorEmail = assessorUser.email;
                 assessorName = assessorUser.name;
