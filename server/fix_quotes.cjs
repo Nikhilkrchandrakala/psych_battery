@@ -1,6 +1,8 @@
 const fs = require('fs');
 const mongoose = require('mongoose');
-const mongoUrl = 'mongodb+srv://isvclub2021:ddtIDjbRII76huv8@ssbwithisvleads.3fu0m.mongodb.net/?appName=SsbWithIsvLeads';
+require('dotenv').config();
+const mongoUrl = process.env.MONGODB_URI;
+if (!mongoUrl) { console.error('MONGODB_URI env var is required'); process.exit(1); }
 
 function fixQuotes(text) {
     if (!text) return text;

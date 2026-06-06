@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
-mongoose.connect('mongodb+srv://isvclub2021:ddtIDjbRII76huv8@ssbwithisvleads.3fu0m.mongodb.net/?appName=SsbWithIsvLeads').then(async () => {
+if (!process.env.MONGODB_URI) { console.error('MONGODB_URI env var is required'); process.exit(1); }
+
+mongoose.connect(process.env.MONGODB_URI).then(async () => {
   const db = mongoose.connection.db;
   const col = db.collection('assessments');
   const doc = await col.findOne({});
