@@ -8,7 +8,18 @@ coverage/
 !.env.example
 .vercel
 
-# Local helper scripts and uploads
+# Local helper scripts — never committed
 seed-*.cjs
-assign-abhishek.cjs
+seed-*.js
+fix_*.cjs
+fix_*.js
+debug_*.cjs
+reset_*.cjs
+simulate*.cjs
+test_*.cjs
+test_*.js
+assign-*.cjs
+scripts/DBQUERY/
+
+# Uploads
 public/uploads/assessments/*
