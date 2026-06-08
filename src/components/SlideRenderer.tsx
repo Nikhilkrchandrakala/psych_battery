@@ -105,14 +105,14 @@ export const SlideRenderer: React.FC<SlideRendererProps> = ({
       )}
 
       {slide.slideType === 'TEXT' && (
-        <div className="w-full h-full flex flex-col items-center justify-center max-h-full overflow-hidden px-[4cqi] py-[3cqi] min-h-0 min-w-0">
-           <div className="w-full max-h-full overflow-hidden flex flex-col justify-center">
+        <div className="w-full h-full flex flex-col items-center justify-center max-h-full overflow-y-auto px-[4cqi] py-[3cqi] min-h-0 min-w-0">
+           <div className="w-full max-h-full overflow-y-auto flex flex-col justify-center">
              <div 
                style={{ 
                  fontSize: `calc(clamp(0.5rem, 2.2cqi, 3rem) * ${slide.typographyScale || 1})`, 
                  lineHeight: '1.5'
                }}
-               className="text-app-text-bright font-sans whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-[3cqi] [&_ol]:pl-[3cqi] text-left"
+               className="text-app-text-bright font-sans break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-[3cqi] [&_ol]:pl-[3cqi] text-left"
                dangerouslySetInnerHTML={{ __html: cleanHTML(slide.content || "") }}
              />
            </div>

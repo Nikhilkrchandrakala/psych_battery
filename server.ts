@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import nodemailer from 'nodemailer';
 import path from 'path';
+import https from 'https';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -545,14 +546,22 @@ async function startServer() {
     const formData = new FormData();
     formData.append('file', blob, file.originalname);
     
-    const res = await fetch('https://api.ssbwithisv.in/api/uploadBatteryImage', {
+    const isLocal = process.env.APP_URL && (process.env.APP_URL.includes('localhost') || process.env.APP_URL.includes('127.0.0.1'));
+    const targetUrl = isLocal ? 'http://localhost:5001/api/uploadBatteryImage' : 'https://api.ssbwithisv.in/api/uploadBatteryImage';
+    
+    const res = await fetch(targetUrl, {
       method: 'POST',
-      headers: { 'token': token || '' },
+      headers: { 'Authorization': token ? `Bearer ${token}` : '' },
       body: formData
     });
     if (!res.ok) throw new Error(`Main backend upload failed: ${res.statusText}`);
     const data = await res.json();
-    return data.url; // Returns the absolute URL hosted on the VPS
+    
+    let url = data.url;
+    if (isLocal && url.startsWith('https://api.ssbwithisv.in')) {
+      url = url.replace('https://api.ssbwithisv.in', 'http://localhost:5001');
+    }
+    return url; // Returns the absolute URL hosted on local or VPS
   }
 
   app.post('/api/submissions/:id/upload', authenticate, upload.array('files', 20), async (req: any, res: any) => {
@@ -696,25 +705,37 @@ async function startServer() {
         return res.status(400).json({ message: 'No files uploaded' });
       }
 
+      const piqType = req.body.piqType || req.query.piqType || 'piq1';
+      const currentPiq1Status = submission.piq1Status || (submission as any).piq1Status || 'PENDING';
+      if (piqType === 'piq2' && currentPiq1Status !== 'VERIFIED') {
+        return res.status(400).json({ message: 'PIQ 2 upload is only allowed after PIQ 1 has been successfully uploaded and verified.' });
+      }
+
       const files = req.files as any[];
       const fileEntries = files.map(f => ({
-        filename: f.originalname,
+        filename: `${piqType}_${f.originalname}`,
         mimetype: f.mimetype,
         data: f.buffer.toString('base64'),
+        piqType: piqType,
         uploadedAt: new Date()
       }));
-      const filePaths = files.map(f => `db://${submissionId}/${f.originalname}`);
+      const filePaths = files.map(f => `db://${submissionId}/${piqType}_${f.originalname}`);
 
       // Store file data directly in MongoDB (works on Vercel's read-only filesystem)
       submission.piqFileData = [...(submission.piqFileData || []), ...fileEntries] as any;
       submission.piqFiles = [...(submission.piqFiles || []), ...filePaths];
-      submission.piqStatus = 'PROCESSING';
+      if (piqType === 'piq2') {
+        submission.piq2Status = 'VERIFIED';
+      } else {
+        submission.piq1Status = 'VERIFIED';
+        submission.piqStatus = 'PARSED';
+      }
       await submission.save();
 
-      // Perform OCR in background
-      runPiqOCR(submissionId, filePaths);
+      // Perform notifications in background
+      runPiqOCR(submissionId, filePaths, piqType);
 
-      res.json({ message: 'PIQ files uploaded and processing started', files: filePaths });
+      res.json({ message: 'PIQ files uploaded successfully', files: filePaths });
     } catch (error: any) {
       console.error('PIQ upload error:', error);
       res.status(500).json({ message: error.message });
@@ -756,7 +777,7 @@ async function startServer() {
     }
   });
 
-  async function runPiqOCR(submissionId: string, filePaths: string[]) {
+  async function runPiqOCR(submissionId: string, filePaths: string[], piqType: string) {
     // OCR Deactivated temporarily.
     // Set text to empty but mark as PARSED so assessors can review the PIQ.
     let combinedText = '';
@@ -765,7 +786,12 @@ async function startServer() {
       const submission = await Submission.findById(submissionId);
       if (submission) {
         submission.piqParsedData = combinedText;
-        submission.piqStatus = 'PARSED';
+        if (piqType === 'piq2') {
+          submission.piq2Status = 'VERIFIED';
+        } else {
+          submission.piq1Status = 'VERIFIED';
+          submission.piqStatus = 'PARSED';
+        }
         await submission.save();
 
         // Create notification for the allotted assessor
@@ -811,8 +837,7 @@ async function startServer() {
 
           // --- SMS NOTIFICATION TEST ---
           try {
-            const https = require('https');
-            const targetNumber = '9884050857';
+            const targetNumber = process.env.ADMIN_SMS_NUMBER || '9884050857';
             const message = `Candidate ${candidateName} has uploaded their PIQ form. Ready for review.`;
 
             // 1. Try Fast2SMS
@@ -1104,6 +1129,7 @@ async function startServer() {
       const submission = await Submission.findById(req.params.id);
       if (!submission) return res.status(404).json({ message: 'Submission not found' });
       
+      submission.status = 'PENDING_UPLOAD';
       submission.workflowStage = 'EVALUATION_COMPLETED';
       await submission.save();
 
@@ -1293,6 +1319,51 @@ async function startServer() {
             isRead: false
           });
           await notification.save();
+        }
+
+        // Send email via MSG91
+        if (student.email && process.env.MSG91_AUTHKEY) {
+          try {
+            const https = require('https');
+            const msg91Payload = JSON.stringify({
+              to: [
+                { name: candidateName, email: student.email }
+              ],
+              from: {
+                name: "Integrated SSB Virtuosos",
+                email: "noreply@ssbwithisv.in"
+              },
+              domain: "noreply.ssbwithisv.in",
+              template_id: "results_broadcast_template_1",
+              variables: {
+                candidate_name: candidateName,
+                evaluation_details: `Your psychological evaluation results are published. Overall Score: ${submission.score || '--'}.`,
+                report_link: `https://ssbwithisv.in/ProfileDashboard?tab=psycheTest`
+              }
+            });
+
+            const options = {
+              hostname: 'api.msg91.com',
+              path: '/api/v5/email/send',
+              method: 'POST',
+              headers: {
+                'authkey': process.env.MSG91_AUTHKEY,
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(msg91Payload)
+              }
+            };
+
+            const reqEmail = https.request(options, (resEmail: any) => {
+              let data = '';
+              resEmail.on('data', (chunk: string) => data += chunk);
+              resEmail.on('end', () => console.log(`Sent results broadcast email via MSG91. Response: ${data}`));
+            });
+            reqEmail.on('error', (e: any) => console.error('MSG91 Results Email Error:', e.message));
+            reqEmail.write(msg91Payload);
+            reqEmail.end();
+          } catch (emailErr) {
+            console.error("Failed to send broadcast email:", emailErr);
+          }
         }
       }
 

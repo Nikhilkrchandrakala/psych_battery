@@ -67,12 +67,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Role-based auto-routing after SSO or bypass entry
       if (urlToken || urlBypass) {
         const currentPath = window.location.pathname;
-        if (userData.role === 'admin' && currentPath === '/') {
-          window.history.replaceState({}, '', '/admin');
-        } else if (userData.role === 'assessor' && currentPath === '/') {
-          window.history.replaceState({}, '', '/assessor');
+        const isEntryPoint = currentPath === '/' || currentPath === '/auth-sync';
+        if (isEntryPoint) {
+          if (userData.role === 'admin') {
+            window.history.replaceState({}, '', '/admin');
+          } else if (userData.role === 'assessor') {
+            window.history.replaceState({}, '', '/assessor');
+          } else {
+            // Students: go to root which shows StudentEntry
+            window.history.replaceState({}, '', '/');
+          }
         }
-        // Students stay at / (dashboard) — no redirect needed
       }
     } catch (error) {
       console.error('Auth verification failed:', error);

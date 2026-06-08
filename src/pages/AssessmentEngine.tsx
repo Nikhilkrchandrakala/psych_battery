@@ -23,6 +23,7 @@ const AssessmentEngine: React.FC = () => {
   const [isStarted, setIsStarted] = useState(false);
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isScreenLocked, setIsScreenLocked] = useState(false);
   
   // Module-aware tracking
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
@@ -36,6 +37,13 @@ const AssessmentEngine: React.FC = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const lastSlideKeyRef = useRef<string>('');
   const globalTimerInitializedRef = useRef<number>(-1);
+  const startedAtRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (isStarted) {
+      startedAtRef.current = Date.now();
+    }
+  }, [isStarted]);
 
   const currentModule = activeModules[currentModuleIndex] || 'INTRO';
   const currentModuleSlides = moduleSlideMap[currentModule] || [];
@@ -66,14 +74,14 @@ const AssessmentEngine: React.FC = () => {
 
   // Data fetch auto-start for admin and candidate
   useEffect(() => {
-    if (!loading && assessment) {
+    if (!loading && assessment && user) {
       if (profile?.role === 'admin') {
         setIsStarted(true);
       } else if (autoStart && !isStarted) {
         startAssessment();
       }
     }
-  }, [loading, assessment, profile, autoStart]);
+  }, [loading, assessment, user, profile, autoStart, isStarted]);
 
   // Advance to next module
   const advanceToNextModule = useCallback(() => {
@@ -153,28 +161,98 @@ const AssessmentEngine: React.FC = () => {
     };
   }, [isStarted, isCompleted, currentModuleIndex, currentSlideInModule, isPaused, currentModuleConfig, currentSlide]);
 
-  // Keyboard controls
+  // Keyboard controls & Security environment listeners
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isStarted || isCompleted) return;
 
+      // Detect screenshot, devtools or printing key combinations
+      const isScreenshotOrBlockKey = 
+        e.key === 'PrintScreen' || 
+        (e.metaKey && e.shiftKey && (e.key === 'S' || e.key === 's')) || // Win+Shift+S (Windows Snipping Tool)
+        (e.metaKey && e.shiftKey && (e.key === '3' || e.key === '4' || e.key === '5')) || // Mac screenshots
+        (e.ctrlKey && (e.key === 'P' || e.key === 'p')) || // Print
+        (e.metaKey && (e.key === 'P' || e.key === 'p')) || // Mac Print
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'C' || e.key === 'c' || e.key === 'J' || e.key === 'j')) || // DevTools
+        (e.key === 'F12');
+
+      if (isScreenshotOrBlockKey) {
+        e.preventDefault();
+        if (!isAdminPreview) {
+          setIsScreenLocked(true);
+        }
+        try {
+          navigator.clipboard.writeText('');
+        } catch (err) {}
+        return;
+      }
+
+      const canProceed = 
+        currentModule === 'SRT' || 
+        currentModule === 'INTRO' || 
+        currentModule === 'SRT_INST' || 
+        currentModule === 'SDT_INST' || 
+        currentSlide?.isInstruction || 
+        currentSlide?.slideType === 'BREAK' || 
+        timeLeft <= 0;
+
       if (e.key === 'ArrowRight') {
-        if (currentModuleConfig.navigable || currentModuleConfig.timingMode === 'per-slide') {
+        if (isAdminPreview || canProceed) {
           handleNextSlide();
         }
       } else if (e.key === 'ArrowLeft') {
-        if (currentModuleConfig.navigable) {
+        if (isAdminPreview || currentModule === 'SRT') {
           handlePrevSlide();
         }
       } else if (e.key === ' ') {
         e.preventDefault();
-        setIsPaused((prev) => !prev);
+        if (isAdminPreview) {
+          setIsPaused((prev) => !prev);
+        }
       }
     };
 
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'PrintScreen') {
+        try {
+          navigator.clipboard.writeText('');
+        } catch (err) {}
+      }
+    };
+
+    const handleBlur = () => {
+      if (!isAdminPreview) {
+        // Implement 3-second grace period to ignore blur events triggered by fullscreen transitions
+        if (Date.now() - startedAtRef.current < 3000) {
+          console.log("Ignoring blur event during start grace period");
+          return;
+        }
+        setIsScreenLocked(true);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden && !isAdminPreview) {
+        setIsScreenLocked(true);
+      }
+    };
+
+    const preventDefaultContext = (e: MouseEvent) => e.preventDefault();
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isStarted, isCompleted, currentModuleConfig, handleNextSlide, handlePrevSlide]);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('contextmenu', preventDefaultContext);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('contextmenu', preventDefaultContext);
+    };
+  }, [isStarted, isCompleted, currentModule, isAdminPreview, handleNextSlide, handlePrevSlide]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -208,8 +286,8 @@ const AssessmentEngine: React.FC = () => {
     }
 
     try {
-      const sub = await api.submissions.create(assessment?._id || assessment?.id as string);
-      setSubmissionId(sub._id);
+      const sub = await api.submissions.create({ assessmentId: assessment?._id || assessment?.id as string });
+      setSubmissionId(sub.id || sub._id);
       setIsStarted(true);
     } catch (error) {
       console.error('Failed to create submission:', error);
@@ -262,6 +340,38 @@ const AssessmentEngine: React.FC = () => {
 
   if (!assessment) return <div className="text-app-text-bright p-12 text-center">Assessment records not found.</div>;
 
+  if (isScreenLocked) {
+    return (
+      <div className="fixed inset-0 z-[999999] bg-black flex flex-col items-center justify-center text-center p-6 select-none">
+        <div className="max-w-md space-y-6">
+          <div className="w-20 h-20 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mx-auto text-red-500 animate-pulse">
+            <AlertTriangle size={40} />
+          </div>
+          <h2 className="text-3xl font-black tracking-tight text-white uppercase">SECURITY BLOCK ACTIVE</h2>
+          <p className="text-sm text-zinc-400 font-medium leading-relaxed">
+            Screen capture attempt, tab switching, or loss of focus detected. Timed evaluations are strictly monitored. Your activity has been logged.
+          </p>
+          <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-xl text-red-400 text-xs font-bold leading-normal">
+            To prevent automatic disqualification, click the button below to resume focus and return to the test.
+          </div>
+          <button
+            onClick={() => {
+              setIsScreenLocked(false);
+              try {
+                if (document.documentElement.requestFullscreen) {
+                  document.documentElement.requestFullscreen();
+                }
+              } catch (err) {}
+            }}
+            className="w-full py-4 bg-app-accent hover:bg-app-accent/90 text-white font-black rounded-xl text-xs uppercase tracking-widest shadow-lg shadow-app-accent/20 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+          >
+            Resume Evaluation
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (isCompleted) {
     return (
       <div className="max-w-2xl mx-auto py-24 text-center space-y-8">
@@ -313,6 +423,20 @@ const AssessmentEngine: React.FC = () => {
         currentSlide?.slideType === 'BLACKOUT' && "bg-black"
       )}
     >
+      {/* Security Watermark Overlay */}
+      {!isAdminPreview && user && (
+        <div className="absolute inset-0 pointer-events-none z-[105] overflow-hidden select-none opacity-[0.03] flex flex-wrap gap-20 p-20 justify-around items-center">
+          {Array.from({ length: 16 }).map((_, idx) => (
+            <div 
+              key={idx} 
+              className="text-white text-lg font-black tracking-widest uppercase rotate-[-25deg] select-none"
+            >
+              {user.name || 'Candidate'} ({user.email})
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Overall Progression Bar */}
       <div className="absolute top-0 left-0 w-full h-[3px] bg-white/5 z-[110]">
         <motion.div 
@@ -378,13 +502,39 @@ const AssessmentEngine: React.FC = () => {
               {String(Math.floor(timeLeft / 60)).padStart(2, '0')}:{String(timeLeft % 60).padStart(2, '0')}
             </span>
           </div>
-          {isAdminPreview && (
+          {isAdminPreview ? (
             <button 
               onClick={exitPreview}
               className="px-4 py-2 bg-red-500/10 text-red-400 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-500/20"
             >
               Exit Preview
             </button>
+          ) : (
+             (() => {
+               const isInstructionOrBreak = currentSlide?.isInstruction || currentSlide?.slideType === 'BREAK';
+               const isLastSlide = currentModuleIndex === activeModules.length - 1 && currentSlideInModule === currentModuleSlides.length - 1;
+               // Allow manual proceeding for instructions (INTRO, SRT_INST, SDT_INST), breaks, SRT module, or when timer expires.
+               const canProceed = 
+                 currentModule === 'SRT' || 
+                 currentModule === 'INTRO' || 
+                 currentModule === 'SRT_INST' || 
+                 currentModule === 'SDT_INST' || 
+                 currentSlide?.isInstruction || 
+                 currentSlide?.slideType === 'BREAK' || 
+                 timeLeft <= 0;
+
+               if (canProceed && (isInstructionOrBreak || currentModule === 'SRT' || isLastSlide)) {
+                return (
+                  <button
+                    onClick={isLastSlide ? completeAssessment : handleNextSlide}
+                    className="px-4 py-2 bg-app-accent hover:bg-app-accent/90 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md active:scale-95 border border-white/10"
+                  >
+                    {isLastSlide ? "Submit Test" : isInstructionOrBreak ? "Proceed" : "Next"}
+                  </button>
+                );
+              }
+              return null;
+            })()
           )}
         </div>
       </div>

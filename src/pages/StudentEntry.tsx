@@ -10,6 +10,15 @@ const StudentEntry: React.FC = () => {
   const { user, profile, mainSiteUrl } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [submission, setSubmission] = useState<any | null>(null);
+
+  const hasBatch = !!(profile?.batch && profile.batch.trim() !== "");
+  const hasAssessor = !!(profile?.assignedPsych || profile?.assignedGTO || profile?.assignedIO || profile?.assignedTO);
+  const hasPiq1 = submission?.piq1Status === 'VERIFIED' || submission?.piq1Status === 'PROCESSING' || (submission?.piqFiles && submission.piqFiles.some((f: any) => f.includes('piq1')));
+  const hasPiq2 = submission?.piq2Status === 'VERIFIED' || submission?.piq2Status === 'PROCESSING' || (submission?.piqFiles && submission.piqFiles.some((f: any) => f.includes('piq2')));
+  const hasBothPiqs = !!(hasPiq1 && hasPiq2);
+  const isEligible = hasBatch && hasAssessor && hasBothPiqs;
+
   const [assessmentState, setAssessmentState] = useState<'NOT_STARTED' | 'IN_PROGRESS' | null>(null);
   const [primaryAssessment, setPrimaryAssessment] = useState<Assessment | null>(null);
   const [totalTime, setTotalTime] = useState(0);
@@ -38,11 +47,13 @@ const StudentEntry: React.FC = () => {
         // Duration is in minutes (e.g. 60)
         setTotalTime(primary.duration ? primary.duration * 60 : 3600);
 
-        const submission = submissionsList.find((s: AssessmentSubmission) => 
-          typeof s.assessmentId === 'object' 
-            ? s.assessmentId._id === primary.id || s.assessmentId._id === primary._id
-            : s.assessmentId === primary.id || s.assessmentId === primary._id
-        );
+        const submission = submissionsList.find((s: AssessmentSubmission) => {
+          const assId = s.assessmentId && typeof s.assessmentId === 'object'
+            ? (s.assessmentId.id || s.assessmentId._id)
+            : s.assessmentId;
+          return assId === primary.id || assId === primary._id;
+        });
+        setSubmission(submission || null);
 
         if (!submission) {
           // Candidate hasn't started yet.
@@ -154,10 +165,33 @@ const StudentEntry: React.FC = () => {
         </div>
       </div>
 
+      {!isEligible && (
+        <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-[1.5rem] text-red-400 text-sm font-semibold max-w-xl mx-auto space-y-2 text-center">
+          <AlertTriangle className="w-8 h-8 text-red-500 mx-auto" />
+          <h4 className="text-base font-black uppercase tracking-wider">Evaluation Start Blocked</h4>
+          <p className="text-xs text-app-text-muted">
+            You cannot start this evaluation because your profile details are incomplete:
+          </p>
+          <ul className="text-xs text-app-text-muted list-disc list-inside text-left max-w-xs mx-auto">
+            {!hasBatch && <li>A batch has not been assigned to your profile.</li>}
+            {!hasAssessor && <li>An assessor has not been assigned to your profile.</li>}
+            {!hasBothPiqs && <li>Both PIQ 1 (Initial) and PIQ 2 (Final) must be uploaded.</li>}
+          </ul>
+          <p className="text-[11px] text-red-400 font-bold italic mt-2">
+            Please contact Integrated SSB Virtuosos Admin to configure your evaluation details.
+          </p>
+        </div>
+      )}
+
       <div className="pt-8 sm:pt-12">
         <button 
           onClick={handleStart}
-          className="w-full py-6 md:py-8 px-6 bg-app-accent hover:bg-app-accent/90 text-white rounded-[1.5rem] md:rounded-[2rem] font-black text-xl md:text-3xl uppercase tracking-widest transition-all shadow-xl shadow-app-accent/30 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-4 border border-white/10"
+          disabled={!isEligible}
+          className={`w-full py-6 md:py-8 px-6 text-white rounded-[1.5rem] md:rounded-[2rem] font-black text-xl md:text-3xl uppercase tracking-widest transition-all shadow-xl flex items-center justify-center gap-4 border ${
+            isEligible 
+              ? "bg-app-accent hover:bg-app-accent/90 shadow-app-accent/30 hover:scale-[1.02] active:scale-[0.98] border-white/10" 
+              : "bg-app-card border-app-border text-app-text-muted opacity-50 cursor-not-allowed"
+          }`}
         >
           <Play className="fill-current w-8 h-8 md:w-10 md:h-10" />
           Commence Test

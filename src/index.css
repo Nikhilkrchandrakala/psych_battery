@@ -104,3 +104,9 @@
     background: var(--color-app-accent-light);
   }
 }
+
+@media print {
+  body {
+    display: none !important;
+  }
+}

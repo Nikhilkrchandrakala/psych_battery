@@ -118,6 +118,12 @@ const SubmissionReview: React.FC = () => {
   // Dossier viewer state
   const [activePiqIndex, setActivePiqIndex] = useState(0);
   const [activeAnswerIndex, setActiveAnswerIndex] = useState(0);
+  const [viewerMode, setViewerMode] = useState<'piq' | 'dossier'>('piq');
+  const [selectedPiqTab, setSelectedPiqTab] = useState<'piq1' | 'piq2'>('piq1');
+
+  useEffect(() => {
+    setActivePiqIndex(0);
+  }, [viewerMode, selectedPiqTab]);
 
   // Form states
   const [remarks, setRemarks] = useState('');
@@ -320,12 +326,30 @@ const SubmissionReview: React.FC = () => {
     }
   };
 
-  const buildFileUrl = (path: string, fileIndex?: number) => {
+  const handleVerifyPiq = async (piqType: 'piq1' | 'piq2') => {
+    try {
+      const fieldName = `${piqType}Status`;
+      const updatePayload: any = { [fieldName]: 'VERIFIED' };
+      // Also update piqStatus compatibility for piq1
+      if (piqType === 'piq1') {
+        updatePayload.piqStatus = 'PARSED';
+      }
+      const updated = await api.submissions.update(id!, updatePayload);
+      setSubmission(prev => prev ? { ...prev, ...updated } : null);
+      alert(`${piqType === 'piq2' ? 'PIQ 2 (Final)' : 'PIQ 1 (Initial)'} has been verified.`);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to verify PIQ.");
+    }
+  };
+
+  const buildFileUrl = (path: string, globalIndex?: number) => {
     if (path.startsWith('db://')) {
       const token = localStorage.getItem('auth_token');
-      // Always fallback to activePiqIndex if fileIndex is not provided
-      const idx = fileIndex !== undefined ? fileIndex : activePiqIndex;
-      return `${SERVER_BASE}/api/submissions/${id}/piq-file/${idx}?token=${token}`;
+      // If path is db:// and we have a global index, use it. Otherwise find index in piqFiles.
+      const idx = globalIndex !== undefined ? globalIndex : (submission?.piqFiles || []).indexOf(path);
+      const safeIdx = idx !== -1 ? idx : 0;
+      return `${SERVER_BASE}/api/submissions/${id}/piq-file/${safeIdx}?token=${token}`;
     }
     if (path.startsWith('http')) return path;
     return `${SERVER_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
@@ -476,102 +500,195 @@ const SubmissionReview: React.FC = () => {
           
           {/* ── DOSSIER VIEWER TAB ─────────────────────────────────────────── */}
           {activeTab === 'dossier' && (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {/* Selector Tabs at the Top */}
+              <div className="flex gap-2 bg-app-card/30 p-1 border border-app-border rounded-2xl w-fit">
+                <button
+                  type="button"
+                  onClick={() => setViewerMode('piq')}
+                  className={cn(
+                    "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                    viewerMode === 'piq'
+                      ? "bg-app-accent text-white shadow-lg"
+                      : "text-app-text-muted hover:text-app-text-bright"
+                  )}
+                >
+                  PIQ Forms ({piqFiles.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewerMode('dossier')}
+                  className={cn(
+                    "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                    viewerMode === 'dossier'
+                      ? "bg-app-accent text-white shadow-lg"
+                      : "text-app-text-muted hover:text-app-text-bright"
+                  )}
+                >
+                  Dossier Sheets ({answerFiles.length})
+                </button>
+              </div>
 
-          {/* PIQ Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 border-b border-app-border pb-3">
-              <FileText className="text-app-accent" size={20} />
-              <h2 className="text-sm font-black text-app-text-bright uppercase tracking-widest">Personal Information Questionnaire (PIQ)</h2>
-              <span className={cn('ml-auto px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest', PIQ_STATUS_STYLES[piqStatus])}>
-                OCR: {piqStatus}
-              </span>
-            </div>
+              {/* Dynamic View Section */}
+              {(() => {
+                const piq1Files = piqFiles.filter(f => f.includes('/piq1_') || !f.includes('/piq2_'));
+                const piq2Files = piqFiles.filter(f => f.includes('/piq2_'));
+                const activeFiles = viewerMode === 'piq' 
+                  ? (selectedPiqTab === 'piq1' ? piq1Files : piq2Files) 
+                  : answerFiles;
+                  
+                const sectionTitle = viewerMode === 'piq' 
+                  ? (selectedPiqTab === 'piq1' ? 'Initial Assessment PIQ (PIQ 1)' : 'Final/Interview Prep PIQ (PIQ 2)') 
+                  : 'Completed Psychology Dossier';
+                  
+                const noFileText = viewerMode === 'piq' 
+                  ? `No files uploaded yet for ${selectedPiqTab === 'piq1' ? 'PIQ 1' : 'PIQ 2'}.` 
+                  : 'No Dossier sheets uploaded yet by the candidate.';
 
-            {piqFiles.length > 0 ? (
-              <div className="flex flex-col gap-8">
-                {/* Top: PDF / Image Viewer */}
-                <div className="w-full space-y-3">
-                  <div className="flex items-center justify-between text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2">
-                    <span>{activeAssessorType === 'IO' ? 'Personal Information Questionnaire (PIQ)' : `File ${activePiqIndex + 1} of ${piqFiles.length}`}</span>
-                    {activeAssessorType !== 'IO' && (
-                      <div className="flex items-center gap-2">
+                const isAssessorAuthorized = ['Psych', 'TO'].includes(activeAssessorType) || profile?.role === 'admin';
+                const currentStatus = selectedPiqTab === 'piq1' 
+                  ? (submission as any).piq1Status || (piq1Files.length > 0 ? 'VERIFIED' : 'PENDING') 
+                  : (submission as any).piq2Status || 'PENDING';
+
+                return (
+                  <div className="space-y-4">
+                    {viewerMode === 'piq' && (
+                      <div className="flex gap-2 p-1 bg-black/30 border border-app-border rounded-xl w-fit">
                         <button
-                          onClick={() => setActivePiqIndex(i => Math.max(0, i - 1))}
-                          disabled={activePiqIndex === 0}
-                          className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent/50 disabled:opacity-30 transition-all"
+                          type="button"
+                          onClick={() => setSelectedPiqTab('piq1')}
+                          className={cn(
+                            "px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all",
+                            selectedPiqTab === 'piq1' ? "bg-app-accent text-white shadow" : "text-app-text-muted hover:text-app-text-bright"
+                          )}
                         >
-                          <ChevronLeft size={12} />
+                          PIQ 1: Initial Assessment [{piq1Files.length}]
                         </button>
                         <button
-                          onClick={() => setActivePiqIndex(i => Math.min(piqFiles.length - 1, i + 1))}
-                          disabled={activePiqIndex === piqFiles.length - 1}
-                          className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent/50 disabled:opacity-30 transition-all"
+                          type="button"
+                          onClick={() => setSelectedPiqTab('piq2')}
+                          className={cn(
+                            "px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all",
+                            selectedPiqTab === 'piq2' ? "bg-app-accent text-white shadow" : "text-app-text-muted hover:text-app-text-bright"
+                          )}
                         >
-                          <ChevronRight size={12} />
+                          PIQ 2: Final/Interview Prep [{piq2Files.length}]
                         </button>
-                        <a
-                          href={buildFileUrl(piqFiles[activePiqIndex])}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent text-app-text-muted hover:text-app-accent transition-all"
-                          title="Open full screen"
-                        >
-                          <Maximize2 size={12} />
-                        </a>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 border-b border-app-border pb-3">
+                      <FileText className="text-app-accent" size={20} />
+                      <h2 className="text-sm font-black text-app-text-bright uppercase tracking-widest">{sectionTitle}</h2>
+                      
+                      {viewerMode === 'piq' && (
+                        <>
+                          <span className={cn('px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest', 
+                            currentStatus === 'VERIFIED' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                          )}>
+                            Status: {currentStatus}
+                          </span>
+                          {currentStatus !== 'VERIFIED' && activeFiles.length > 0 && isAssessorAuthorized && (
+                            <button
+                              type="button"
+                              onClick={() => handleVerifyPiq(selectedPiqTab)}
+                              className="ml-auto px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow"
+                            >
+                              Verify {selectedPiqTab === 'piq1' ? 'PIQ 1' : 'PIQ 2'}
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {activeFiles.length > 0 ? (
+                      <div className="flex flex-col gap-8">
+                        {/* Top: PDF / Image Viewer */}
+                        <div className="w-full space-y-3">
+                          <div className="flex items-center justify-between text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2">
+                            <span>{viewerMode === 'piq' && activeAssessorType === 'IO' ? 'Personal Information Questionnaire (PIQ)' : `File ${activePiqIndex + 1} of ${activeFiles.length}`}</span>
+                            {(viewerMode !== 'piq' || activeAssessorType !== 'IO') && (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setActivePiqIndex(i => Math.max(0, i - 1))}
+                                  disabled={activePiqIndex === 0}
+                                  className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent/50 disabled:opacity-30 transition-all"
+                                >
+                                  <ChevronLeft size={12} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setActivePiqIndex(i => Math.min(activeFiles.length - 1, i + 1))}
+                                  disabled={activePiqIndex === activeFiles.length - 1}
+                                  className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent/50 disabled:opacity-30 transition-all"
+                                >
+                                  <ChevronRight size={12} />
+                                </button>
+                                <a
+                                  href={buildFileUrl(activeFiles[activePiqIndex], piqFiles.indexOf(activeFiles[activePiqIndex]))}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent text-app-text-muted hover:text-app-accent transition-all"
+                                  title="Open full screen"
+                                >
+                                  <Maximize2 size={12} />
+                                </a>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="bg-app-card rounded-3xl border border-app-border overflow-hidden shadow-2xl" style={{ height: '1100px' }}>
+                            {isPdf(activeFiles[activePiqIndex]) ? (
+                              <iframe
+                                key={`${viewerMode}-${selectedPiqTab}-${activePiqIndex}`}
+                                src={`${buildFileUrl(activeFiles[activePiqIndex], piqFiles.indexOf(activeFiles[activePiqIndex]))}#toolbar=0&navpanes=0`}
+                                className="w-full h-full border-0"
+                                title={`${viewerMode} Document ${activePiqIndex + 1}`}
+                              />
+                            ) : (
+                              <img
+                                key={`${viewerMode}-${selectedPiqTab}-${activePiqIndex}`}
+                                src={buildFileUrl(activeFiles[activePiqIndex], piqFiles.indexOf(activeFiles[activePiqIndex]))}
+                                alt={`${viewerMode} Page ${activePiqIndex + 1}`}
+                                className="w-full h-full object-contain"
+                              />
+                            )}
+                          </div>
+
+                          {/* File tabs if multiple */}
+                          {activeFiles.length > 1 && (viewerMode !== 'piq' || activeAssessorType !== 'IO') && (
+                            <div className="flex gap-2 flex-wrap">
+                              {activeFiles.map((_, i) => (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => setActivePiqIndex(i)}
+                                  className={cn(
+                                    'px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all',
+                                    i === activePiqIndex
+                                      ? 'bg-app-accent text-white border-app-accent'
+                                      : 'bg-app-card text-app-text-muted border-app-border hover:border-app-accent/50'
+                                  )}
+                                >
+                                  {viewerMode === 'piq' ? (i === 0 ? 'PIQ Page 1' : 'PIQ Page 2') : `Page ${i + 1}`}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-app-sidebar border border-app-border border-dashed rounded-[3rem] p-20 text-center opacity-50 space-y-4">
+                        <FileText size={48} className="mx-auto text-app-border" />
+                        <p className="text-app-text-muted font-serif italic text-xl">{noFileText}</p>
                       </div>
                     )}
                   </div>
-
-                  <div className="bg-app-card rounded-3xl border border-app-border overflow-hidden shadow-2xl" style={{ height: '1100px' }}>
-                    {isPdf(piqFiles[activePiqIndex]) ? (
-                      <iframe
-                        key={activePiqIndex}
-                        src={`${buildFileUrl(piqFiles[activePiqIndex])}#toolbar=0&navpanes=0`}
-                        className="w-full h-full border-0"
-                        title={`PIQ Document ${activePiqIndex + 1}`}
-                      />
-                    ) : (
-                      <img
-                        key={activePiqIndex}
-                        src={buildFileUrl(piqFiles[activePiqIndex])}
-                        alt={`PIQ Page ${activePiqIndex + 1}`}
-                        className="w-full h-full object-contain"
-                      />
-                    )}
-                  </div>
-
-                  {/* File tabs if multiple */}
-                  {piqFiles.length > 1 && activeAssessorType !== 'IO' && (
-                    <div className="flex gap-2 flex-wrap">
-                      {piqFiles.map((_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setActivePiqIndex(i)}
-                          className={cn(
-                            'px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all',
-                            i === activePiqIndex
-                              ? 'bg-app-accent text-white border-app-accent'
-                              : 'bg-app-card text-app-text-muted border-app-border hover:border-app-accent/50'
-                          )}
-                        >
-                          {i === 0 ? 'Dossier' : i === 1 ? 'PIQ' : `File ${i + 1}`}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-              </div>
-            ) : (
-              <div className="bg-app-sidebar border border-app-border border-dashed rounded-[3rem] p-20 text-center opacity-50 space-y-4">
-                <FileText size={48} className="mx-auto text-app-border" />
-                <p className="text-app-text-muted font-serif italic text-xl">No PIQ document uploaded yet by the candidate.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+                );
+              })()}
+            </div>
+          )}
 
       {/* ── CLINICAL REMARKS TAB ─────────────────────────────────────── */}
       {activeTab === 'evaluation' && (() => {

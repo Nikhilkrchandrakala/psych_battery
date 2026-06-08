@@ -43,6 +43,9 @@ export default function App() {
       {/* Legacy /login route — redirect to home (ProtectedRoute handles auth) */}
       <Route path="/login" element={<Navigate to="/" replace />} />
 
+      {/* SSO Auth Sync — token is read by AuthProvider from URL params, then redirects based on role */}
+      <Route path="/auth-sync" element={<RoleRedirect />} />
+
       {/* Routes with Sidebar Layout */}
       <Route element={<Layout />}>
         <Route element={<ProtectedRoute />}>
