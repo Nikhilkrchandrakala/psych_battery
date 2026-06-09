@@ -1064,11 +1064,18 @@ async function startServer() {
       });
 
       if (submission) {
-        // Update fields sent in req.body
+        // Protect terminal/advanced statuses from being overwritten by a re-create call
+        // (e.g. PIQ upload from ProfileDashboard passes status: 'IN_PROGRESS' which would
+        //  reset a PENDING_UPLOAD / COMPLETED submission back to IN_PROGRESS)
+        const PROTECTED_STATUSES = ['PENDING_UPLOAD', 'COMPLETED', 'UPLOADED', 'REVIEW_PENDING', 'REPORT_RELEASED', 'MEETING_SCHEDULED'];
+        const existingStatus = (submission as any).status;
+        const isProtected = PROTECTED_STATUSES.includes(existingStatus);
+
         Object.keys(req.body).forEach(key => {
-          if (key !== 'userId' && key !== 'assessmentId') {
-            (submission as any)[key] = req.body[key];
-          }
+          if (key === 'userId' || key === 'assessmentId') return;
+          // Never overwrite status if submission is already in a terminal/advanced state
+          if (key === 'status' && isProtected) return;
+          (submission as any)[key] = req.body[key];
         });
         await submission.save();
         return res.status(200).json(submission);
