@@ -763,6 +763,44 @@ const AssessmentEditor: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar">
+            {/* Global Assessment Settings */}
+            <div className="p-4 bg-app-card rounded-xl border border-app-border space-y-4">
+              <div className="flex items-center gap-2">
+                <Shield size={14} className="text-red-400" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-app-text-muted">
+                  Global Test Settings
+                </span>
+              </div>
+
+              {/* Allow Candidate Skip Toggle */}
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <div 
+                  onClick={() => setAssessment(prev => prev ? { ...prev, allowCandidateSkip: !prev.allowCandidateSkip } : null)}
+                  className={cn(
+                    "w-8 h-5 rounded-full border transition-all relative",
+                    assessment?.allowCandidateSkip
+                      ? "bg-app-accent border-app-accent"
+                      : "bg-app-card border-app-border"
+                  )}
+                >
+                  <div className={cn(
+                    "w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-all",
+                    assessment?.allowCandidateSkip ? "left-[14px]" : "left-[3px]"
+                  )} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest group-hover:text-app-text-bright transition-colors">
+                    Allow Candidate Skip
+                  </span>
+                  <span className="text-[8px] font-bold text-app-text-muted/60 mt-0.5">
+                    {assessment?.allowCandidateSkip 
+                      ? 'Candidates CAN manually advance slides' 
+                      : 'Candidates MUST wait for timer on every slide'}
+                  </span>
+                </div>
+              </label>
+            </div>
+
             {/* Module Config Section */}
             <div className="p-4 bg-app-card rounded-xl border border-app-border space-y-4">
               <div className="flex items-center gap-2">

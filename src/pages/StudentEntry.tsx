@@ -5,6 +5,7 @@ import { Assessment, AssessmentSubmission } from '../types';
 import { useAuth } from '../components/AuthProvider';
 import { Play, Timer, BookOpen, AlertTriangle } from 'lucide-react';
 import { motion } from 'motion/react';
+import { Watermark } from '../components/Watermark';
 
 const StudentEntry: React.FC = () => {
   const { user, profile, mainSiteUrl } = useAuth();
@@ -115,6 +116,7 @@ const StudentEntry: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 space-y-10 sm:space-y-16 pb-20 pt-6 sm:pt-10 animate-fade-in">
+      <Watermark user={user} isAdminPreview={profile?.role === 'admin' || profile?.role === 'assessor'} />
       <div className="space-y-4 sm:space-y-6">
         <button 
           onClick={() => window.location.href = `${mainSiteUrl}/ProfileDashboard`}

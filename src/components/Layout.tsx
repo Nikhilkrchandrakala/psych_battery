@@ -9,6 +9,7 @@ const Layout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
 
   const handleLogout = () => {
     logout();
@@ -53,7 +54,10 @@ const Layout: React.FC = () => {
   return (
     <div className="min-h-screen bg-app-bg text-app-text-main flex overflow-hidden font-sans">
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex w-64 bg-app-sidebar border-r border-app-border flex-col shrink-0">
+      <aside className={cn(
+        "hidden md:flex bg-app-sidebar border-r border-app-border flex-col shrink-0 transition-all duration-300",
+        isSidebarCollapsed ? "w-0 border-r-0 overflow-hidden" : "w-64"
+      )}>
         <div className="p-6">
           <div className="flex items-center gap-3 mb-10">
             <img 
@@ -131,7 +135,7 @@ const Layout: React.FC = () => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 relative">
+      <div className="flex-grow flex flex-col min-w-0 relative">
         {/* Header */}
         <header className="h-16 border-b border-app-border flex items-center justify-between px-8 bg-app-header sticky top-0 z-40">
           <div className="flex items-center gap-4">
@@ -141,6 +145,14 @@ const Layout: React.FC = () => {
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               <Menu size={24} />
+            </button>
+            {/* Desktop Menu Toggle */}
+            <button
+              className="hidden md:block p-2 text-app-text-muted hover:bg-white/5 hover:text-app-text-bright rounded-lg transition-colors cursor-pointer"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              <Menu size={20} />
             </button>
             <h1 className="text-sm font-bold text-app-text-bright flex items-center gap-2 uppercase tracking-widest">
               <span className="opacity-50 font-normal">Section /</span> {activeItem?.label || 'Overview'}

@@ -647,47 +647,9 @@ async function startServer() {
   });
 
   async function runOCR(submissionId: string, filePaths: string[]) {
-    if (!process.env.GEMINI_API_KEY) {
-      console.warn("Skipping OCR: No GEMINI_API_KEY found");
-      return;
-    }
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      let fullTranscript = '';
-
-      for (const filePath of filePaths) {
-        const absolutePath = path.join(process.cwd(), 'public', filePath);
-        if (fs.existsSync(absolutePath)) {
-          const fileData = fs.readFileSync(absolutePath);
-          const mimeType = filePath.endsWith('.pdf') ? 'application/pdf' : (filePath.endsWith('.png') ? 'image/png' : 'image/jpeg');
-
-          try {
-            const response = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
-              contents: [
-                {
-                  role: 'user',
-                  parts: [
-                    { inlineData: { data: fileData.toString('base64'), mimeType } },
-                    { text: 'Please transcribe the handwritten text in this image accurately. Do not summarize, just output the raw text.' }
-                  ]
-                }
-              ]
-            });
-            fullTranscript += `\n\n--- Page Transcript ---\n\n${response.text}`;
-          } catch (apiErr) {
-            console.error(`Gemini OCR failed for ${filePath}:`, apiErr);
-          }
-        }
-      }
-
-      if (fullTranscript.trim()) {
-        await Submission.findByIdAndUpdate(submissionId, { evaluation: fullTranscript.trim() });
-        console.log(`OCR Complete for submission ${submissionId}`);
-      }
-    } catch (err) {
-      console.error("OCR Pipeline Error:", err);
-    }
+    // OCR Deactivated completely to optimize upload and viewing speeds
+    console.log(`OCR Deactivated completely for submission ${submissionId}`);
+    return;
   }
 
   // --- PIQ UPLOAD & OCR ROUTES ---
@@ -1070,7 +1032,7 @@ async function startServer() {
 
     try {
       const submission = await Submission.findById(req.params.id)
-        .select('-piqFileData').populate('userId', 'name email profileImage')
+        .select('-piqFileData').populate('userId', 'name email assignedGTO assignedTO assignedPsych assignedIO clinicalStage profileImage chestNo batch')
         .populate('assessmentId', 'title');
       res.json(submission);
     } catch (error: any) {
@@ -1095,6 +1057,23 @@ async function startServer() {
     }
 
     try {
+      // Check for existing submission for this user and assessment to prevent duplication
+      let submission = await Submission.findOne({
+        userId: req.user._id,
+        assessmentId: req.body.assessmentId
+      });
+
+      if (submission) {
+        // Update fields sent in req.body
+        Object.keys(req.body).forEach(key => {
+          if (key !== 'userId' && key !== 'assessmentId') {
+            (submission as any)[key] = req.body[key];
+          }
+        });
+        await submission.save();
+        return res.status(200).json(submission);
+      }
+
       // Pre-populate assessor statuses based on candidate allotments
       const candidateUser = await User.findById(req.user._id);
       let gtoStatus = 'NOT_REQUIRED';
@@ -1109,7 +1088,7 @@ async function startServer() {
         if (candidateUser.assignedPsych) psychStatus = 'PENDING';
       }
 
-      const submission = new Submission({
+      submission = new Submission({
         ...req.body,
         userId: req.user._id,
         psychStatus,

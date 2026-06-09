@@ -8,6 +8,7 @@ import { Maximize, Timer, AlertTriangle, Play, BookOpen, Clock, Zap, ChevronLeft
 import { cn } from '../lib/utils';
 import { useAssessmentData } from '../hooks/useAssessmentData';
 import { SlideRenderer } from '../components/SlideRenderer';
+import { Watermark } from '../components/Watermark';
 
 const DEFAULT_MODULE_CONFIG: ModuleConfig = { timingMode: 'per-slide', globalDuration: 0, navigable: false };
 
@@ -45,10 +46,23 @@ const AssessmentEngine: React.FC = () => {
     }
   }, [isStarted]);
 
+  // Preload images in the background to ensure TAT images load instantly
+  useEffect(() => {
+    if (allSlides && allSlides.length > 0) {
+      allSlides.forEach(slide => {
+        if (slide.slideType === 'IMAGE' && slide.imageUrl) {
+          const img = new Image();
+          img.src = slide.imageUrl;
+        }
+      });
+    }
+  }, [allSlides]);
+
   const currentModule = activeModules[currentModuleIndex] || 'INTRO';
   const currentModuleSlides = moduleSlideMap[currentModule] || [];
 
   const isAdminPreview = profile?.role === 'admin' || profile?.role === 'assessor';
+  const allowCandidateSkip = assessment?.allowCandidateSkip === true;
 
   const currentModuleConfig: ModuleConfig = useMemo(() => {
     const base = assessment?.modules?.[currentModule] || DEFAULT_MODULE_CONFIG;
@@ -85,16 +99,22 @@ const AssessmentEngine: React.FC = () => {
 
   // Advance to next module
   const advanceToNextModule = useCallback(() => {
+    console.log('[ENGINE] advanceToNextModule called. currentModuleIndex:', currentModuleIndex, 'activeModules:', activeModules, 'next will be:', activeModules[currentModuleIndex + 1]);
     if (currentModuleIndex + 1 >= activeModules.length) {
       completeAssessment();
       return;
     }
-    setCurrentModuleIndex(prev => prev + 1);
+    setCurrentModuleIndex(prev => {
+      const next = prev + 1;
+      console.log('[ENGINE] setCurrentModuleIndex:', prev, '->', next, '= module:', activeModules[next]);
+      return next;
+    });
     setCurrentSlideInModule(0);
   }, [currentModuleIndex, activeModules.length]);
 
   // Advance to next slide (or next module if at end of current module)
   const handleNextSlide = useCallback(() => {
+    console.log('[ENGINE] handleNextSlide called. slideInModule:', currentSlideInModule, 'totalSlides:', currentModuleSlides.length, 'currentModule:', activeModules[currentModuleIndex]);
     if (currentSlideInModule + 1 >= currentModuleSlides.length) {
       advanceToNextModule();
       return;
@@ -109,7 +129,11 @@ const AssessmentEngine: React.FC = () => {
     }
   }, [currentModuleConfig, currentSlideInModule]);
 
-  // Timer logic
+  // Timer logic — uses a ref to avoid calling side-effects inside React state updaters
+  // (React 18 StrictMode double-invokes state updaters, which caused handleNextSlide
+  //  to fire twice, skipping entire modules like TAT)
+  const timeLeftRef = useRef(0);
+
   useEffect(() => {
     if (!isStarted || isCompleted || !currentSlide) return;
 
@@ -117,7 +141,9 @@ const AssessmentEngine: React.FC = () => {
 
     if (currentModuleConfig.timingMode === 'per-slide') {
       if (lastSlideKeyRef.current !== slideKey) {
-        setTimeLeft(currentSlide.displayTime || 30);
+        const newTime = currentSlide.displayTime || 30;
+        setTimeLeft(newTime);
+        timeLeftRef.current = newTime;
         lastSlideKeyRef.current = slideKey;
       }
 
@@ -125,19 +151,23 @@ const AssessmentEngine: React.FC = () => {
 
       if (!isPaused) {
         timerRef.current = setInterval(() => {
-          setTimeLeft((prev) => {
-            if (prev <= 1) {
-              handleNextSlide();
-              return 0;
-            }
-            return prev - 1;
-          });
+          timeLeftRef.current -= 1;
+          const t = timeLeftRef.current;
+          setTimeLeft(t);
+          if (t <= 0) {
+            console.log('[ENGINE] Per-slide timer expired, advancing. Module:', activeModules[currentModuleIndex], 'slide:', currentSlideInModule);
+            clearInterval(timerRef.current!);
+            timerRef.current = null;
+            handleNextSlide();
+          }
         }, 1000);
       }
     } else if (currentModuleConfig.timingMode === 'global') {
       // Initialize global timer exactly ONCE per module
       if (globalTimerInitializedRef.current !== currentModuleIndex) {
-        setTimeLeft(currentModuleConfig.globalDuration);
+        const newTime = currentModuleConfig.globalDuration;
+        setTimeLeft(newTime);
+        timeLeftRef.current = newTime;
         globalTimerInitializedRef.current = currentModuleIndex;
       }
 
@@ -145,13 +175,15 @@ const AssessmentEngine: React.FC = () => {
 
       if (!isPaused) {
         timerRef.current = setInterval(() => {
-          setTimeLeft((prev) => {
-            if (prev <= 1) {
-              advanceToNextModule();
-              return 0;
-            }
-            return prev - 1;
-          });
+          timeLeftRef.current -= 1;
+          const t = timeLeftRef.current;
+          setTimeLeft(t);
+          if (t <= 0) {
+            console.log('[ENGINE] Global timer expired, advancing module from:', activeModules[currentModuleIndex]);
+            clearInterval(timerRef.current!);
+            timerRef.current = null;
+            advanceToNextModule();
+          }
         }, 1000);
       }
     }
@@ -187,21 +219,19 @@ const AssessmentEngine: React.FC = () => {
         return;
       }
 
-      const canProceed = 
-        currentModule === 'SRT' || 
-        currentModule === 'INTRO' || 
-        currentModule === 'SRT_INST' || 
-        currentModule === 'SDT_INST' || 
-        currentSlide?.isInstruction || 
-        currentSlide?.slideType === 'BREAK' || 
-        timeLeft <= 0;
+      const isGlobalTiming = currentModuleConfig.timingMode === 'global';
+      const isLastSlideOfModule = currentSlideInModule === currentModuleSlides.length - 1;
 
       if (e.key === 'ArrowRight') {
-        if (isAdminPreview || canProceed) {
+        if (isAdminPreview) {
+          handleNextSlide();
+        } else if (allowCandidateSkip && isGlobalTiming && !isLastSlideOfModule) {
           handleNextSlide();
         }
       } else if (e.key === 'ArrowLeft') {
-        if (isAdminPreview || currentModule === 'SRT') {
+        if (isAdminPreview) {
+          handlePrevSlide();
+        } else if (allowCandidateSkip && isGlobalTiming && currentSlideInModule > 0) {
           handlePrevSlide();
         }
       } else if (e.key === ' ') {
@@ -252,7 +282,7 @@ const AssessmentEngine: React.FC = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('contextmenu', preventDefaultContext);
     };
-  }, [isStarted, isCompleted, currentModule, isAdminPreview, handleNextSlide, handlePrevSlide]);
+  }, [isStarted, isCompleted, currentModule, isAdminPreview, handleNextSlide, handlePrevSlide, currentModuleConfig, currentSlideInModule, currentModuleSlides.length, allowCandidateSkip]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -343,6 +373,7 @@ const AssessmentEngine: React.FC = () => {
   if (isScreenLocked) {
     return (
       <div className="fixed inset-0 z-[999999] bg-black flex flex-col items-center justify-center text-center p-6 select-none">
+        <Watermark user={user} isAdminPreview={isAdminPreview} />
         <div className="max-w-md space-y-6">
           <div className="w-20 h-20 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mx-auto text-red-500 animate-pulse">
             <AlertTriangle size={40} />
@@ -375,6 +406,7 @@ const AssessmentEngine: React.FC = () => {
   if (isCompleted) {
     return (
       <div className="max-w-2xl mx-auto py-24 text-center space-y-8">
+        <Watermark user={user} isAdminPreview={isAdminPreview} />
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -409,6 +441,7 @@ const AssessmentEngine: React.FC = () => {
   if (!isStarted) {
     return (
       <div className="flex justify-center items-center h-screen bg-app-bg">
+        <Watermark user={user} isAdminPreview={isAdminPreview} />
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-app-accent"></div>
       </div>
     );
@@ -424,18 +457,7 @@ const AssessmentEngine: React.FC = () => {
       )}
     >
       {/* Security Watermark Overlay */}
-      {!isAdminPreview && user && (
-        <div className="absolute inset-0 pointer-events-none z-[105] overflow-hidden select-none opacity-[0.03] flex flex-wrap gap-20 p-20 justify-around items-center">
-          {Array.from({ length: 16 }).map((_, idx) => (
-            <div 
-              key={idx} 
-              className="text-white text-lg font-black tracking-widest uppercase rotate-[-25deg] select-none"
-            >
-              {user.name || 'Candidate'} ({user.email})
-            </div>
-          ))}
-        </div>
-      )}
+      <Watermark user={user} isAdminPreview={isAdminPreview} />
 
       {/* Overall Progression Bar */}
       <div className="absolute top-0 left-0 w-full h-[3px] bg-white/5 z-[110]">
@@ -458,11 +480,15 @@ const AssessmentEngine: React.FC = () => {
               <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] opacity-40">Module</span>
               <span className="text-app-text-bright font-black text-[10px] md:text-xs">{currentModule}</span>
             </div>
-            <div className="h-4 w-px bg-app-border/30" />
-            <div className="flex flex-col">
-              <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] opacity-40">Slide</span>
-              <span className="text-app-text-bright font-black text-[10px] md:text-xs">{currentSlideInModule + 1} of {currentModuleSlides.length}</span>
-            </div>
+            {currentModule !== 'TAT' && currentModule !== 'WAT' && (
+              <>
+                <div className="h-4 w-px bg-app-border/30" />
+                <div className="flex flex-col">
+                  <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] opacity-40">Slide</span>
+                  <span className="text-app-text-bright font-black text-[10px] md:text-xs">{currentSlideInModule + 1} of {currentModuleSlides.length}</span>
+                </div>
+              </>
+            )}
           </div>
 
           {currentModuleConfig.navigable && (
@@ -510,30 +536,30 @@ const AssessmentEngine: React.FC = () => {
               Exit Preview
             </button>
           ) : (
-             (() => {
-               const isInstructionOrBreak = currentSlide?.isInstruction || currentSlide?.slideType === 'BREAK';
-               const isLastSlide = currentModuleIndex === activeModules.length - 1 && currentSlideInModule === currentModuleSlides.length - 1;
-               // Allow manual proceeding for instructions (INTRO, SRT_INST, SDT_INST), breaks, SRT module, or when timer expires.
-               const canProceed = 
-                 currentModule === 'SRT' || 
-                 currentModule === 'INTRO' || 
-                 currentModule === 'SRT_INST' || 
-                 currentModule === 'SDT_INST' || 
-                 currentSlide?.isInstruction || 
-                 currentSlide?.slideType === 'BREAK' || 
-                 timeLeft <= 0;
+            (() => {
+              // If allowCandidateSkip is OFF, no manual controls for candidate at all
+              if (!allowCandidateSkip) return null;
 
-               if (canProceed && (isInstructionOrBreak || currentModule === 'SRT' || isLastSlide)) {
-                return (
-                  <button
-                    onClick={isLastSlide ? completeAssessment : handleNextSlide}
-                    className="px-4 py-2 bg-app-accent hover:bg-app-accent/90 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md active:scale-95 border border-white/10"
-                  >
-                    {isLastSlide ? "Submit Test" : isInstructionOrBreak ? "Proceed" : "Next"}
-                  </button>
-                );
+              const isGlobalTiming = currentModuleConfig.timingMode === 'global';
+              const isLastSlideOfModule = currentSlideInModule === currentModuleSlides.length - 1;
+
+              if (isGlobalTiming) {
+                // Global timed module (e.g. SRT)
+                if (!isLastSlideOfModule) {
+                  return (
+                    <button
+                      onClick={handleNextSlide}
+                      className="px-4 py-2 bg-app-accent hover:bg-app-accent/90 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md active:scale-95 border border-white/10"
+                    >
+                      Next
+                    </button>
+                  );
+                }
+                return null;
+              } else {
+                // Per-slide timing module (TAT, WAT, SDT, INTRO, etc.)
+                return null;
               }
-              return null;
             })()
           )}
         </div>
@@ -544,7 +570,7 @@ const AssessmentEngine: React.FC = () => {
       </div>
 
       {/* Slide Pagination Strip */}
-      {currentModuleConfig.navigable && currentModuleConfig.timingMode === 'global' && (
+      {currentModuleConfig.navigable && currentModuleConfig.timingMode === 'global' && (isAdminPreview || allowCandidateSkip) && (
         <div className="absolute bottom-20 md:bottom-24 left-1/2 -translate-x-1/2 z-[120] flex items-center gap-1.5 bg-app-card/80 backdrop-blur-md px-4 py-2 rounded-full border border-app-border shadow-lg">
           {currentModuleSlides.map((slide, idx) => {
             const displayIdx = idx + 1;

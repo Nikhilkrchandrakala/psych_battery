@@ -42,6 +42,7 @@ const AssessmentSchema = new mongoose.Schema({
   instructions: String,
   duration: Number,
   active: { type: Boolean, default: false },
+  allowCandidateSkip: { type: Boolean, default: false },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   modules: {
     type: Map,

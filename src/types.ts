@@ -40,6 +40,7 @@ export interface Assessment {
   instructions: string;
   duration: number;
   active: boolean;
+  allowCandidateSkip?: boolean;
   createdBy: string;
   createdAt: any;
   modules?: Record<ModuleId, ModuleConfig>;

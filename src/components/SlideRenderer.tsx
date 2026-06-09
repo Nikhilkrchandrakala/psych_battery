@@ -63,9 +63,11 @@ export const SlideRenderer: React.FC<SlideRendererProps> = ({
             referrerPolicy="no-referrer"
             style={{ filter: invertContentOnly && slide.inverted ? 'invert(1)' : 'none' }}
           />
-          <div className="absolute bottom-[5cqi] left-[5cqi] bg-black/80 backdrop-blur px-[3cqi] py-[1.5cqi] rounded-[1.5cqi] font-black text-white border border-white/10 z-20 shadow-2xl" style={{ fontSize: 'clamp(0.5rem, 3cqi, 3rem)' }}>
-            {slide.order}
-          </div>
+          {slide.module !== 'TAT' && slide.module !== 'WAT' && (
+            <div className="absolute bottom-[5cqi] left-[5cqi] bg-black/80 backdrop-blur px-[3cqi] py-[1.5cqi] rounded-[1.5cqi] font-black text-white border border-white/10 z-20 shadow-2xl" style={{ fontSize: 'clamp(0.5rem, 3cqi, 3rem)' }}>
+              {slide.order}
+            </div>
+          )}
         </div>
       )}
 
@@ -105,17 +107,15 @@ export const SlideRenderer: React.FC<SlideRendererProps> = ({
       )}
 
       {slide.slideType === 'TEXT' && (
-        <div className="w-full h-full flex flex-col items-center justify-center max-h-full overflow-y-auto px-[4cqi] py-[3cqi] min-h-0 min-w-0">
-           <div className="w-full max-h-full overflow-y-auto flex flex-col justify-center">
-             <div 
-               style={{ 
-                 fontSize: `calc(clamp(0.5rem, 2.2cqi, 3rem) * ${slide.typographyScale || 1})`, 
-                 lineHeight: '1.5'
-               }}
-               className="text-app-text-bright font-sans break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-[3cqi] [&_ol]:pl-[3cqi] text-left"
-               dangerouslySetInnerHTML={{ __html: cleanHTML(slide.content || "") }}
-             />
-           </div>
+        <div className="w-full px-[6cqi] py-[4cqi]">
+          <div 
+            style={{ 
+              fontSize: `calc(clamp(0.5rem, 2.2cqi, 3rem) * ${slide.typographyScale || 1})`, 
+              lineHeight: '1.5'
+            }}
+            className="text-app-text-bright font-sans break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-[3cqi] [&_ol]:pl-[3cqi] text-left"
+            dangerouslySetInnerHTML={{ __html: cleanHTML(slide.content || "") }}
+          />
         </div>
       )}
 
@@ -127,10 +127,18 @@ export const SlideRenderer: React.FC<SlideRendererProps> = ({
     </>
   );
 
+  const isTextSlide = slide.slideType === 'TEXT';
+  const containerClasses = cn(
+    "flex-1 w-full h-full flex flex-col bg-app-sidebar min-h-0 min-w-0 relative",
+    isTextSlide 
+      ? "items-start justify-start overflow-y-auto" 
+      : "items-center justify-center overflow-hidden"
+  );
+
   if (!animated) {
     return (
       <div 
-        className="flex-1 w-full h-full flex flex-col items-center justify-center bg-app-sidebar min-h-0 min-w-0 overflow-hidden relative"
+        className={containerClasses}
         style={{ 
           filter: !invertContentOnly && slide.inverted ? 'invert(1)' : 'none',
           containerType: 'size' 
@@ -149,7 +157,7 @@ export const SlideRenderer: React.FC<SlideRendererProps> = ({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 1.05 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="flex-1 w-full h-full flex flex-col items-center justify-center bg-app-sidebar min-h-0 min-w-0 overflow-hidden relative"
+        className={containerClasses}
         style={{ 
           filter: !invertContentOnly && slide.inverted ? 'invert(1)' : 'none',
           containerType: 'size'

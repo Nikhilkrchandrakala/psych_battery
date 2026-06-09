@@ -29,7 +29,13 @@ export const AssessmentMiniViewer: React.FC<AssessmentPresenterProps> = ({ asses
   const currentModuleSlides = moduleSlideMap[currentModule] || [];
   const currentSlide = currentModuleSlides[currentSlideInModule];
 
-  const totalSlides = previewModule ? (moduleSlideMap[previewModule as any]?.length || 0) : allSlides.length;
+  const totalSlides = useMemo(() => {
+    if (previewModule) {
+      return moduleSlideMap[previewModule as any]?.length || 0;
+    }
+    return activeModules.reduce((acc, m) => acc + (moduleSlideMap[m]?.length || 0), 0);
+  }, [previewModule, activeModules, moduleSlideMap]);
+
   const globalSlideIndex = useMemo(() => {
     let count = 0;
     for (let i = 0; i < currentModuleIndex; i++) {
@@ -100,8 +106,8 @@ export const AssessmentMiniViewer: React.FC<AssessmentPresenterProps> = ({ asses
     return <div className="text-red-400 p-8 text-center bg-app-bg w-full h-full flex items-center justify-center font-serif italic">{error || "Assessment not found"}</div>;
   }
 
-  if (allSlides.length === 0) {
-    return <div className="text-app-text-muted p-8 text-center bg-app-bg w-full h-full flex items-center justify-center font-serif italic">No slides found for this assessment.</div>;
+  if (activeModules.length === 0) {
+    return <div className="text-app-text-muted p-8 text-center bg-app-bg w-full h-full flex items-center justify-center font-serif italic">No evaluation slides found for this assessment.</div>;
   }
 
   const isAtStart = currentModuleIndex === 0 && currentSlideInModule === 0;
@@ -121,7 +127,7 @@ export const AssessmentMiniViewer: React.FC<AssessmentPresenterProps> = ({ asses
       </div>
 
       {/* Slide Content Area (WYSIWYG 16:9 Canvas) */}
-      <div className="flex-1 min-h-0 w-full flex items-center justify-center p-4">
+      <div className="flex-1 min-h-0 w-full flex items-center justify-center p-0">
         <div className="w-full aspect-video max-h-full relative overflow-hidden rounded-2xl border border-app-border bg-app-bg flex items-center justify-center shadow-2xl">
           <SlideRenderer slide={currentSlide} invertContentOnly={false} animated={false} />
         </div>

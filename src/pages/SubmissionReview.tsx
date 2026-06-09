@@ -120,6 +120,7 @@ const SubmissionReview: React.FC = () => {
   const [activeAnswerIndex, setActiveAnswerIndex] = useState(0);
   const [viewerMode, setViewerMode] = useState<'piq' | 'dossier'>('piq');
   const [selectedPiqTab, setSelectedPiqTab] = useState<'piq1' | 'piq2'>('piq1');
+  const [showSidebar, setShowSidebar] = useState(true);
 
   useEffect(() => {
     setActivePiqIndex(0);
@@ -461,36 +462,50 @@ const SubmissionReview: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-app-sidebar/50 p-1 rounded-2xl border border-app-border w-fit shadow-inner">
-        {[
-          { id: 'dossier', label: 'Document Viewer', icon: FileSearch },
-          { id: 'meeting', label: 'Feedback Scheduler', icon: Calendar },
-          { id: 'evaluation', label: 'Assessment', icon: MessageSquare },
-          ...(submission.status === 'REPORT_RELEASED' ? [{ id: 'feedback', label: 'All Assessor Feedback', icon: Users }] : [])
-        ].filter(tab => {
-          if (activeAssessorType === 'GTO' && tab.id === 'dossier') return false;
-          if (tab.id === 'meeting' && !['Psych', 'IO', 'TO'].includes(activeAssessorType)) return false;
-          return true;
-        }).map(tab => (
+      {/* Tabs and Sidebar Toggle */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex gap-1 bg-app-sidebar/50 p-1 rounded-2xl border border-app-border w-fit shadow-inner">
+          {[
+            { id: 'dossier', label: 'Document Viewer', icon: FileSearch },
+            { id: 'meeting', label: 'Feedback Scheduler', icon: Calendar },
+            { id: 'evaluation', label: 'Assessment', icon: MessageSquare },
+            ...(submission.status === 'REPORT_RELEASED' ? [{ id: 'feedback', label: 'All Assessor Feedback', icon: Users }] : [])
+          ].filter(tab => {
+            if (activeAssessorType === 'GTO' && tab.id === 'dossier') return false;
+            if (tab.id === 'meeting' && !['Psych', 'IO', 'TO'].includes(activeAssessorType)) return false;
+            return true;
+          }).map(tab => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as any)}
+              className={cn(
+                "px-6 py-2.5 rounded-[0.85rem] text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center gap-2",
+                activeTab === tab.id ? "bg-app-accent text-white shadow-xl" : "text-app-text-muted hover:text-app-text-bright"
+              )}
+            >
+              <tab.icon size={16} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'dossier' && viewerMode === 'dossier' && (activeAssessorType === 'Psych' || activeAssessorType === 'TO') && assessment && (
           <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={cn(
-              "px-6 py-2.5 rounded-[0.85rem] text-[10px] font-black uppercase tracking-[0.15em] transition-all flex items-center gap-2",
-              activeTab === tab.id ? "bg-app-accent text-white shadow-xl" : "text-app-text-muted hover:text-app-text-bright"
-            )}
+            type="button"
+            onClick={() => setShowSidebar(!showSidebar)}
+            className="px-4 py-2.5 rounded-2xl bg-app-card border border-app-border text-[10px] font-black uppercase tracking-widest text-app-text-muted hover:text-app-text-bright hover:border-app-accent/50 transition-all flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer"
           >
-            <tab.icon size={16} />
-            {tab.label}
+            <Maximize2 size={14} className="text-app-accent" />
+            {showSidebar ? 'Hide Test Preview' : 'Show Test Preview'}
           </button>
-        ))}
+        )}
       </div>
 
       {/* Main Content Area: 2-Column Layout */}
       <div className={cn(
         "grid gap-8 items-start",
-        (activeTab === 'dossier' && (activeAssessorType === 'Psych' || activeAssessorType === 'TO') && assessment)
+        (activeTab === 'dossier' && viewerMode === 'dossier' && (activeAssessorType === 'Psych' || activeAssessorType === 'TO') && assessment && showSidebar)
           ? "grid-cols-1 lg:grid-cols-[1fr_500px] xl:grid-cols-[1fr_600px]" 
           : "grid-cols-1"
       )}>
@@ -638,7 +653,7 @@ const SubmissionReview: React.FC = () => {
                             )}
                           </div>
 
-                          <div className="bg-app-card rounded-3xl border border-app-border overflow-hidden shadow-2xl" style={{ height: '1100px' }}>
+                          <div className="bg-app-card rounded-3xl border border-app-border overflow-hidden shadow-2xl" style={{ height: '720px' }}>
                             {isPdf(activeFiles[activePiqIndex]) ? (
                               <iframe
                                 key={`${viewerMode}-${selectedPiqTab}-${activePiqIndex}`}
@@ -952,7 +967,7 @@ const SubmissionReview: React.FC = () => {
         </div>
 
         {/* RIGHT COLUMN: Presenter Sticky Panel */}
-        {activeTab === 'dossier' && (activeAssessorType === 'Psych' || activeAssessorType === 'TO') && assessment && (
+        {activeTab === 'dossier' && viewerMode === 'dossier' && (activeAssessorType === 'Psych' || activeAssessorType === 'TO') && assessment && showSidebar && (
           <div className="flex flex-col w-full h-full">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3 text-app-accent">
@@ -963,16 +978,8 @@ const SubmissionReview: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 flex items-center gap-2">
-                  <span className="opacity-0">Placeholder</span>
-                </h4>
-              </div>
-            
-              <div className="@container bg-app-card/60 border border-app-border rounded-3xl overflow-hidden shadow-2xl flex flex-col relative" style={{ height: '1100px' }}>
-                <AssessmentMiniViewer assessmentId={assessment._id || assessment.id} />
-              </div>
+            <div className="@container bg-app-card/60 border border-app-border rounded-3xl overflow-hidden shadow-2xl flex flex-col relative w-full h-[335px] xl:h-[390px]">
+              <AssessmentMiniViewer assessmentId={assessment._id || assessment.id} />
             </div>
           </div>
         )}
