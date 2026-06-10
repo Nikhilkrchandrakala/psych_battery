@@ -1,98 +1,112 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { useAssessmentData } from '../hooks/useAssessmentData';
-import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, ChevronRight, Clock, Maximize } from 'lucide-react';
-import { cn } from '../lib/utils';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { SlideRenderer } from '../components/SlideRenderer';
-
-
+import { useParams } from 'react-router-dom';
+import { AssessmentSlide, ModuleId } from '../types';
 
 interface AssessmentPresenterProps {
   assessmentId?: string; // Can be passed directly or taken from route params
   onExit?: () => void;
 }
 
-export const AssessmentMiniViewer: React.FC<AssessmentPresenterProps> = ({ assessmentId: propId, onExit }) => {
+const MODULE_ORDER: ModuleId[] = ['INTRO', 'TAT', 'WAT', 'SRT_INST', 'SRT', 'SDT_INST', 'SDT', 'CLOSING'];
+
+const cleanHTML = (html: string) => {
+  if (!html) return "";
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    let lastChild = doc.body.lastChild;
+    while (lastChild) {
+      if (lastChild.nodeType === Node.TEXT_NODE && !lastChild.textContent?.trim()) {
+        const prev = lastChild.previousSibling;
+        lastChild.remove();
+        lastChild = prev;
+      } else if (lastChild.nodeType === Node.ELEMENT_NODE) {
+        const el = lastChild as HTMLElement;
+        if (el.tagName === 'BR' || (!el.textContent?.trim() && !el.querySelector('img'))) {
+          const prev = lastChild.previousSibling;
+          lastChild.remove();
+          lastChild = prev;
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+    return doc.body.innerHTML;
+  } catch (e) {
+    return html;
+  }
+};
+
+export const AssessmentMiniViewer: React.FC<AssessmentPresenterProps> = ({ assessmentId: propId }) => {
   const { id: routeId } = useParams<{ id: string }>();
   const id = propId || routeId;
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const previewModule = searchParams.get('module');
   
-  const { assessment, allSlides, loading, error, moduleSlideMap, activeModules } = useAssessmentData(id, previewModule);
+  const { assessment, allSlides, loading, error } = useAssessmentData(id, null);
 
-  const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
-  const [currentSlideInModule, setCurrentSlideInModule] = useState(0);
+  const filteredSlides = useMemo(() => {
+    const list = allSlides.filter(slide => {
+      // 1. Exclude introductory, instruction, closing modules
+      if (['INTRO', 'SRT_INST', 'SDT_INST', 'CLOSING'].includes(slide.module)) return false;
+      // 2. Exclude break and blackout slides
+      if (slide.slideType === 'BREAK' || slide.slideType === 'BLACKOUT') return false;
+      // 3. Exclude explicit instruction slides
+      if (slide.isInstruction) return false;
+      
+      // 4. Module-specific question constraints:
+      // TAT (Thematic Apperception Test) only consists of IMAGE slides as questions
+      if (slide.module === 'TAT' && slide.slideType !== 'IMAGE') return false;
+      // WAT (Word Association Test) only consists of WORD slides as questions
+      if (slide.module === 'WAT' && slide.slideType !== 'WORD') return false;
 
-  const currentModule = activeModules[currentModuleIndex] || 'INTRO';
-  const currentModuleSlides = moduleSlideMap[currentModule] || [];
-  const currentSlide = currentModuleSlides[currentSlideInModule];
+      // 5. Exclude slide if it matches instruction/introductory text patterns (case-insensitive)
+      const contentUpper = (slide.content || '').toUpperCase();
+      const instructionKeywords = [
+        'INSTRUCTIONS FOR',
+        'IN THIS TEST',
+        'TEST OF YOUR',
+        'YOU WILL BE PRESENTED',
+        'YOU ARE REQUIRED TO',
+        'GREETINGS OF THE',
+        'PRACTICE WORD',
+        'PRACTICE SITUATION',
+        'SAMPLE WORD',
+        'SAMPLE SITUATION',
+        'WRITE DOWN YOUR',
+        'WRITING YOUR',
+        'THANK YOU PLEASE',
+        'THANK YOU!'
+      ];
+      const hasKeyword = instructionKeywords.some(kw => contentUpper.includes(kw));
+      if (hasKeyword) return false;
 
-  const totalSlides = useMemo(() => {
-    if (previewModule) {
-      return moduleSlideMap[previewModule as any]?.length || 0;
-    }
-    return activeModules.reduce((acc, m) => acc + (moduleSlideMap[m]?.length || 0), 0);
-  }, [previewModule, activeModules, moduleSlideMap]);
+      return true;
+    });
 
-  const globalSlideIndex = useMemo(() => {
-    let count = 0;
-    for (let i = 0; i < currentModuleIndex; i++) {
-      count += moduleSlideMap[activeModules[i]]?.length || 0;
-    }
-    return count + currentSlideInModule;
-  }, [currentModuleIndex, currentSlideInModule, activeModules, moduleSlideMap]);
-
-  const currentModuleConfig = assessment?.modules?.[currentModule as any] || { timingMode: 'per-slide', globalDuration: 0, navigable: false };
-
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastSlideKeyRef = useRef<string>('');
-
-  const advanceToNextModule = useCallback(() => {
-    if (currentModuleIndex + 1 >= activeModules.length) {
-      return; // End of assessment
-    }
-    setCurrentModuleIndex(prev => prev + 1);
-    setCurrentSlideInModule(0);
-  }, [currentModuleIndex, activeModules.length]);
-
-  const handleNextSlide = useCallback(() => {
-    if (currentSlideInModule + 1 >= currentModuleSlides.length) {
-      advanceToNextModule();
-      return;
-    }
-    setCurrentSlideInModule(prev => prev + 1);
-  }, [currentSlideInModule, currentModuleSlides.length, advanceToNextModule]);
-
-  const handlePrevSlide = useCallback(() => {
-    if (currentSlideInModule > 0) {
-      setCurrentSlideInModule(prev => prev - 1);
-    } else if (currentModuleIndex > 0) {
-      // Go to last slide of previous module
-      const prevModuleIndex = currentModuleIndex - 1;
-      const prevModule = activeModules[prevModuleIndex];
-      setCurrentModuleIndex(prevModuleIndex);
-      setCurrentSlideInModule(Math.max(0, (moduleSlideMap[prevModule]?.length || 1) - 1));
-    }
-  }, [currentSlideInModule, currentModuleIndex, activeModules, moduleSlideMap]);
-
-  // Timer logic removed for assessor preview - manual navigation only
-
-  // Keyboard controls
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') {
-        handleNextSlide();
-      } else if (e.key === 'ArrowLeft') {
-        handlePrevSlide();
+    // Sort by module order and order within module
+    return list.sort((a, b) => {
+      const idxA = MODULE_ORDER.indexOf(a.module);
+      const idxB = MODULE_ORDER.indexOf(b.module);
+      if (idxA !== idxB) {
+        return idxA - idxB;
       }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleNextSlide, handlePrevSlide]);
+      return (a.order || 0) - (b.order || 0);
+    });
+  }, [allSlides]);
+
+  // Group slides by module for rendering sections
+  const groupedSlides = useMemo(() => {
+    const groups: Record<string, AssessmentSlide[]> = {};
+    filteredSlides.forEach(slide => {
+      if (!groups[slide.module]) {
+        groups[slide.module] = [];
+      }
+      groups[slide.module].push(slide);
+    });
+    return groups;
+  }, [filteredSlides]);
 
   if (loading) {
     return (
@@ -103,57 +117,99 @@ export const AssessmentMiniViewer: React.FC<AssessmentPresenterProps> = ({ asses
   }
 
   if (error || !assessment) {
-    return <div className="text-red-400 p-8 text-center bg-app-bg w-full h-full flex items-center justify-center font-serif italic">{error || "Assessment not found"}</div>;
+    return (
+      <div className="text-red-400 p-8 text-center bg-app-bg w-full h-full flex items-center justify-center font-serif italic">
+        {error || "Assessment not found"}
+      </div>
+    );
   }
 
-  if (activeModules.length === 0) {
-    return <div className="text-app-text-muted p-8 text-center bg-app-bg w-full h-full flex items-center justify-center font-serif italic">No evaluation slides found for this assessment.</div>;
+  if (filteredSlides.length === 0) {
+    return (
+      <div className="text-app-text-muted p-8 text-center bg-app-bg w-full h-full flex items-center justify-center font-serif italic">
+        No evaluation questions found for this assessment.
+      </div>
+    );
   }
-
-  const isAtStart = currentModuleIndex === 0 && currentSlideInModule === 0;
-  const isAtEnd = currentModuleIndex === activeModules.length - 1 && currentSlideInModule === currentModuleSlides.length - 1;
 
   return (
-    <div className={cn("w-full h-full flex flex-col bg-app-sidebar overflow-hidden font-sans select-none relative rounded-3xl", currentSlide?.slideType === 'BLACKOUT' && "bg-black")}>
-      
-      {/* Progress Bar */}
-      <div className="w-full h-[3px] bg-white/5 z-50 shrink-0">
-        <motion.div 
-          className="h-full bg-app-accent"
-          initial={{ width: 0 }}
-          animate={{ width: `${((globalSlideIndex + 1) / totalSlides) * 100}%` }}
-          transition={{ duration: 0.3 }}
-        />
+    <div className="w-full h-full flex flex-col bg-app-sidebar overflow-hidden font-sans select-none relative rounded-3xl">
+      {/* Quick Section Links */}
+      <div className="shrink-0 flex gap-2 p-3 bg-black/20 border-b border-app-border overflow-x-auto select-none no-scrollbar">
+        {Object.entries(groupedSlides).map(([mod, slides]) => (
+          <button
+            key={mod}
+            onClick={() => {
+              const el = document.getElementById(`qp-sec-${mod}`);
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }}
+            className="px-3 py-1.5 bg-app-card border border-app-border/60 hover:border-app-accent text-app-text-bright hover:text-app-accent rounded-lg text-[9px] font-black transition-all uppercase tracking-widest shrink-0 cursor-pointer"
+          >
+            {mod} ({slides.length})
+          </button>
+        ))}
       </div>
 
-      {/* Slide Content Area (WYSIWYG 16:9 Canvas) */}
-      <div className="flex-1 min-h-0 w-full flex items-center justify-center p-0">
-        <div className="w-full aspect-video max-h-full relative overflow-hidden rounded-2xl border border-app-border bg-app-bg flex items-center justify-center shadow-2xl">
-          <SlideRenderer slide={currentSlide} invertContentOnly={false} animated={false} />
-        </div>
-      </div>
+      {/* Scrollable Questions list */}
+      <div className="flex-1 overflow-y-auto p-5 space-y-6 bg-app-bg text-app-text-bright custom-scrollbar">
+        {Object.entries(groupedSlides).map(([moduleName, slides]) => (
+          <div key={moduleName} id={`qp-sec-${moduleName}`} className="space-y-4 pt-1">
+            <div className="sticky top-0 bg-app-bg/95 backdrop-blur border-b border-app-border/60 pb-2 z-10 flex items-center justify-between">
+              <h3 className="text-[10px] font-black uppercase text-app-accent tracking-[0.2em]">
+                {moduleName} Section
+              </h3>
+              <span className="text-[9px] text-app-text-muted font-black uppercase tracking-widest">
+                {slides.length} Questions
+              </span>
+            </div>
 
-      {/* Simple Mini Toolbar */}
-      <div className="shrink-0 h-12 bg-black/40 flex items-center justify-between px-4 z-50 border-t border-app-border w-full">
-        <button
-          onClick={handlePrevSlide}
-          disabled={isAtStart}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-app-text-muted hover:bg-white/5 hover:text-app-text-bright disabled:opacity-30 transition-all font-black uppercase tracking-widest text-[10px]"
-        >
-          <ChevronLeft size={14} /> Back
-        </button>
-        
-        <div className="text-[10px] font-mono text-app-text-muted tracking-widest uppercase">
-          Slide {globalSlideIndex + 1} / {totalSlides}
-        </div>
+            <div className="grid grid-cols-1 gap-4">
+              {slides.map((slide, idx) => (
+                <div 
+                  key={slide.id} 
+                  className="bg-app-card/40 border border-app-border/40 hover:border-app-accent/20 rounded-2xl p-4 transition-all space-y-3"
+                >
+                  <div className="flex justify-between items-center text-[9px] font-black text-app-text-muted uppercase tracking-widest">
+                    <span>Question {idx + 1}</span>
+                    <span className="px-1.5 py-0.5 rounded bg-black/20 border border-app-border/30">
+                      ID: {slide.order || (idx + 1)}
+                    </span>
+                  </div>
 
-        <button
-          onClick={handleNextSlide}
-          disabled={isAtEnd}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-app-text-muted hover:bg-white/5 hover:text-app-text-bright disabled:opacity-30 transition-all font-black uppercase tracking-widest text-[10px]"
-        >
-          Next <ChevronRight size={14} />
-        </button>
+                  {/* Render based on slide type */}
+                  {slide.slideType === 'IMAGE' && slide.imageUrl && (
+                    <div className="w-full aspect-video bg-black/20 rounded-xl overflow-hidden border border-app-border/40 relative flex items-center justify-center p-2">
+                      <img 
+                        src={slide.imageUrl} 
+                        alt={`Stimulus ${idx + 1}`} 
+                        className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                        referrerPolicy="no-referrer"
+                        style={{ filter: slide.inverted ? 'invert(1)' : 'none' }}
+                      />
+                    </div>
+                  )}
+
+                  {slide.slideType === 'WORD' && slide.content && (
+                    <div 
+                      className="text-xl font-black text-app-text-bright tracking-tight text-center py-6 bg-black/20 rounded-xl font-mono uppercase border border-app-border/20"
+                      style={{ filter: slide.inverted ? 'invert(1)' : 'none' }}
+                      dangerouslySetInnerHTML={{ __html: slide.content }}
+                    />
+                  )}
+
+                  {slide.slideType === 'TEXT' && slide.content && (
+                    <div 
+                      className="text-xs text-app-text-bright leading-relaxed bg-black/20 border border-app-border/20 rounded-xl p-4 font-serif italic"
+                      dangerouslySetInnerHTML={{ __html: cleanHTML(slide.content) }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

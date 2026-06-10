@@ -540,6 +540,13 @@ async function startServer() {
   const storage = multer.memoryStorage();
   const upload = multer({ storage, limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB per file to support high-res scans
 
+  const uploadDossierMiddleware = (req: any, res: any, next: any) => {
+    if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+      return next();
+    }
+    return upload.array('files', 20)(req, res, next);
+  };
+
   // Helper to forward files to the main VPS backend
   async function forwardToMainBackend(file: any, token: string) {
     const blob = new Blob([file.buffer], { type: file.mimetype });
@@ -564,7 +571,10 @@ async function startServer() {
     return url; // Returns the absolute URL hosted on local or VPS
   }
 
-  app.post('/api/submissions/:id/upload', authenticate, upload.array('files', 20), async (req: any, res: any) => {
+  app.post('/api/submissions/:id/upload', authenticate, uploadDossierMiddleware, async (req: any, res: any) => {
+    console.log("--- UPLOAD DEBUG ---");
+    console.log("Content-Type:", req.headers['content-type']);
+    console.log("Body:", req.body);
     try {
       const submissionId = req.params.id;
       const submission = await Submission.findById(submissionId);
@@ -575,17 +585,23 @@ async function startServer() {
         return res.status(403).json({ message: 'Unauthorized' });
       }
 
-      if (!req.files || (req.files as any[]).length === 0) {
-        return res.status(400).json({ message: 'No files uploaded' });
-      }
-
-      const files = req.files as any[];
       const filePaths: string[] = [];
-      const token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : (req.headers.token as string);
 
-      for (const file of files) {
-        const url = await forwardToMainBackend(file, token);
-        filePaths.push(url);
+      // Accept pre-uploaded URLs to bypass Vercel serverless request body size limits
+      if (req.body && req.body.fileUrls && Array.isArray(req.body.fileUrls)) {
+        filePaths.push(...req.body.fileUrls);
+      } else {
+        if (!req.files || (req.files as any[]).length === 0) {
+          return res.status(400).json({ message: 'No files uploaded' });
+        }
+
+        const files = req.files as any[];
+        const token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : (req.headers.token as string);
+
+        for (const file of files) {
+          const url = await forwardToMainBackend(file, token);
+          filePaths.push(url);
+        }
       }
 
       // Add files to submission
@@ -838,7 +854,7 @@ async function startServer() {
               const req2 = https.request(options, (res) => {
                 let data = '';
                 res.on('data', chunk => data += chunk);
-                res.on('end', () => console.log('MSG91 Response:', data));
+                res.on('end', () => console.log(`MSG91 Response (Status: ${res.statusCode}): ${data}`));
               });
               req2.on('error', (e) => console.error('MSG91 Error:', e.message));
               req2.write(msg91Payload);
@@ -1110,6 +1126,7 @@ async function startServer() {
       submission = new Submission({
         ...req.body,
         userId: req.user._id,
+        startedAt: new Date(),
         psychStatus,
         gtoStatus,
         ioStatus,
@@ -1210,9 +1227,12 @@ async function startServer() {
             console.error("Failed to fetch assessor for email:", err);
           }
           
-          if (studentEmail && process.env.MSG91_AUTHKEY) {
+          if (!studentEmail) {
+            console.warn(`[EMAIL WARNING] Student email is missing. Cannot send meeting email for ${role.toUpperCase()}.`);
+          } else if (!process.env.MSG91_AUTHKEY) {
+            console.warn(`[EMAIL WARNING] MSG91_AUTHKEY is missing in env. Cannot send meeting email for ${role.toUpperCase()} to ${studentEmail}.`);
+          } else {
             try {
-              const https = require('https');
               const recipients = [
                 { name: studentName, email: studentEmail }
               ];
@@ -1258,7 +1278,7 @@ async function startServer() {
               const reqEmail = https.request(options, (resEmail: any) => {
                 let data = '';
                 resEmail.on('data', (chunk: string) => data += chunk);
-                resEmail.on('end', () => console.log(`Sent meeting email via MSG91 for ${role.toUpperCase()}. Response: ${data}`));
+                resEmail.on('end', () => console.log(`Sent meeting email via MSG91 for ${role.toUpperCase()}. Status: ${resEmail.statusCode}. Response: ${data}`));
               });
               reqEmail.on('error', (e: any) => console.error('MSG91 Email Error:', e.message));
               reqEmail.write(msg91Payload);
@@ -1320,9 +1340,12 @@ async function startServer() {
         }
 
         // Send email via MSG91
-        if (student.email && process.env.MSG91_AUTHKEY) {
+        if (!student.email) {
+          console.warn(`[EMAIL WARNING] Student email is missing. Cannot send results broadcast email.`);
+        } else if (!process.env.MSG91_AUTHKEY) {
+          console.warn(`[EMAIL WARNING] MSG91_AUTHKEY is missing in env. Cannot send results broadcast email to ${student.email}.`);
+        } else {
           try {
-            const https = require('https');
             const msg91Payload = JSON.stringify({
               to: [
                 { name: candidateName, email: student.email }
@@ -1354,7 +1377,7 @@ async function startServer() {
             const reqEmail = https.request(options, (resEmail: any) => {
               let data = '';
               resEmail.on('data', (chunk: string) => data += chunk);
-              resEmail.on('end', () => console.log(`Sent results broadcast email via MSG91. Response: ${data}`));
+              resEmail.on('end', () => console.log(`Sent results broadcast email via MSG91. Status: ${resEmail.statusCode}. Response: ${data}`));
             });
             reqEmail.on('error', (e: any) => console.error('MSG91 Results Email Error:', e.message));
             reqEmail.write(msg91Payload);

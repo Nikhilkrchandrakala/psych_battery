@@ -66,7 +66,7 @@ const AssessmentEngine: React.FC = () => {
 
   const currentModuleConfig: ModuleConfig = useMemo(() => {
     const base = assessment?.modules?.[currentModule] || DEFAULT_MODULE_CONFIG;
-    if (isAdminPreview) {
+    if (isAdminPreview || currentModule === 'SRT') {
       return { ...base, navigable: true };
     }
     return base;
@@ -116,11 +116,15 @@ const AssessmentEngine: React.FC = () => {
   const handleNextSlide = useCallback(() => {
     console.log('[ENGINE] handleNextSlide called. slideInModule:', currentSlideInModule, 'totalSlides:', currentModuleSlides.length, 'currentModule:', activeModules[currentModuleIndex]);
     if (currentSlideInModule + 1 >= currentModuleSlides.length) {
+      if (activeModules[currentModuleIndex] === 'SRT' && !isAdminPreview) {
+        // SRT candidate navigation is locked within this module until the global 30-min timer expires
+        return;
+      }
       advanceToNextModule();
       return;
     }
     setCurrentSlideInModule(prev => prev + 1);
-  }, [currentSlideInModule, currentModuleSlides.length, advanceToNextModule]);
+  }, [currentSlideInModule, currentModuleSlides.length, advanceToNextModule, currentModuleIndex, activeModules, isAdminPreview]);
 
   // Go to previous slide
   const handlePrevSlide = useCallback(() => {
@@ -221,17 +225,18 @@ const AssessmentEngine: React.FC = () => {
 
       const isGlobalTiming = currentModuleConfig.timingMode === 'global';
       const isLastSlideOfModule = currentSlideInModule === currentModuleSlides.length - 1;
+      const isSRT = currentModule === 'SRT';
 
       if (e.key === 'ArrowRight') {
         if (isAdminPreview) {
           handleNextSlide();
-        } else if (allowCandidateSkip && isGlobalTiming && !isLastSlideOfModule) {
+        } else if ((isSRT || (allowCandidateSkip && isGlobalTiming)) && !isLastSlideOfModule) {
           handleNextSlide();
         }
       } else if (e.key === 'ArrowLeft') {
         if (isAdminPreview) {
           handlePrevSlide();
-        } else if (allowCandidateSkip && isGlobalTiming && currentSlideInModule > 0) {
+        } else if ((isSRT || (allowCandidateSkip && isGlobalTiming)) && currentSlideInModule > 0) {
           handlePrevSlide();
         }
       } else if (e.key === ' ') {
@@ -537,14 +542,41 @@ const AssessmentEngine: React.FC = () => {
             </button>
           ) : (
             (() => {
+              const isSRT = currentModule === 'SRT';
+              const isLastSlideOfModule = currentSlideInModule === currentModuleSlides.length - 1;
+              const isFirstSlideOfModule = currentSlideInModule === 0;
+
+              if (isSRT) {
+                // Candidates can navigate freely back and forth inside SRT
+                return (
+                  <div className="flex gap-2">
+                    {!isFirstSlideOfModule && (
+                      <button
+                        onClick={handlePrevSlide}
+                        className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all border border-app-border shadow-md active:scale-95"
+                      >
+                        Prev
+                      </button>
+                    )}
+                    {!isLastSlideOfModule && (
+                      <button
+                        onClick={handleNextSlide}
+                        className="px-4 py-2 bg-app-accent hover:bg-app-accent/90 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md active:scale-95 border border-white/10"
+                      >
+                        Next
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+
               // If allowCandidateSkip is OFF, no manual controls for candidate at all
               if (!allowCandidateSkip) return null;
 
               const isGlobalTiming = currentModuleConfig.timingMode === 'global';
-              const isLastSlideOfModule = currentSlideInModule === currentModuleSlides.length - 1;
 
               if (isGlobalTiming) {
-                // Global timed module (e.g. SRT)
+                // Global timed module (e.g. other global tests)
                 if (!isLastSlideOfModule) {
                   return (
                     <button
@@ -565,12 +597,12 @@ const AssessmentEngine: React.FC = () => {
         </div>
       </div>
 
-      <div className="@container flex-grow flex items-center justify-center relative px-4 py-4 md:px-12 md:py-8 lg:px-20 lg:py-10">
+      <div className="@container flex-grow flex items-center justify-center relative px-4 py-4 md:px-12 md:py-8 lg:px-20 lg:py-10 min-h-0 w-full">
         <SlideRenderer slide={currentSlide} invertContentOnly={false} animated={true} />
       </div>
 
       {/* Slide Pagination Strip */}
-      {currentModuleConfig.navigable && currentModuleConfig.timingMode === 'global' && (isAdminPreview || allowCandidateSkip) && (
+      {currentModuleConfig.navigable && currentModuleConfig.timingMode === 'global' && (isAdminPreview || allowCandidateSkip || currentModule === 'SRT') && (
         <div className="absolute bottom-20 md:bottom-24 left-1/2 -translate-x-1/2 z-[120] flex items-center gap-1.5 bg-app-card/80 backdrop-blur-md px-4 py-2 rounded-full border border-app-border shadow-lg">
           {currentModuleSlides.map((slide, idx) => {
             const displayIdx = idx + 1;

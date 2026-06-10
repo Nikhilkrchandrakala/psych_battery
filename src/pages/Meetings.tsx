@@ -41,7 +41,7 @@ const Meetings: React.FC = () => {
       });
       // Optimistic update
       setSubmissions(prev => prev.map(s => {
-        if (s.id === id) {
+        if (s.id === id || s._id === id) {
           return { ...s, [`${prefix}MeetingCompleted`]: true } as any;
         }
         return s;
@@ -95,9 +95,10 @@ const Meetings: React.FC = () => {
               const dateStr = s[`${prefix}MeetingDate`];
               const linkStr = s[`${prefix}MeetingLink`];
               const date = new Date(dateStr);
+              const subId = sub.id || sub._id || '';
               
               return (
-                <div key={sub.id} className="bg-app-sidebar border border-app-border rounded-3xl p-6 shadow-xl flex flex-col hover:border-app-accent/50 transition-colors">
+                <div key={subId} className="bg-app-sidebar border border-app-border rounded-3xl p-6 shadow-xl flex flex-col hover:border-app-accent/50 transition-colors">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-14 h-14 rounded-2xl bg-app-card border border-app-border overflow-hidden flex items-center justify-center shrink-0">
                       {sub.student?.profileImage ? (
@@ -139,7 +140,7 @@ const Meetings: React.FC = () => {
                       Join Link
                     </a>
                     <button 
-                      onClick={() => handleMarkAsComplete(sub.id)}
+                      onClick={() => handleMarkAsComplete(subId)}
                       className="flex items-center justify-center gap-2 py-2.5 bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                     >
                       <CheckCircle2 size={14} />

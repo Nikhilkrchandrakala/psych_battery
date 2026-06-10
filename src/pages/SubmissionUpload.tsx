@@ -317,7 +317,7 @@ const SubmissionUpload: React.FC = () => {
                <div className="flex justify-between text-sm font-medium">
                  <span className="text-app-text-muted">Started</span>
                  <span className="text-app-text-bright">
-                  {submission.startedAt ? new Date(submission.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                  {submission.startedAt || submission.createdAt ? new Date(submission.startedAt || submission.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                  </span>
                </div>
                <div className="flex justify-between text-sm font-medium">

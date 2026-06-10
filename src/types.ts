@@ -101,8 +101,11 @@ export interface AssessmentSubmission {
   ioMeetingLink?: string;
   gtoMeetingDate?: any;
   gtoMeetingLink?: string;
+  toMeetingDate?: any;
+  toMeetingLink?: string;
   finalReport?: string;
   reviewedAt?: any;
+  createdAt?: any;
 }
 
 export interface AssessorNote {

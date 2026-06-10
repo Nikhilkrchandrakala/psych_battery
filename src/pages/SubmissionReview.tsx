@@ -128,7 +128,7 @@ const SubmissionReview: React.FC = () => {
 
   // Form states
   const [remarks, setRemarks] = useState('');
-  const [scores, setScores] = useState<Record<string, number>>({});
+  const [scores, setScores] = useState<Record<string, number | string>>({});
   const [meetingDate, setMeetingDate] = useState('');
   const [meetingLink, setMeetingLink] = useState('');
 
@@ -189,7 +189,7 @@ const SubmissionReview: React.FC = () => {
         if (roleScores && Object.keys(roleScores).length > 0) {
           setScores(roleScores);
         } else {
-          const initialScores: Record<string, number> = {};
+          const initialScores: Record<string, number | string> = {};
           Object.values(SPECIALIZED_TRAITS).forEach(groups => {
             Object.values(groups).forEach(traits => {
               Object.keys(traits).forEach(k => {
@@ -450,7 +450,7 @@ const SubmissionReview: React.FC = () => {
           <div className="flex items-center gap-4 text-[10px] font-black text-app-text-muted uppercase tracking-wider px-1">
             <div className="flex items-center gap-1.5">
               <Clock size={12} className="text-app-text-muted/65" />
-              <span>Started: {submission?.startedAt ? new Date(submission.startedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
+              <span>Started: {submission?.startedAt || submission?.createdAt ? new Date(submission.startedAt || submission.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
             </div>
             {submission?.completedAt && (
               <div className="flex items-center gap-1.5 text-app-accent">
@@ -472,7 +472,7 @@ const SubmissionReview: React.FC = () => {
             ...(submission.status === 'REPORT_RELEASED' ? [{ id: 'feedback', label: 'All Assessor Feedback', icon: Users }] : [])
           ].filter(tab => {
             if (activeAssessorType === 'GTO' && tab.id === 'dossier') return false;
-            if (tab.id === 'meeting' && !['Psych', 'IO', 'TO'].includes(activeAssessorType)) return false;
+            if (tab.id === 'meeting' && !['Psych', 'TO'].includes(activeAssessorType)) return false;
             return true;
           }).map(tab => (
             <button
@@ -506,7 +506,7 @@ const SubmissionReview: React.FC = () => {
       <div className={cn(
         "grid gap-8 items-start",
         (activeTab === 'dossier' && viewerMode === 'dossier' && (activeAssessorType === 'Psych' || activeAssessorType === 'TO') && assessment && showSidebar)
-          ? "grid-cols-1 lg:grid-cols-[1fr_500px] xl:grid-cols-[1fr_600px]" 
+          ? "grid-cols-1 lg:grid-cols-2" 
           : "grid-cols-1"
       )}>
         
@@ -840,13 +840,23 @@ const SubmissionReview: React.FC = () => {
                                     <input
                                       type="number"
                                       min={0}
-                                      max={10}
+                                      max={9}
                                       value={scores[t.id] ?? ''}
                                       onChange={(e) => {
-                                        if (e.target.value.length > 2) return;
-                                        const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                                        const valStr = e.target.value;
+                                        if (valStr === '') {
+                                          setScores((prev) => ({ ...prev, [t.id]: '' }));
+                                          return;
+                                        }
+                                        const parsed = parseInt(valStr, 10);
+                                        if (isNaN(parsed)) {
+                                          setScores((prev) => ({ ...prev, [t.id]: '' }));
+                                          return;
+                                        }
+                                        const val = parsed % 10;
                                         setScores((prev) => ({ ...prev, [t.id]: val }));
                                       }}
+                                      onFocus={(e) => e.target.select()}
                                       placeholder="--"
                                       className="w-full bg-transparent border-0 text-center text-xs font-black text-app-text-bright focus:outline-none focus:ring-1 focus:ring-app-accent/50 focus:bg-black/30 rounded py-2 px-0.5 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
@@ -856,12 +866,23 @@ const SubmissionReview: React.FC = () => {
                                   <input
                                     type="number"
                                     min={0}
+                                    max={999}
                                     value={scores['marks'] ?? ''}
                                     onChange={(e) => {
-                                      if (e.target.value.length > 3) return;
-                                      const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
-                                      setScores((prev) => ({ ...prev, marks: val }));
+                                      const valStr = e.target.value;
+                                      if (valStr === '') {
+                                        setScores((prev) => ({ ...prev, marks: '' }));
+                                        return;
+                                      }
+                                      const parsed = parseInt(valStr, 10);
+                                      if (isNaN(parsed)) {
+                                        setScores((prev) => ({ ...prev, marks: '' }));
+                                        return;
+                                      }
+                                      if (parsed > 999) return;
+                                      setScores((prev) => ({ ...prev, marks: parsed }));
                                     }}
+                                    onFocus={(e) => e.target.select()}
                                     placeholder="--"
                                     className="w-full bg-app-accent/15 border-0 text-center text-xs font-black text-app-accent focus:outline-none focus:ring-1 focus:ring-app-accent/80 focus:bg-app-accent/20 rounded py-2 px-1 transition-all font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                   />
@@ -882,49 +903,47 @@ const SubmissionReview: React.FC = () => {
 
       {/* ── INTERVENTION PLAN TAB ──────────────────────────────────────── */}
       {activeTab === 'meeting' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="lg:col-span-2">
-            <div className="bg-app-sidebar border border-app-border rounded-[3rem] p-12 shadow-2xl space-y-10">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 text-app-accent">
-                  <Calendar size={24} />
-                  <h3 className="text-2xl font-black text-app-text-bright tracking-tight">{activeAssessorType} Feedback Scheduler</h3>
-                </div>
-                <p className="text-app-text-muted text-sm font-serif italic leading-relaxed">
-                  Schedule a follow-up feedback session or review with the candidate to discuss their performance from the {activeAssessorType} perspective.
-                </p>
+        <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="bg-app-sidebar border border-app-border rounded-[3rem] p-12 shadow-2xl space-y-10">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-app-accent">
+                <Calendar size={24} />
+                <h3 className="text-2xl font-black text-app-text-bright tracking-tight">{activeAssessorType} Feedback Scheduler</h3>
+              </div>
+              <p className="text-app-text-muted text-sm font-serif italic leading-relaxed">
+                Schedule a follow-up feedback session or review with the candidate to discuss their performance from the {activeAssessorType} perspective.
+              </p>
+            </div>
+
+            <div className="space-y-8">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 block">Conference Date & Hour</label>
+                <input
+                  type="datetime-local"
+                  value={meetingDate}
+                  onChange={(e) => setMeetingDate(e.target.value)}
+                  className="w-full bg-app-card border border-app-border rounded-2xl p-4 text-sm font-black text-app-text-bright focus:outline-none focus:border-app-accent transition-all [color-scheme:dark]"
+                />
               </div>
 
-              <div className="space-y-8 max-w-lg">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 block">Conference Date & Hour</label>
-                  <input
-                    type="datetime-local"
-                    value={meetingDate}
-                    onChange={(e) => setMeetingDate(e.target.value)}
-                    className="w-full bg-app-card border border-app-border rounded-2xl p-4 text-sm font-black text-app-text-bright focus:outline-none focus:border-app-accent transition-all [color-scheme:dark]"
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 block">Secure Meeting Link</label>
-                  <input
-                    type="url"
-                    value={meetingLink}
-                    onChange={(e) => setMeetingLink(e.target.value)}
-                    placeholder="https://meet.google.com/xxx-xxxx-xxx"
-                    className="w-full bg-app-card border border-app-border rounded-2xl p-4 text-sm font-black text-app-text-bright focus:outline-none focus:border-app-accent transition-all placeholder:text-app-text-muted/20"
-                  />
-                </div>
-
-                <button
-                  onClick={() => handleUpdate('MEETING_SCHEDULED')}
-                  disabled={saving}
-                  className="w-full py-4 bg-app-card border border-app-border hover:border-app-accent text-app-text-bright rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all shadow-lg shadow-black/40 hover:bg-app-accent hover:text-white disabled:opacity-50"
-                >
-                  Confirm & Transmit Invite
-                </button>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 block">Secure Meeting Link</label>
+                <input
+                  type="url"
+                  value={meetingLink}
+                  onChange={(e) => setMeetingLink(e.target.value)}
+                  placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                  className="w-full bg-app-card border border-app-border rounded-2xl p-4 text-sm font-black text-app-text-bright focus:outline-none focus:border-app-accent transition-all placeholder:text-app-text-muted/20"
+                />
               </div>
+
+              <button
+                onClick={() => handleUpdate('MEETING_SCHEDULED')}
+                disabled={saving}
+                className="w-full py-4 bg-app-card border border-app-border hover:border-app-accent text-app-text-bright rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all shadow-lg shadow-black/40 hover:bg-app-accent hover:text-white disabled:opacity-50 cursor-pointer"
+              >
+                Confirm & Transmit Invite
+              </button>
             </div>
           </div>
         </div>
@@ -968,18 +987,22 @@ const SubmissionReview: React.FC = () => {
 
         {/* RIGHT COLUMN: Presenter Sticky Panel */}
         {activeTab === 'dossier' && viewerMode === 'dossier' && (activeAssessorType === 'Psych' || activeAssessorType === 'TO') && assessment && showSidebar && (
-          <div className="flex flex-col w-full h-full">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3 text-app-accent">
-                <Sparkles size={24} className="fill-current" />
-                <h3 className="text-xl font-black text-app-text-bright tracking-tight uppercase">
-                  ASSESSMENT PREVIEW
-                </h3>
-              </div>
+          <div className="flex flex-col w-full space-y-4">
+            <div className="flex items-center gap-3 border-b border-app-border pb-3">
+              <Sparkles className="text-app-accent animate-pulse" size={20} />
+              <h2 className="text-sm font-black text-app-text-bright uppercase tracking-widest">
+                Assessment Preview
+              </h2>
             </div>
 
-            <div className="@container bg-app-card/60 border border-app-border rounded-3xl overflow-hidden shadow-2xl flex flex-col relative w-full h-[335px] xl:h-[390px]">
-              <AssessmentMiniViewer assessmentId={assessment._id || assessment.id} />
+            <div className="w-full space-y-3">
+              <div className="flex items-center justify-between text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 h-[26px]">
+                <span>Question Reference Sheet</span>
+              </div>
+
+              <div className="bg-app-card rounded-3xl border border-app-border overflow-hidden shadow-2xl flex flex-col relative w-full" style={{ height: '720px' }}>
+                <AssessmentMiniViewer assessmentId={assessment._id || assessment.id} />
+              </div>
             </div>
           </div>
         )}

@@ -272,40 +272,50 @@ const AssessorDashboard: React.FC = () => {
                           </span>
                        </td>
                        <td className="p-6">
-                          <span className="px-2.5 py-1 rounded bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-[0.15em] text-app-text-bright">
-                            {
-                              sub.student?.clinicalStage === 'full_course' ? 'Full Course' :
-                              sub.student?.clinicalStage === 'ssb_ppdt' ? 'Intro & PPDT' :
-                              sub.student?.clinicalStage === 'psych' ? 'Psychology' :
-                              sub.student?.clinicalStage === 'interview' ? 'Interview' :
-                              sub.student?.clinicalStage === 'group_testing' ? 'GTO Tasks' : 'Full Course'
-                            }
-                          </span>
-                       </td>
-                       <td className="p-6">
-                         <div className="flex flex-wrap gap-1.5 max-w-[200px]">
-                           {sub.student?.assignedPsych && (
-                             <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded text-[9px] font-black uppercase tracking-wider">Psych</span>
-                           )}
-                           {sub.student?.assignedGTO && (
-                             <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded text-[9px] font-black uppercase tracking-wider">GTO</span>
-                           )}
-                           {sub.student?.assignedIO && (
-                             <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[9px] font-black uppercase tracking-wider">IO</span>
-                           )}
-                           {sub.student?.assignedTO && (
-                             <span className="px-1.5 py-0.5 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded text-[9px] font-black uppercase tracking-wider">TO</span>
-                           )}
-                           {!sub.student?.assignedPsych && !sub.student?.assignedGTO && !sub.student?.assignedIO && !sub.student?.assignedTO && (
-                             <span className="text-[10px] italic text-app-text-muted">None Allotted</span>
-                           )}
-                         </div>
-                       </td>
-                       <td className="p-6">
-                         <div className="text-[11px] font-black text-app-text-bright">
-                           {sub.startedAt ? new Date(sub.startedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
-                         </div>
-                       </td>
+                           <span className="px-2.5 py-1 rounded bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-[0.15em] text-app-text-bright">
+                             {(() => {
+                               const stage = sub.student?.clinicalStage || '';
+                               const parts = stage.split(',').map((s: string) => s.trim()).filter(Boolean);
+                               if (parts.length === 0) return 'Full Course';
+                               
+                               const names = parts.map((part: string) => {
+                                 switch(part) {
+                                   case 'full_course': return 'Full Course';
+                                   case 'ssb_ppdt': return 'Intro & PPDT';
+                                   case 'psych': return 'Psychology';
+                                   case 'interview': return 'Interview';
+                                   case 'group_testing': return 'GTO Tasks';
+                                   default: return part.toUpperCase();
+                                 }
+                               });
+                               return names.join(', ');
+                             })()}
+                           </span>
+                        </td>
+                        <td className="p-6">
+                          <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                            {sub.student?.assignedPsych && (
+                              <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded text-[9px] font-black uppercase tracking-wider">Psych</span>
+                            )}
+                            {sub.student?.assignedGTO && (
+                              <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded text-[9px] font-black uppercase tracking-wider">GTO</span>
+                            )}
+                            {sub.student?.assignedIO && (
+                              <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[9px] font-black uppercase tracking-wider">IO</span>
+                            )}
+                            {sub.student?.assignedTO && (
+                              <span className="px-1.5 py-0.5 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded text-[9px] font-black uppercase tracking-wider">TO</span>
+                            )}
+                            {!sub.student?.assignedPsych && !sub.student?.assignedGTO && !sub.student?.assignedIO && !sub.student?.assignedTO && (
+                              <span className="text-[10px] italic text-app-text-muted">None Allotted</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-6">
+                          <div className="text-[11px] font-black text-app-text-bright">
+                            {sub.startedAt || sub.createdAt ? new Date(sub.startedAt || sub.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                          </div>
+                        </td>
                        <td className="p-6 text-right">
                           {sub.status === 'PENDING' ? (
                             <span className="inline-flex items-center gap-2 text-[10px] font-black text-app-text-muted uppercase tracking-widest cursor-not-allowed opacity-50" title="Candidate has not started their assessment yet">
