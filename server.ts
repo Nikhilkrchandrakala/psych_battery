@@ -941,6 +941,18 @@ async function startServer() {
         .populate('assessmentId', 'title type')
         .sort({ updatedAt: -1 });
 
+      // For students fetching their own submissions: return ALL submissions without deduplication.
+      // The uniqueSubmissionsMap below is for admin/assessor views (one row per candidate).
+      // Applying it to a student's own query would silently drop all but the most recent
+      // submission, breaking StudentEntry's assessmentId lookup when the student has >1 submission.
+      if (req.user.role === 'student') {
+        const studentSubmissions = submissions.map(sub => {
+          const subJSON = sub.toJSON ? sub.toJSON() : sub;
+          return { ...subJSON, student: subJSON.userId };
+        });
+        return res.json(studentSubmissions);
+      }
+
       const uniqueSubmissionsMap = new Map();
       submissions.forEach(sub => {
         const subJSON = sub.toJSON ? sub.toJSON() : sub;

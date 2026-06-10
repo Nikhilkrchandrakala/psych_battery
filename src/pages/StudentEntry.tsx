@@ -12,11 +12,23 @@ const StudentEntry: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [submission, setSubmission] = useState<any | null>(null);
+  const [allSubmissions, setAllSubmissions] = useState<any[]>([]);
 
   const hasBatch = !!(profile?.batch && profile.batch.trim() !== "");
   const hasAssessor = !!(profile?.assignedPsych || profile?.assignedGTO || profile?.assignedIO || profile?.assignedTO);
-  const hasPiq1 = submission?.piq1Status === 'VERIFIED' || submission?.piq1Status === 'PROCESSING' || (submission?.piqFiles && submission.piqFiles.some((f: any) => f.includes('piq1')));
-  const hasPiq2 = submission?.piq2Status === 'VERIFIED' || submission?.piq2Status === 'PROCESSING' || (submission?.piqFiles && submission.piqFiles.some((f: any) => f.includes('piq2')));
+  // Check PIQ across ALL submissions for the user — not just the matched one.
+  // This handles the case where PIQs were uploaded to one submission (assessment A)
+  // but the current active assessment is B (or assessmentId lookup returns a different sub).
+  const hasPiq1 = allSubmissions.some((s: any) =>
+    s.piq1Status === 'VERIFIED' || s.piq1Status === 'PROCESSING' ||
+    (s.piqFiles && s.piqFiles.some((f: any) => f.includes('piq1')))
+  ) || submission?.piq1Status === 'VERIFIED' || submission?.piq1Status === 'PROCESSING' ||
+    (submission?.piqFiles && submission.piqFiles.some((f: any) => f.includes('piq1')));
+  const hasPiq2 = allSubmissions.some((s: any) =>
+    s.piq2Status === 'VERIFIED' || s.piq2Status === 'PROCESSING' ||
+    (s.piqFiles && s.piqFiles.some((f: any) => f.includes('piq2')))
+  ) || submission?.piq2Status === 'VERIFIED' || submission?.piq2Status === 'PROCESSING' ||
+    (submission?.piqFiles && submission.piqFiles.some((f: any) => f.includes('piq2')));
   const hasBothPiqs = !!(hasPiq1 && hasPiq2);
   const isEligible = hasBatch && hasAssessor && hasBothPiqs;
 
@@ -54,6 +66,7 @@ const StudentEntry: React.FC = () => {
             : s.assessmentId;
           return assId === primary.id || assId === primary._id;
         });
+        setAllSubmissions(submissionsList);
         setSubmission(submission || null);
 
         if (!submission) {
