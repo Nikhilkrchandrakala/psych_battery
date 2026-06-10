@@ -147,16 +147,15 @@ const SubmissionReview: React.FC = () => {
     } else {
       setActiveTab('dossier');
     }
-  }, [activeAssessorType]);
 
-  useEffect(() => {
-    const piqCount = submission?.piqFiles?.length || 0;
-    if (activeAssessorType === 'IO' && piqCount > 1) {
-      setActivePiqIndex(1); // Default exclusively to PIQ document
+    if (activeAssessorType === 'IO') {
+      setViewerMode('piq');
+      setSelectedPiqTab('piq2');
+      setActivePiqIndex(0);
     } else {
-      setActivePiqIndex(0); // Default to Dossier
+      setActivePiqIndex(0);
     }
-  }, [activeAssessorType, submission?.piqFiles?.length]);
+  }, [activeAssessorType]);
 
   const showRoleToggle = !profile?.assessorType;
 
@@ -244,6 +243,50 @@ const SubmissionReview: React.FC = () => {
     }
     setMeetingLink(linkField || '');
   }, [activeAssessorType, submission]);
+
+  const handleUploadRemarks = async () => {
+    if (!id) return;
+    setSaving(true);
+    try {
+      const updateData: any = {};
+      if (activeAssessorType === 'Psych') {
+        updateData.psychRemarks = remarks;
+        updateData.assessorRemarks = remarks; // Sync compatibility
+      } else if (activeAssessorType === 'GTO') {
+        updateData.gtoRemarks = remarks;
+      } else if (activeAssessorType === 'IO') {
+        updateData.ioRemarks = remarks;
+      } else if (activeAssessorType === 'TO') {
+        updateData.toRemarks = remarks;
+      }
+      await api.submissions.update(id, updateData);
+      setSubmission(prev => prev ? { ...prev, ...updateData } : null);
+      alert("Remarks uploaded successfully to Admin.");
+    } catch (error) {
+      console.error('Failed to upload remarks:', error);
+      alert('Failed to upload remarks.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUploadMarks = async () => {
+    if (!id) return;
+    setSaving(true);
+    try {
+      const updateData: any = {
+        [`${activeAssessorType.toLowerCase()}Scores`]: scores,
+      };
+      await api.submissions.update(id, updateData);
+      setSubmission(prev => prev ? { ...prev, ...updateData } : null);
+      alert("Marks uploaded successfully to Admin.");
+    } catch (error) {
+      console.error('Failed to upload marks:', error);
+      alert('Failed to upload marks.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleUpdate = async (status: AssessmentSubmission['status']) => {
     if (!id) return;
@@ -352,8 +395,15 @@ const SubmissionReview: React.FC = () => {
       const safeIdx = idx !== -1 ? idx : 0;
       return `${SERVER_BASE}/api/submissions/${id}/piq-file/${safeIdx}?token=${token}`;
     }
-    if (path.startsWith('http')) return path;
-    return `${SERVER_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
+    
+    let url = path;
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocal && url.startsWith('https://api.ssbwithisv.in')) {
+      url = url.replace('https://api.ssbwithisv.in', 'http://localhost:5001');
+    }
+    
+    if (url.startsWith('http')) return url;
+    return `${SERVER_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   const isPdf = (path: string) => path.toLowerCase().endsWith('.pdf');
@@ -370,6 +420,7 @@ const SubmissionReview: React.FC = () => {
 
   const piqFiles: string[] = (submission as any).piqFiles || [];
   const answerFiles: string[] = submission.uploadedFiles || [];
+  const isDossierUploaded = answerFiles.length > 0;
   const piqStatus: string = (submission as any).piqStatus || 'PENDING';
   const ocrTranscript: string = (submission as any).piqParsedData || '';
 
@@ -431,15 +482,15 @@ const SubmissionReview: React.FC = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => handleUpdate('UNDER_REVIEW')}
-              disabled={saving}
-              className="px-6 py-3 bg-app-card border border-app-border rounded-2xl text-xs font-black text-app-text-bright hover:bg-white/5 transition-all shadow-lg active:scale-95 disabled:opacity-50 cursor-pointer"
+              disabled={saving || ((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded)}
+              className="px-6 py-3 bg-app-card border border-app-border rounded-2xl text-xs font-black text-app-text-bright hover:bg-white/5 transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               Save Preliminary
             </button>
             <button
               onClick={() => handleUpdate('COMPLETED')}
-              disabled={saving}
-              className="px-6 py-3 bg-gradient-to-br from-[#C5A028] to-[#8C6A0F] text-white rounded-2xl text-xs font-black hover:opacity-90 transition-all shadow-lg shadow-app-accent/30 active:scale-95 flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+              disabled={saving || ((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded)}
+              className="px-6 py-3 bg-gradient-to-br from-[#C5A028] to-[#8C6A0F] text-white rounded-2xl text-xs font-black hover:opacity-90 transition-all shadow-lg shadow-app-accent/30 active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
               Finalize Evaluation
@@ -472,7 +523,7 @@ const SubmissionReview: React.FC = () => {
             ...(submission.status === 'REPORT_RELEASED' ? [{ id: 'feedback', label: 'All Assessor Feedback', icon: Users }] : [])
           ].filter(tab => {
             if (activeAssessorType === 'GTO' && tab.id === 'dossier') return false;
-            if (tab.id === 'meeting' && !['Psych', 'TO'].includes(activeAssessorType)) return false;
+            if (tab.id === 'meeting' && !['Psych', 'TO', 'IO'].includes(activeAssessorType)) return false;
             return true;
           }).map(tab => (
             <button
@@ -512,37 +563,46 @@ const SubmissionReview: React.FC = () => {
         
         {/* LEFT COLUMN: Tabs Content */}
         <div className="space-y-8 min-w-0">
+          {/* Awaiting Dossier Warning Banner */}
+          {((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded) && (
+            <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-amber-400 text-xs font-bold flex items-center gap-2">
+              <AlertCircle size={16} />
+              Awaiting Candidate Dossier Upload: Meeting scheduling and assessment uploads are disabled until the candidate uploads their dossier.
+            </div>
+          )}
           
           {/* ── DOSSIER VIEWER TAB ─────────────────────────────────────────── */}
           {activeTab === 'dossier' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {/* Selector Tabs at the Top */}
-              <div className="flex gap-2 bg-app-card/30 p-1 border border-app-border rounded-2xl w-fit">
-                <button
-                  type="button"
-                  onClick={() => setViewerMode('piq')}
-                  className={cn(
-                    "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                    viewerMode === 'piq'
-                      ? "bg-app-accent text-white shadow-lg"
-                      : "text-app-text-muted hover:text-app-text-bright"
-                  )}
-                >
-                  PIQ Forms ({piqFiles.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewerMode('dossier')}
-                  className={cn(
-                    "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                    viewerMode === 'dossier'
-                      ? "bg-app-accent text-white shadow-lg"
-                      : "text-app-text-muted hover:text-app-text-bright"
-                  )}
-                >
-                  Dossier Sheets ({answerFiles.length})
-                </button>
-              </div>
+              {activeAssessorType !== 'IO' && (
+                <div className="flex gap-2 bg-app-card/30 p-1 border border-app-border rounded-2xl w-fit">
+                  <button
+                    type="button"
+                    onClick={() => setViewerMode('piq')}
+                    className={cn(
+                      "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                      viewerMode === 'piq'
+                        ? "bg-app-accent text-white shadow-lg"
+                        : "text-app-text-muted hover:text-app-text-bright"
+                    )}
+                  >
+                    PIQ Forms ({piqFiles.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewerMode('dossier')}
+                    className={cn(
+                      "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                      viewerMode === 'dossier'
+                        ? "bg-app-accent text-white shadow-lg"
+                        : "text-app-text-muted hover:text-app-text-bright"
+                    )}
+                  >
+                    Dossier Sheets ({answerFiles.length})
+                  </button>
+                </div>
+              )}
 
               {/* Dynamic View Section */}
               {(() => {
@@ -567,7 +627,7 @@ const SubmissionReview: React.FC = () => {
 
                 return (
                   <div className="space-y-4">
-                    {viewerMode === 'piq' && (
+                    {viewerMode === 'piq' && activeAssessorType !== 'IO' && (
                       <div className="flex gap-2 p-1 bg-black/30 border border-app-border rounded-xl w-fit">
                         <button
                           type="button"
@@ -766,6 +826,16 @@ const SubmissionReview: React.FC = () => {
                     rows={6}
                     className="w-full bg-app-card border border-app-border rounded-3xl p-6 text-app-text-bright font-serif text-lg italic focus:outline-none focus:border-app-accent focus:ring-1 focus:ring-app-accent/20 transition-all placeholder:text-app-text-muted/30"
                   />
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="button"
+                      onClick={handleUploadRemarks}
+                      disabled={saving || ((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded)}
+                      className="px-6 py-2.5 bg-app-card border border-app-border hover:border-app-accent text-app-text-bright rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      Upload Remarks
+                    </button>
+                  </div>
                 </div>
 
                 {/* Scoring Table Row */}
@@ -774,126 +844,178 @@ const SubmissionReview: React.FC = () => {
                     TICKS and MARKS
                   </label>
 
-                  <div className="w-full bg-app-card border border-app-border rounded-3xl overflow-hidden shadow-xl">
-                    <div className="w-full overflow-hidden">
-                      {(() => {
-                        const traineeWidth = 'w-[13%]';
-                        const marksWidth = 'w-[9%]';
-                        const traitWidth = 'w-[5.2%]';
-                        
-                        return (
-                          <table className="w-full border-collapse text-left table-fixed">
-                            <colgroup>
-                              <col className={traineeWidth} />
-                              {gridConfig.traits.map((t) => (
-                                <col key={t.id} className={traitWidth} />
-                              ))}
-                              <col className={marksWidth} />
-                            </colgroup>
-                            <thead>
-                              {/* Factor Headers Row */}
-                              <tr className="bg-black/30 border-b border-app-border divide-x divide-app-border/40 text-[9px] font-black text-app-accent uppercase tracking-widest text-center">
-                                <th className="px-2 py-3 text-left overflow-hidden text-ellipsis whitespace-nowrap">Trainee / Chest No</th>
-                                {gridConfig.factors.map((f, i) => (
-                                  <th key={i} colSpan={f.colSpan} className="px-1 py-2 leading-tight">
-                                    {f.label}
-                                  </th>
-                                ))}
-                                <th rowSpan={2} className="px-1 py-3 text-center align-middle font-bold text-app-accent bg-app-accent/10 overflow-hidden text-ellipsis whitespace-nowrap">
-                                  MARKS
-                                </th>
-                              </tr>
-                              {/* OLQ Codes Row */}
-                              <tr className="bg-black/10 border-b border-app-border divide-x divide-app-border/40 text-[10px] font-black text-app-text-bright uppercase tracking-wider text-center">
-                                <td className="px-2 py-2 text-left text-app-text-muted text-[8px] overflow-hidden text-ellipsis whitespace-nowrap">Code</td>
+                  {activeAssessorType === 'GTO' ? (
+                    <div className="bg-app-card border border-app-border rounded-3xl p-6 shadow-xl max-w-md space-y-4">
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] block">
+                          GTO Overall Marks
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={999}
+                          value={scores['marks'] ?? ''}
+                          onChange={(e) => {
+                            const valStr = e.target.value;
+                            if (valStr === '') {
+                              setScores((prev) => ({ ...prev, marks: '' }));
+                              return;
+                            }
+                            const parsed = parseInt(valStr, 10);
+                            if (isNaN(parsed)) {
+                              setScores((prev) => ({ ...prev, marks: '' }));
+                              return;
+                            }
+                            if (parsed > 999) return;
+                            setScores((prev) => ({ ...prev, marks: parsed }));
+                          }}
+                          placeholder="--"
+                          className="w-full bg-black/30 border border-app-border rounded-xl p-3 text-sm font-black text-app-accent focus:outline-none focus:border-app-accent transition-all placeholder:text-app-text-muted/20"
+                        />
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleUploadMarks}
+                          disabled={saving}
+                          className="px-6 py-2.5 bg-app-card border border-app-border hover:border-app-accent text-app-text-bright rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          Upload Marks
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full bg-app-card border border-app-border rounded-3xl overflow-hidden shadow-xl">
+                      <div className="w-full overflow-hidden">
+                        {(() => {
+                          const traineeWidth = 'w-[13%]';
+                          const marksWidth = 'w-[9%]';
+                          const traitWidth = 'w-[5.2%]';
+                          
+                          return (
+                            <table className="w-full border-collapse text-left table-fixed">
+                              <colgroup>
+                                <col className={traineeWidth} />
                                 {gridConfig.traits.map((t) => (
-                                  <td key={t.id} className="px-1 py-2 font-mono text-[9px] hover:bg-black/20 group relative cursor-help overflow-hidden text-ellipsis whitespace-nowrap">
-                                    <span className="underline decoration-dotted decoration-app-text-muted/50">{t.code}</span>
-                                    {/* Tooltip for description */}
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-black border border-app-border text-white text-[9px] font-bold py-1.5 px-3 rounded-lg shadow-2xl whitespace-nowrap z-50">
-                                      {t.name}
+                                  <col key={t.id} className={traitWidth} />
+                                ))}
+                                <col className={marksWidth} />
+                              </colgroup>
+                              <thead>
+                                {/* Factor Headers Row */}
+                                <tr className="bg-black/30 border-b border-app-border divide-x divide-app-border/40 text-[9px] font-black text-app-accent uppercase tracking-widest text-center">
+                                  <th className="px-2 py-3 text-left overflow-hidden text-ellipsis whitespace-nowrap">Trainee / Chest No</th>
+                                  {gridConfig.factors.map((f, i) => (
+                                    <th key={i} colSpan={f.colSpan} className="px-1 py-2 leading-tight">
+                                      {f.label}
+                                    </th>
+                                  ))}
+                                  <th rowSpan={2} className="px-1 py-3 text-center align-middle font-bold text-app-accent bg-app-accent/10 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    MARKS
+                                  </th>
+                                </tr>
+                                {/* OLQ Codes Row */}
+                                <tr className="bg-black/10 border-b border-app-border divide-x divide-app-border/40 text-[10px] font-black text-app-text-bright uppercase tracking-wider text-center">
+                                  <td className="px-2 py-2 text-left text-app-text-muted text-[8px] overflow-hidden text-ellipsis whitespace-nowrap">Code</td>
+                                  {gridConfig.traits.map((t) => (
+                                    <td key={t.id} className="px-1 py-2 font-mono text-[9px] hover:bg-black/20 group relative cursor-help overflow-hidden text-ellipsis whitespace-nowrap">
+                                      <span className="underline decoration-dotted decoration-app-text-muted/50">{t.code}</span>
+                                      {/* Tooltip for description */}
+                                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-black border border-app-border text-white text-[9px] font-bold py-1.5 px-3 rounded-lg shadow-2xl whitespace-nowrap z-50">
+                                        {t.name}
+                                      </div>
+                                    </td>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {/* Trainee Row */}
+                                <tr className="divide-x divide-app-border/40 hover:bg-black/10 transition-colors">
+                                  <td className="px-2 py-3">
+                                    <div className="flex flex-col overflow-hidden">
+                                      <span className="text-[11px] font-black text-app-text-bright uppercase tracking-wide leading-tight truncate mb-1">
+                                        {student?.name || 'Trainee'}
+                                      </span>
+                                      <div className="flex items-center gap-1">
+                                        <span className="px-1 py-0.5 rounded bg-black/30 border border-app-border text-[7px] font-black uppercase tracking-widest text-app-text-bright truncate">
+                                          B: {student?.batch || '--'}
+                                        </span>
+                                        <span className="px-1 py-0.5 rounded bg-black/30 border border-app-border text-[7px] font-black uppercase tracking-widest text-app-text-bright truncate">
+                                          C: {student?.chestNo || '--'}
+                                        </span>
+                                      </div>
                                     </div>
                                   </td>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {/* Trainee Row */}
-                              <tr className="divide-x divide-app-border/40 hover:bg-black/10 transition-colors">
-                                <td className="px-2 py-3">
-                                  <div className="flex flex-col overflow-hidden">
-                                    <span className="text-[11px] font-black text-app-text-bright uppercase tracking-wide leading-tight truncate mb-1">
-                                      {student?.name || 'Trainee'}
-                                    </span>
-                                    <div className="flex items-center gap-1">
-                                      <span className="px-1 py-0.5 rounded bg-black/30 border border-app-border text-[7px] font-black uppercase tracking-widest text-app-text-bright truncate">
-                                        B: {student?.batch || '--'}
-                                      </span>
-                                      <span className="px-1 py-0.5 rounded bg-black/30 border border-app-border text-[7px] font-black uppercase tracking-widest text-app-text-bright truncate">
-                                        C: {student?.chestNo || '--'}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </td>
-                                {gridConfig.traits.map((t) => (
-                                  <td key={t.id} className="p-0.5 text-center">
+                                  {gridConfig.traits.map((t) => (
+                                    <td key={t.id} className="p-0.5 text-center">
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        max={9}
+                                        value={scores[t.id] ?? ''}
+                                        onChange={(e) => {
+                                          const valStr = e.target.value;
+                                          if (valStr === '') {
+                                            setScores((prev) => ({ ...prev, [t.id]: '' }));
+                                            return;
+                                          }
+                                          const parsed = parseInt(valStr, 10);
+                                          if (isNaN(parsed)) {
+                                            setScores((prev) => ({ ...prev, [t.id]: '' }));
+                                            return;
+                                          }
+                                          const val = parsed % 10;
+                                          setScores((prev) => ({ ...prev, [t.id]: val }));
+                                        }}
+                                        onFocus={(e) => e.target.select()}
+                                        placeholder="--"
+                                        className="w-full bg-transparent border-0 text-center text-xs font-black text-app-text-bright focus:outline-none focus:ring-1 focus:ring-app-accent/50 focus:bg-black/30 rounded py-2 px-0.5 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                      />
+                                    </td>
+                                  ))}
+                                  <td className="p-0.5 text-center bg-app-accent/5">
                                     <input
                                       type="number"
                                       min={0}
-                                      max={9}
-                                      value={scores[t.id] ?? ''}
+                                      max={999}
+                                      value={scores['marks'] ?? ''}
                                       onChange={(e) => {
                                         const valStr = e.target.value;
                                         if (valStr === '') {
-                                          setScores((prev) => ({ ...prev, [t.id]: '' }));
+                                          setScores((prev) => ({ ...prev, marks: '' }));
                                           return;
                                         }
                                         const parsed = parseInt(valStr, 10);
                                         if (isNaN(parsed)) {
-                                          setScores((prev) => ({ ...prev, [t.id]: '' }));
+                                          setScores((prev) => ({ ...prev, marks: '' }));
                                           return;
                                         }
-                                        const val = parsed % 10;
-                                        setScores((prev) => ({ ...prev, [t.id]: val }));
+                                        if (parsed > 999) return;
+                                        setScores((prev) => ({ ...prev, marks: parsed }));
                                       }}
                                       onFocus={(e) => e.target.select()}
                                       placeholder="--"
-                                      className="w-full bg-transparent border-0 text-center text-xs font-black text-app-text-bright focus:outline-none focus:ring-1 focus:ring-app-accent/50 focus:bg-black/30 rounded py-2 px-0.5 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                      className="w-full bg-app-accent/15 border-0 text-center text-xs font-black text-app-accent focus:outline-none focus:ring-1 focus:ring-app-accent/80 focus:bg-app-accent/20 rounded py-2 px-1 transition-all font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
                                   </td>
-                                ))}
-                                <td className="p-0.5 text-center bg-app-accent/5">
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    max={999}
-                                    value={scores['marks'] ?? ''}
-                                    onChange={(e) => {
-                                      const valStr = e.target.value;
-                                      if (valStr === '') {
-                                        setScores((prev) => ({ ...prev, marks: '' }));
-                                        return;
-                                      }
-                                      const parsed = parseInt(valStr, 10);
-                                      if (isNaN(parsed)) {
-                                        setScores((prev) => ({ ...prev, marks: '' }));
-                                        return;
-                                      }
-                                      if (parsed > 999) return;
-                                      setScores((prev) => ({ ...prev, marks: parsed }));
-                                    }}
-                                    onFocus={(e) => e.target.select()}
-                                    placeholder="--"
-                                    className="w-full bg-app-accent/15 border-0 text-center text-xs font-black text-app-accent focus:outline-none focus:ring-1 focus:ring-app-accent/80 focus:bg-app-accent/20 rounded py-2 px-1 transition-all font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                  />
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        );
-                      })()}
+                                </tr>
+                              </tbody>
+                            </table>
+                          );
+                        })()}
+                      </div>
+                      <div className="flex justify-end p-4 border-t border-app-border/40">
+                        <button
+                          type="button"
+                          onClick={handleUploadMarks}
+                          disabled={saving || ((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded)}
+                          className="px-6 py-2.5 bg-app-card border border-app-border hover:border-app-accent text-app-text-bright rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          Upload Marks
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -939,8 +1061,8 @@ const SubmissionReview: React.FC = () => {
 
               <button
                 onClick={() => handleUpdate('MEETING_SCHEDULED')}
-                disabled={saving}
-                className="w-full py-4 bg-app-card border border-app-border hover:border-app-accent text-app-text-bright rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all shadow-lg shadow-black/40 hover:bg-app-accent hover:text-white disabled:opacity-50 cursor-pointer"
+                disabled={saving || ((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded)}
+                className="w-full py-4 bg-app-card border border-app-border hover:border-app-accent text-app-text-bright rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all shadow-lg shadow-black/40 hover:bg-app-accent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 Confirm & Transmit Invite
               </button>

@@ -536,11 +536,6 @@ const AdminDashboard: React.FC = () => {
                       <CheckCircle size={16} />
                       Results Broadcasted & Qualitative Comments Released
                     </div>
-                  ) : !allAssessorDone ? (
-                    <div className="px-6 py-4 bg-amber-500/5 border border-amber-500/15 text-amber-400/80 rounded-2xl text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 max-w-sm mx-auto md:max-w-none">
-                      <AlertCircle size={16} className="shrink-0" />
-                      Broadcast Locked: Awaiting Finalise locks from required evaluators
-                    </div>
                   ) : (
                     <button
                       onClick={() => handleBroadcastSub(s.id!)}

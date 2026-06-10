@@ -1248,6 +1248,14 @@ async function startServer() {
                 formattedTime = d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true });
               }
 
+              const roleLabels: Record<string, string> = {
+                psych: 'Psychologist Feedback',
+                gto: 'GTO Outdoor Case',
+                io: 'Interviewing Officer (IO) Interview',
+                to: 'Technical Officer (TO) Aptitude'
+              };
+              const roleLabel = roleLabels[role] || role.toUpperCase();
+
               const msg91Payload = JSON.stringify({
                 to: recipients,
                 from: {
@@ -1257,7 +1265,8 @@ async function startServer() {
                 domain: "noreply.ssbwithisv.in",
                 template_id: "interview_template_6",
                 variables: {
-                  candidate_name: studentName,
+                  candidate_name: `${studentName} (${roleLabel})`,
+                  interview_type: roleLabel,
                   date: formattedDate,
                   time: formattedTime,
                   meeting_link: meetingLink || '#'
