@@ -224,7 +224,7 @@ export const AssessmentAdminPreview: React.FC<AssessmentPresenterProps> = ({ ass
           <button
             onClick={() => {
               if (onExit) onExit();
-              else navigate(-1);
+              else navigate(`/admin/assessment/${id}`);
             }}
             className="px-6 py-2.5 bg-red-500/10 text-red-400 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all border border-red-500/20"
           >

@@ -336,7 +336,11 @@ const AssessmentEngine: React.FC = () => {
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(e => console.log(e));
     }
-    window.location.href = `${mainSiteUrl}/ProfileDashboard?tab=psycheTest`;
+    if (isAdminPreview) {
+      navigate(`/admin/assessment/${id}`);
+    } else {
+      window.location.href = `${mainSiteUrl}/ProfileDashboard?tab=psycheTest`;
+    }
   };
 
   const completeAssessment = async () => {

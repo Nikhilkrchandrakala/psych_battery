@@ -68,6 +68,13 @@ const SubmissionUpload: React.FC = () => {
   const handlePiqChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       const file = e.target.files[0];
+      const maxLimit = 500 * 1024; // 500 KB
+      if (file.size > maxLimit) {
+        setError('PIQ form file size must not exceed 500 KB.');
+        e.target.value = '';
+        return;
+      }
+      setError(null);
       setPiqFile(file);
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
@@ -82,6 +89,14 @@ const SubmissionUpload: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
+      const maxLimit = 2 * 1024 * 1024; // 2 MB
+      const oversized = newFiles.filter(f => f.size > maxLimit);
+      if (oversized.length > 0) {
+        setError(`The following file(s) exceed the 2 MB limit: ${oversized.map(f => f.name).join(', ')}`);
+        e.target.value = '';
+        return;
+      }
+      setError(null);
       setFiles(prev => [...prev, ...newFiles]);
       
       // Generate previews
@@ -228,7 +243,7 @@ const SubmissionUpload: React.FC = () => {
                 >
                   <Upload size={24} className="text-app-text-muted mb-2" />
                   <span className="text-xs font-bold text-app-text-bright">Attach Handwritten PIQ</span>
-                  <span className="text-[9px] font-black text-app-text-muted uppercase tracking-widest mt-1">Images or PDF</span>
+                  <span className="text-[9px] font-black text-app-text-muted uppercase tracking-widest mt-1">Images or PDF (Max 500 KB)</span>
                 </label>
                 <div className="flex items-center justify-center gap-4 pt-2">
                   <span className="text-[10px] font-black text-app-text-muted uppercase">Missing form?</span>
@@ -261,6 +276,7 @@ const SubmissionUpload: React.FC = () => {
               </div>
               <h3 className="text-2xl font-black text-app-text-bright mb-2">Import Stimuli Captures</h3>
               <p className="text-app-text-muted text-sm font-medium">Drag & drop or <span className="text-app-accent">browse filesystem</span></p>
+              <p className="text-[9px] font-black text-app-text-muted uppercase tracking-widest mt-2">Max 2 MB per file</p>
             </label>
           </div>
 

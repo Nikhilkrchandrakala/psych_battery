@@ -224,7 +224,8 @@ const authenticate = async (req: any, res: any, next: any) => {
         .populate('assignedTO', 'name email');
       if (user) {
         foundUser = user.toObject ? user.toObject() : user;
-        foundUser.role = decoded.role || foundUser.role || 'student';
+        const currentRole = decoded.role || foundUser.role || 'student';
+        foundUser.role = currentRole === 'lead' ? 'student' : currentRole;
         console.log("[AUTH] Found User model match:", foundUser.email, "Role:", foundUser.role);
       } else {
         console.log("[AUTH] User model match not found for decoded.id:", decoded.id);
@@ -539,12 +540,14 @@ async function startServer() {
   // --- SUBMISSION UPLOAD & OCR ROUTES ---
   const storage = multer.memoryStorage();
   const upload = multer({ storage, limits: { fileSize: 100 * 1024 * 1024 } }); // 100MB per file to support high-res scans
+  const uploadPiq = multer({ storage, limits: { fileSize: 500 * 1024 } }); // 500 KB limit for PIQ
+  const uploadDossier = multer({ storage, limits: { fileSize: 2 * 1024 * 1024 } }); // 2 MB limit for Dossiers
 
   const uploadDossierMiddleware = (req: any, res: any, next: any) => {
     if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
       return next();
     }
-    return upload.array('files', 20)(req, res, next);
+    return uploadDossier.array('files', 20)(req, res, next);
   };
 
   // Helper to forward files to the main VPS backend
@@ -669,7 +672,7 @@ async function startServer() {
   }
 
   // --- PIQ UPLOAD & OCR ROUTES ---
-  app.post('/api/submissions/:id/piq', authenticate, upload.array('files', 10), async (req: any, res: any) => {
+  app.post('/api/submissions/:id/piq', authenticate, uploadPiq.array('files', 10), async (req: any, res: any) => {
     try {
       const submissionId = req.params.id;
       const submission = await Submission.findById(submissionId);
@@ -1473,6 +1476,12 @@ async function startServer() {
       if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
       }
+      
+      // Enforce 2MB limit for student uploads (Dossiers)
+      if (req.user && req.user.role === 'student' && req.file.size > 2 * 1024 * 1024) {
+        return res.status(400).json({ message: 'File size exceeds the 2MB limit for Dossier uploads' });
+      }
+      
       const token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : (req.headers.token as string);
       const url = await forwardToMainBackend(req.file, token);
       res.json({ url, message: 'File uploaded successfully via main backend' });
