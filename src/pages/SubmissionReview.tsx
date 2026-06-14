@@ -95,6 +95,341 @@ const ASSESSOR_GRID_CONFIG = {
   TO: PSYCH_GRID_CONFIG
 };
 
+interface ModernDateTimePickerProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+const ModernDateTimePicker: React.FC<ModernDateTimePickerProps> = ({ value, onChange }) => {
+  const initialDate = value ? new Date(value) : new Date();
+  
+  const [currentMonth, setCurrentMonth] = useState(initialDate.getMonth());
+  const [currentYear, setCurrentYear] = useState(initialDate.getFullYear());
+  
+  const [tempDate, setTempDate] = useState<Date | null>(value ? new Date(value) : null);
+  const [selectedHour, setSelectedHour] = useState(tempDate ? tempDate.getHours() : 10);
+  const [selectedMinute, setSelectedMinute] = useState(tempDate ? tempDate.getMinutes() : 0);
+  
+  const [isConfirmed, setIsConfirmed] = useState(!!value);
+  const [isCollapsed, setIsCollapsed] = useState(!!value);
+
+  useEffect(() => {
+    if (value) {
+      const parsed = new Date(value);
+      setTempDate(parsed);
+      setSelectedHour(parsed.getHours());
+      setSelectedMinute(parsed.getMinutes());
+      setIsConfirmed(true);
+      setIsCollapsed(true);
+    } else {
+      setTempDate(null);
+      setIsConfirmed(false);
+      setIsCollapsed(false);
+    }
+  }, [value]);
+
+  const MONTH_NAMES = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  const getDaysInMonth = (month: number, year: number) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (month: number, year: number) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+  const firstDayIndex = getFirstDayOfMonth(currentMonth, currentYear);
+
+  const prevMonth = () => {
+    if (currentMonth === 0) {
+      setCurrentMonth(11);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+  };
+
+  const nextMonth = () => {
+    if (currentMonth === 11) {
+      setCurrentMonth(0);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+  };
+
+  const createDateObject = (day: number, hour: number, minute: number) => {
+    const d = new Date();
+    d.setFullYear(currentYear);
+    d.setMonth(currentMonth);
+    d.setDate(day);
+    d.setHours(hour);
+    d.setMinutes(minute);
+    d.setSeconds(0);
+    d.setMilliseconds(0);
+    return d;
+  };
+
+  const handleDayClick = (day: number) => {
+    const newDate = createDateObject(day, selectedHour, selectedMinute);
+    setTempDate(newDate);
+    setIsConfirmed(false);
+  };
+
+  const handleTimeChange = (hour: number, minute: number) => {
+    setSelectedHour(hour);
+    setSelectedMinute(minute);
+    setIsConfirmed(false);
+    
+    if (tempDate) {
+      const updatedDate = new Date(tempDate);
+      updatedDate.setHours(hour);
+      updatedDate.setMinutes(minute);
+      setTempDate(updatedDate);
+    } else {
+      const today = new Date();
+      const newDate = createDateObject(today.getDate(), hour, minute);
+      setTempDate(newDate);
+    }
+  };
+
+  const handleConfirm = () => {
+    if (!tempDate) return;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const formattedDateStr = `${tempDate.getFullYear()}-${pad(tempDate.getMonth() + 1)}-${pad(tempDate.getDate())}T${pad(selectedHour)}:${pad(selectedMinute)}`;
+    onChange(formattedDateStr);
+    setIsConfirmed(true);
+    setIsCollapsed(true);
+  };
+
+  const calendarDays = [];
+  for (let i = 0; i < firstDayIndex; i++) {
+    calendarDays.push(null);
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    calendarDays.push(i);
+  }
+
+  const TIME_SLOTS = [
+    { label: '09:00 AM', h: 9, m: 0 },
+    { label: '10:00 AM', h: 10, m: 0 },
+    { label: '11:00 AM', h: 11, m: 0 },
+    { label: '12:00 PM', h: 12, m: 0 },
+    { label: '02:00 PM', h: 14, m: 0 },
+    { label: '03:00 PM', h: 15, m: 0 },
+    { label: '04:00 PM', h: 16, m: 0 },
+    { label: '05:00 PM', h: 17, m: 0 },
+    { label: '06:00 PM', h: 18, m: 0 },
+  ];
+
+  const isSelectedDay = (day: number) => {
+    return tempDate && 
+           tempDate.getDate() === day && 
+           tempDate.getMonth() === currentMonth && 
+           tempDate.getFullYear() === currentYear;
+  };
+
+  const isToday = (day: number) => {
+    const today = new Date();
+    return today.getDate() === day && 
+           today.getMonth() === currentMonth && 
+           today.getFullYear() === currentYear;
+  };
+
+  const pad = (n: number) => n.toString().padStart(2, '0');
+
+  if (isCollapsed && tempDate) {
+    return (
+      <div className="bg-app-card border border-green-500/20 rounded-3xl p-5 shadow-xl flex items-center justify-between animate-in fade-in duration-300">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-green-500/10 border border-green-500/25 flex items-center justify-center text-green-400">
+            <CheckCircle2 size={20} />
+          </div>
+          <div>
+            <div className="text-[10px] font-black uppercase text-app-text-muted tracking-wider">Confirmed Meeting Time</div>
+            <div className="text-base font-black text-app-text-bright tracking-tight mt-0.5">
+              {tempDate.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(false)}
+          className="px-4 py-2 bg-black/40 border border-app-border hover:border-app-accent hover:text-app-accent text-app-text-muted text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 cursor-pointer"
+        >
+          Change
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-app-card border border-app-border rounded-3xl p-6 shadow-xl space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+        <div className="md:col-span-3 space-y-4">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-black uppercase text-app-text-bright tracking-wider">
+              {MONTH_NAMES[currentMonth]} {currentYear}
+            </h4>
+            <div className="flex gap-2">
+              <button 
+                type="button"
+                onClick={prevMonth}
+                className="p-2 rounded-xl bg-black/30 border border-app-border hover:border-app-accent hover:text-app-accent transition-all cursor-pointer"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button 
+                type="button"
+                onClick={nextMonth}
+                className="p-2 rounded-xl bg-black/30 border border-app-border hover:border-app-accent hover:text-app-accent transition-all cursor-pointer"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 text-center text-[9px] font-black uppercase text-app-text-muted tracking-widest">
+            <div>Su</div>
+            <div>Mo</div>
+            <div>Tu</div>
+            <div>We</div>
+            <div>Th</div>
+            <div>Fr</div>
+            <div>Sa</div>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold">
+            {calendarDays.map((day, idx) => {
+              if (day === null) {
+                return <div key={`empty-${idx}`} className="p-2" />;
+              }
+              const selected = isSelectedDay(day);
+              const today = isToday(day);
+
+              return (
+                <button
+                  key={`day-${day}`}
+                  type="button"
+                  onClick={() => handleDayClick(day)}
+                  className={cn(
+                    "p-2 rounded-xl text-center transition-all cursor-pointer relative font-bold",
+                    selected 
+                      ? "bg-app-accent text-black font-black shadow-lg" 
+                      : today 
+                        ? "bg-app-accent/10 border border-app-accent/40 text-app-accent" 
+                        : "hover:bg-white/5 text-app-text-bright"
+                  )}
+                >
+                  {day}
+                  {today && !selected && (
+                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-app-accent rounded-full"></span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="md:col-span-2 border-t md:border-t-0 md:border-l border-app-border/40 pt-6 md:pt-0 md:pl-6 space-y-4">
+          <h4 className="text-xs font-black uppercase text-app-text-bright tracking-wider">
+            Select Time
+          </h4>
+
+          <div className="grid grid-cols-2 gap-2">
+            {TIME_SLOTS.map((slot) => {
+              const active = selectedHour === slot.h && selectedMinute === slot.m;
+              return (
+                <button
+                  key={slot.label}
+                  type="button"
+                  onClick={() => handleTimeChange(slot.h, slot.m)}
+                  className={cn(
+                    "py-2 px-3 rounded-xl text-[10px] font-black tracking-wider transition-all cursor-pointer text-center",
+                    active 
+                      ? "bg-app-accent text-black shadow-lg" 
+                      : "bg-black/35 border border-app-border text-app-text-muted hover:text-app-text-bright hover:border-app-accent/50"
+                  )}
+                >
+                  {slot.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="space-y-2 pt-2">
+            <span className="text-[9px] font-black text-app-text-muted uppercase tracking-widest">Custom Time</span>
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedHour}
+                onChange={(e) => handleTimeChange(parseInt(e.target.value, 10), selectedMinute)}
+                className="flex-1 bg-black/45 border border-app-border rounded-xl p-2 text-xs text-app-text-bright focus:outline-none focus:border-app-accent font-bold"
+              >
+                {Array.from({ length: 24 }).map((_, i) => (
+                  <option key={i} value={i} className="bg-app-sidebar text-white">
+                    {i === 0 ? '12 AM (00:00)' : i === 12 ? '12 PM (12:00)' : i > 12 ? `${i - 12} PM (${pad(i)}:00)` : `${i} AM (${pad(i)}:00)`}
+                  </option>
+                ))}
+              </select>
+              <span className="text-app-text-muted font-bold">:</span>
+              <select
+                value={selectedMinute}
+                onChange={(e) => handleTimeChange(selectedHour, parseInt(e.target.value, 10))}
+                className="flex-1 bg-black/45 border border-app-border rounded-xl p-2 text-xs text-app-text-bright focus:outline-none focus:border-app-accent font-bold"
+              >
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <option key={i * 5} value={i * 5} className="bg-app-sidebar text-white">
+                    {pad(i * 5)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="pt-4 border-t border-app-border/40 flex flex-col sm:flex-row items-center gap-4 justify-between">
+        <div className="text-xs text-app-text-bright font-serif italic text-left w-full sm:w-auto">
+          {tempDate ? (
+            <div className="flex flex-col">
+              <span className="text-[9px] font-black uppercase text-app-text-muted not-italic tracking-wider">Selected Session:</span>
+              <span className="font-sans font-black uppercase text-app-accent tracking-wider text-sm mt-0.5">
+                {tempDate.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+          ) : (
+            <span className="text-app-text-muted">No date & time selected yet.</span>
+          )}
+        </div>
+        
+        <button
+          type="button"
+          onClick={handleConfirm}
+          disabled={!tempDate || isConfirmed}
+          className={cn(
+            "w-full sm:w-auto px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer",
+            isConfirmed 
+              ? "bg-green-500/10 text-green-400 border border-green-500/25 cursor-default" 
+              : "bg-app-accent text-black hover:scale-102 hover:shadow-lg active:scale-98"
+          )}
+        >
+          {isConfirmed ? (
+            <>
+              <CheckCircle2 size={14} className="text-green-400" /> Confirmed
+            </>
+          ) : (
+            "Confirm Date & Time"
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const SubmissionReview: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user, profile } = useAuth();
@@ -261,7 +596,8 @@ const SubmissionReview: React.FC = () => {
       }
       await api.submissions.update(id, updateData);
       setSubmission(prev => prev ? { ...prev, ...updateData } : null);
-      alert("Remarks uploaded successfully to Admin.");
+      alert("Remarks uploaded successfully to Super Admin.");
+
     } catch (error) {
       console.error('Failed to upload remarks:', error);
       alert('Failed to upload remarks.');
@@ -279,7 +615,7 @@ const SubmissionReview: React.FC = () => {
       };
       await api.submissions.update(id, updateData);
       setSubmission(prev => prev ? { ...prev, ...updateData } : null);
-      alert("Marks uploaded successfully to Admin.");
+      alert("Marks uploaded successfully to Super Admin.");
     } catch (error) {
       console.error('Failed to upload marks:', error);
       alert('Failed to upload marks.');
@@ -844,47 +1180,6 @@ const SubmissionReview: React.FC = () => {
                     TICKS and MARKS
                   </label>
 
-                  {activeAssessorType === 'GTO' ? (
-                    <div className="bg-app-card border border-app-border rounded-3xl p-6 shadow-xl max-w-md space-y-4">
-                      <div className="space-y-2">
-                        <span className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] block">
-                          GTO Overall Marks
-                        </span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={999}
-                          value={scores['marks'] ?? ''}
-                          onChange={(e) => {
-                            const valStr = e.target.value;
-                            if (valStr === '') {
-                              setScores((prev) => ({ ...prev, marks: '' }));
-                              return;
-                            }
-                            const parsed = parseInt(valStr, 10);
-                            if (isNaN(parsed)) {
-                              setScores((prev) => ({ ...prev, marks: '' }));
-                              return;
-                            }
-                            if (parsed > 999) return;
-                            setScores((prev) => ({ ...prev, marks: parsed }));
-                          }}
-                          placeholder="--"
-                          className="w-full bg-black/30 border border-app-border rounded-xl p-3 text-sm font-black text-app-accent focus:outline-none focus:border-app-accent transition-all placeholder:text-app-text-muted/20"
-                        />
-                      </div>
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={handleUploadMarks}
-                          disabled={saving}
-                          className="px-6 py-2.5 bg-app-card border border-app-border hover:border-app-accent text-app-text-bright rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-                        >
-                          Upload Marks
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
                     <div className="w-full bg-app-card border border-app-border rounded-3xl overflow-hidden shadow-xl">
                       <div className="w-full overflow-hidden">
                         {(() => {
@@ -1015,7 +1310,6 @@ const SubmissionReview: React.FC = () => {
                         </button>
                       </div>
                     </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -1039,12 +1333,10 @@ const SubmissionReview: React.FC = () => {
 
             <div className="space-y-8">
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 block">Conference Date & Hour</label>
-                <input
-                  type="datetime-local"
+                <label className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 block">{activeAssessorType} Feedback Meeting Date & Hour</label>
+                <ModernDateTimePicker
                   value={meetingDate}
-                  onChange={(e) => setMeetingDate(e.target.value)}
-                  className="w-full bg-app-card border border-app-border rounded-2xl p-4 text-sm font-black text-app-text-bright focus:outline-none focus:border-app-accent transition-all [color-scheme:dark]"
+                  onChange={setMeetingDate}
                 />
               </div>
 

@@ -330,8 +330,8 @@ const AssessorDashboard: React.FC = () => {
                                 )}
                                 title={sub.status === 'REPORT_RELEASED' ? 'View Finalized Report' : 'Initialize Review'}
                               >
-                                {sub.status === 'REPORT_RELEASED' ? 'View Finalized Report' : <Eye size={18} />} 
-                                {sub.status === 'REPORT_RELEASED' && <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />}
+                                {sub.status === 'REPORT_RELEASED' && activeAssessorType !== 'GTO' ? 'View Finalized Report' : <Eye size={18} />} 
+                                {sub.status === 'REPORT_RELEASED' && activeAssessorType !== 'GTO' && <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />}
                             </Link>
                           )}
                        </td>

@@ -12,6 +12,8 @@ coverage/
 # (K:/H DRIVE/Quantum Climb/APPS/SSB/DBQUERY/PsychBattery/)
 seed-*.cjs
 seed-*.js
+seed_*.cjs
+seed_*.js
 fix_*.cjs
 fix_*.js
 debug_*.cjs
@@ -20,6 +22,9 @@ simulate*.cjs
 test_*.cjs
 test_*.js
 assign-*.cjs
+scratch/
+scan_structure.py
+folder structure.txt
 
 # Uploads
 public/uploads/assessments/*

@@ -45,6 +45,17 @@ export const api = {
     broadcast: (id: string) => fetchWithAuth(`/submissions/${id}/broadcast`, { method: 'POST' }),
     audit: (id: string, data: any) => fetchWithAuth(`/submissions/${id}/audit`, { method: 'POST', body: JSON.stringify(data) }),
   },
+  meetings: {
+    list: (params: any = {}) => {
+      const query = new URLSearchParams();
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+          query.set(key, params[key].toString());
+        }
+      });
+      return fetchWithAuth(`/meetings?${query.toString()}`);
+    }
+  },
   users: {
     list: () => fetchWithAuth('/users'),
     update: (id: string, data: any) => fetchWithAuth(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),

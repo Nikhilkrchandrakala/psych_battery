@@ -30,6 +30,7 @@ dotenv.config();
 const app = express();
 const PORT = parseInt(process.env.PORT || '5173', 10);
 const JWT_SECRET = (process.env.JWT_SECRET || 'hdvay6ert72839289()aiyg8t87qt72393293883uhefiuh78ttq3ifi78272jbkj2[]pou89ywe').trim();
+const JWT_FALLBACK_SECRET = (process.env.JWT_FALLBACK_SECRET || 'hvdvay6ert72839289()aiyg8t87qt72393293883uhefiuh78ttq3ifi78272jbkj?[]]pou89ywe').trim();
 
 // CORS — allow main site, admin panel, and local dev origins
 app.use(cors({
@@ -151,8 +152,7 @@ const authenticate = async (req: any, res: any, next: any) => {
           try {
             decoded = jwt.verify(trimmedToken, JWT_SECRET) as any;
           } catch (err) {
-            const fallbackSecret = 'hvdvay6ert72839289()aiyg8t87qt72393293883uhefiuh78ttq3ifi78272jbkj?[]]pou89ywe';
-            decoded = jwt.verify(trimmedToken, fallbackSecret) as any;
+            decoded = jwt.verify(trimmedToken, JWT_FALLBACK_SECRET) as any;
           }
           if (decoded.role === 'admin') {
             mockUser = {
@@ -193,11 +193,12 @@ const authenticate = async (req: any, res: any, next: any) => {
       decoded = jwt.verify(token.trim(), JWT_SECRET) as any;
     } catch (err) {
       try {
-        const fallbackSecret = 'hvdvay6ert72839289()aiyg8t87qt72393293883uhefiuh78ttq3ifi78272jbkj?[]]pou89ywe';
-        decoded = jwt.verify(token.trim(), fallbackSecret) as any;
+        decoded = jwt.verify(token.trim(), JWT_FALLBACK_SECRET) as any;
       } catch (fallbackErr) {
-        console.warn("[AUTH] JWT signature mismatch. Falling back to jwt.decode for local dev recovery.");
-        decoded = jwt.decode(token.trim()) as any;
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn("[AUTH] JWT signature mismatch. Falling back to jwt.decode for local dev recovery.");
+          decoded = jwt.decode(token.trim()) as any;
+        }
         if (!decoded) throw fallbackErr;
       }
     }
@@ -289,6 +290,9 @@ async function startServer() {
   });
 
   app.get('/api/debug-auth', async (req: any, res: any) => {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ error: 'Access Denied: Debug routes are disabled in production' });
+    }
     if (mongoose.connection.readyState !== 1) {
       try {
         if (!process.env.MONGODB_URI) {
@@ -331,8 +335,7 @@ async function startServer() {
         try {
           decoded = jwt.verify(token.trim(), JWT_SECRET) as any;
         } catch (verifyErr) {
-          const fallbackSecret = 'hvdvay6ert72839289()aiyg8t87qt72393293883uhefiuh78ttq3ifi78272jbkj?[]]pou89ywe';
-          decoded = jwt.verify(token.trim(), fallbackSecret) as any;
+          decoded = jwt.verify(token.trim(), JWT_FALLBACK_SECRET) as any;
         }
       } catch (e: any) {
         error = e.message;
@@ -580,7 +583,7 @@ async function startServer() {
     console.log("Body:", req.body);
     try {
       const submissionId = req.params.id;
-      const submission = await Submission.findById(submissionId);
+      const submission = await Submission.findById(submissionId).select('-piqFileData');
       if (!submission) return res.status(404).json({ message: 'Submission not found' });
 
       // Security: Only allow the student who owns the submission or an admin to upload
@@ -726,11 +729,11 @@ async function startServer() {
   // Serve PIQ files stored in MongoDB
   app.get('/api/submissions/:id/piq-file/:index', authenticate, async (req: any, res: any) => {
     try {
-      const submission = await Submission.findById(req.params.id);
+      const index = parseInt(req.params.index, 10);
+      const submission = await Submission.findById(req.params.id).select({ piqFileData: { $slice: [index, 1] } });
       if (!submission) return res.status(404).json({ message: 'Submission not found' });
 
-      const index = parseInt(req.params.index, 10);
-      const fileData = submission.piqFileData?.[index];
+      const fileData = submission.piqFileData?.[0];
       if (!fileData) return res.status(404).json({ message: 'File not found' });
 
       const buffer = Buffer.from(fileData.data, 'base64');
@@ -764,7 +767,7 @@ async function startServer() {
     let combinedText = '';
 
     try {
-      const submission = await Submission.findById(submissionId);
+      const submission = await Submission.findById(submissionId).select('-piqFileData');
       if (submission) {
         submission.piqParsedData = combinedText;
         if (piqType === 'piq2') {
@@ -908,6 +911,248 @@ async function startServer() {
         { $set: { isRead: true } }
       );
       res.json({ message: 'All notifications marked as read' });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+
+  // --- MEETINGS DATA AND WORKSPACE MANAGEMENT ---
+  app.get('/api/meetings', authenticate, async (req: any, res) => {
+    try {
+      const isBypass = process.env.BYPASS_AUTH === 'true';
+      let rawSubmissions: any[] = [];
+
+      if (isBypass) {
+        rawSubmissions = mockSubmissions;
+      } else {
+        const query: any = {
+          $or: [
+            { psychMeetingDate: { $ne: null } },
+            { toMeetingDate: { $ne: null } },
+            { gtoMeetingDate: { $ne: null } },
+            { ioMeetingDate: { $ne: null } }
+          ]
+        };
+
+        if (req.user.role === 'student') {
+          query.userId = req.user._id;
+        }
+
+        rawSubmissions = await Submission.find(query)
+          .select('-piqFileData')
+          .populate({
+            path: 'userId',
+            select: 'name email assignedGTO assignedTO assignedPsych assignedIO clinicalStage profileImage chestNo batch',
+            populate: [
+              { path: 'assignedPsych', select: 'name email' },
+              { path: 'assignedTO', select: 'name email' },
+              { path: 'assignedGTO', select: 'name email' },
+              { path: 'assignedIO', select: 'name email' }
+            ]
+          })
+          .populate('assessmentId', 'title type');
+      }
+
+      // Flatten into individual meeting objects
+      const allMeetings: any[] = [];
+      const roles = ['psych', 'to', 'gto', 'io'];
+      const roleLabels: Record<string, string> = {
+        psych: 'Psychologist Feedback',
+        to: 'TO Aptitude',
+        gto: 'GTO Outdoor Case',
+        io: 'IO Interview'
+      };
+
+      for (const sub of rawSubmissions) {
+        const subJSON = sub.toJSON ? sub.toJSON() : sub;
+        const student = subJSON.userId || subJSON.user || { name: 'Candidate', email: '' };
+        if (!student) continue;
+
+        for (const role of roles) {
+          const dateVal = subJSON[`${role}MeetingDate`];
+          if (!dateVal) continue;
+
+          const linkVal = subJSON[`${role}MeetingLink`] || '';
+          const completedVal = subJSON[`${role}MeetingCompleted`] || false;
+          
+          let assessor: any = null;
+          if (role === 'psych') assessor = student.assignedPsych;
+          else if (role === 'to') assessor = student.assignedTO;
+          else if (role === 'gto') assessor = student.assignedGTO;
+          else if (role === 'io') assessor = student.assignedIO;
+
+          const meetingDate = new Date(dateVal);
+          const now = new Date();
+          
+          // Determine status
+          let status = 'Upcoming';
+          if (completedVal) {
+            status = 'Completed';
+          } else if (meetingDate < now) {
+            status = 'Missed';
+          }
+
+          // Check if meeting date is today (in local date string format)
+          const todayStr = now.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+          const meetingDateStr = meetingDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+          if (meetingDateStr === todayStr) {
+            status = 'Today';
+          }
+
+          // If the logged-in user is an assessor, restrict them to their assigned role meetings
+          if (req.user.role === 'assessor') {
+            let assessorType = '';
+            if (isBypass) {
+              assessorType = req.user.assessorType || '';
+            } else {
+              const loggedInUser = await User.findById(req.user._id);
+              assessorType = loggedInUser?.assessorType || '';
+            }
+            if (assessorType) {
+              const expectedRole = assessorType.toLowerCase();
+              if (role !== expectedRole) {
+                continue; // Skip meetings of other types for this assessor
+              }
+            }
+          }
+
+          allMeetings.push({
+            id: `${subJSON._id || subJSON.id}_${role}`,
+            _id: `${subJSON._id || subJSON.id}_${role}`,
+            submissionId: (subJSON._id || subJSON.id).toString(),
+            meetingType: role,
+            meetingTypeLabel: roleLabels[role] || role.toUpperCase(),
+            meetingDate: dateVal,
+            meetingLink: linkVal,
+            completed: completedVal,
+            status,
+            student: {
+              id: (student._id || student.id || '').toString(),
+              _id: (student._id || student.id || '').toString(),
+              name: student.name || 'Candidate',
+              email: student.email || '',
+              chestNo: student.chestNo || '--',
+              batch: student.batch || '--',
+              profileImage: student.profileImage
+            },
+            assessor: assessor ? {
+              id: (assessor._id || assessor.id || '').toString(),
+              _id: (assessor._id || assessor.id || '').toString(),
+              name: assessor.name || 'Assessor',
+              email: assessor.email || ''
+            } : null
+          });
+        }
+      }
+
+      // Filter the meetings list based on query params
+      let filteredMeetings = allMeetings;
+
+      // Search Query
+      if (req.query.search) {
+        const searchVal = req.query.search.toString().toLowerCase();
+        filteredMeetings = filteredMeetings.filter(m => 
+          (m.student.name && m.student.name.toLowerCase().includes(searchVal)) ||
+          (m.student.chestNo && m.student.chestNo.toLowerCase().includes(searchVal)) ||
+          (m.student.batch && m.student.batch.toLowerCase().includes(searchVal)) ||
+          (m.student.email && m.student.email.toLowerCase().includes(searchVal)) ||
+          (m.assessor && m.assessor.name && m.assessor.name.toLowerCase().includes(searchVal)) ||
+          (m.meetingTypeLabel && m.meetingTypeLabel.toLowerCase().includes(searchVal)) ||
+          (m.id && m.id.toLowerCase().includes(searchVal))
+        );
+      }
+
+      // Status Filters
+      if (req.query.status) {
+        const statusVal = req.query.status.toString();
+        if (statusVal === 'Today') {
+          const todayStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+          filteredMeetings = filteredMeetings.filter(m => new Date(m.meetingDate).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) === todayStr);
+        } else {
+          filteredMeetings = filteredMeetings.filter(m => m.status === statusVal);
+        }
+      }
+
+      // Meeting Type Filter
+      if (req.query.meetingType) {
+        filteredMeetings = filteredMeetings.filter(m => m.meetingType === req.query.meetingType.toString());
+      }
+
+      // Batch Filter
+      if (req.query.batch) {
+        filteredMeetings = filteredMeetings.filter(m => m.student.batch === req.query.batch.toString());
+      }
+
+      // Assessor Filter
+      if (req.query.assessor) {
+        filteredMeetings = filteredMeetings.filter(m => m.assessor && m.assessor.id === req.query.assessor.toString());
+      }
+
+      // Date Range Filter
+      if (req.query.startDate && req.query.endDate) {
+        const start = new Date(req.query.startDate.toString());
+        const end = new Date(req.query.endDate.toString());
+        end.setHours(23, 59, 59, 999);
+        filteredMeetings = filteredMeetings.filter(m => {
+          const d = new Date(m.meetingDate);
+          return d >= start && d <= end;
+        });
+      }
+
+      // Calculate stats based on the pre-searched, pre-status-filtered scope (scope for the user/assessor)
+      const todayStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' });
+      const stats = {
+        total: allMeetings.length,
+        today: allMeetings.filter(m => new Date(m.meetingDate).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }) === todayStr).length,
+        upcoming: allMeetings.filter(m => m.status === 'Upcoming').length,
+        completed: allMeetings.filter(m => m.status === 'Completed').length,
+        missed: allMeetings.filter(m => m.status === 'Missed').length
+      };
+
+      // Sort the meetings
+      const sortBy = req.query.sortBy?.toString() || 'meetingDate';
+      const sortOrder = req.query.sortOrder?.toString() || 'desc';
+
+      filteredMeetings.sort((a, b) => {
+        let valA: any = a[sortBy];
+        let valB: any = b[sortBy];
+
+        if (sortBy === 'candidateName') {
+          valA = a.student.name;
+          valB = b.student.name;
+        } else if (sortBy === 'chestNo') {
+          valA = parseInt(a.student.chestNo) || 0;
+          valB = parseInt(b.student.chestNo) || 0;
+        } else if (sortBy === 'batch') {
+          valA = a.student.batch;
+          valB = b.student.batch;
+        } else if (sortBy === 'assessorName') {
+          valA = a.assessor?.name || '';
+          valB = b.assessor?.name || '';
+        }
+
+        if (valA === undefined || valA === null) valA = '';
+        if (valB === undefined || valB === null) valB = '';
+
+        if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+        if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+
+      // Pagination
+      const page = parseInt(req.query.page?.toString() || '1');
+      const limit = parseInt(req.query.limit?.toString() || '25');
+      const startIndex = (page - 1) * limit;
+      const paginatedMeetings = filteredMeetings.slice(startIndex, startIndex + limit);
+
+      res.json({
+        meetings: paginatedMeetings,
+        totalCount: filteredMeetings.length,
+        stats,
+        page,
+        limit
+      });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -1144,7 +1389,7 @@ async function startServer() {
 
   app.post('/api/submissions/:id/complete', authenticate, async (req: any, res) => {
     try {
-      const submission = await Submission.findById(req.params.id);
+      const submission = await Submission.findById(req.params.id).select('-piqFileData');
       if (!submission) return res.status(404).json({ message: 'Submission not found' });
       
       submission.status = 'PENDING_UPLOAD';
@@ -1219,7 +1464,31 @@ async function startServer() {
           let assessorEmail = '';
           let assessorName = '';
           try {
-            if ((req as any).user && (req as any).user._id) {
+            // First check the assigned assessor on the User profile in MongoDB
+            const student = await User.findById(submission.userId);
+            let assessorId = null;
+            if (student) {
+              if (role === 'psych' && student.assignedPsych) {
+                assessorId = student.assignedPsych;
+              } else if (role === 'to' && student.assignedTO) {
+                assessorId = student.assignedTO;
+              } else if (role === 'gto' && student.assignedGTO) {
+                assessorId = student.assignedGTO;
+              } else if (role === 'io' && student.assignedIO) {
+                assessorId = student.assignedIO;
+              }
+            }
+            
+            if (assessorId) {
+              const assignedAssessor = await User.findById(assessorId);
+              if (assignedAssessor) {
+                assessorEmail = assignedAssessor.email;
+                assessorName = assignedAssessor.name;
+              }
+            }
+            
+            // Fallback to currently logged-in user if no assigned assessor
+            if (!assessorEmail && (req as any).user && (req as any).user._id) {
               const assessorUser = await User.findById((req as any).user._id);
               if (assessorUser) {
                 assessorEmail = assessorUser.email;
@@ -1236,13 +1505,6 @@ async function startServer() {
             console.warn(`[EMAIL WARNING] MSG91_AUTHKEY is missing in env. Cannot send meeting email for ${role.toUpperCase()} to ${studentEmail}.`);
           } else {
             try {
-              const recipients = [
-                { name: studentName, email: studentEmail }
-              ];
-              if (assessorEmail) {
-                recipients.push({ name: assessorName || 'Assessor', email: assessorEmail });
-              }
-
               let formattedDate = 'TBA';
               let formattedTime = 'TBA';
               if (meetingDate) {
@@ -1258,43 +1520,143 @@ async function startServer() {
                 to: 'Technical Officer (TO) Aptitude'
               };
               const roleLabel = roleLabels[role] || role.toUpperCase();
+              const assessorRoleName = role === 'psych' ? 'Psychologist' : role === 'to' ? 'Technical Officer' : role === 'gto' ? 'GTO Assessor' : 'Interviewing Officer';
 
-              const msg91Payload = JSON.stringify({
-                to: recipients,
-                from: {
-                  name: "Integrated SSB Virtuosos",
-                  email: "noreply@ssbwithisv.in"
-                },
-                domain: "noreply.ssbwithisv.in",
-                template_id: "interview_template_6",
-                variables: {
-                  candidate_name: `${studentName} (${roleLabel})`,
-                  interview_type: roleLabel,
-                  date: formattedDate,
-                  time: formattedTime,
-                  meeting_link: meetingLink || '#'
-                }
-              });
+              const sendMsg91Email = (payload: any, label: string) => {
+                const msg91Payload = JSON.stringify(payload);
+                const options = {
+                  hostname: 'api.msg91.com',
+                  path: '/api/v5/email/send',
+                  method: 'POST',
+                  headers: {
+                    'authkey': process.env.MSG91_AUTHKEY,
+                    'Content-Type': 'application/json',
+                    'Content-Length': Buffer.byteLength(msg91Payload)
+                  }
+                };
 
-              const options = {
-                hostname: 'api.msg91.com',
-                path: '/api/v5/email/send',
-                method: 'POST',
-                headers: {
-                  'authkey': process.env.MSG91_AUTHKEY,
-                  'Content-Type': 'application/json',
-                  'Content-Length': Buffer.byteLength(msg91Payload)
-                }
+                const reqEmail = https.request(options, (resEmail: any) => {
+                  let data = '';
+                  resEmail.on('data', (chunk: string) => data += chunk);
+                  resEmail.on('end', () => console.log(`Sent meeting email via MSG91 for ${role.toUpperCase()} [${label}]. Status: ${resEmail.statusCode}. Response: ${data}`));
+                });
+                reqEmail.on('error', (e: any) => console.error(`MSG91 Email Error [${label}]:`, e.message));
+                reqEmail.write(msg91Payload);
+                reqEmail.end();
               };
 
-              const reqEmail = https.request(options, (resEmail: any) => {
-                let data = '';
-                resEmail.on('data', (chunk: string) => data += chunk);
-                resEmail.on('end', () => console.log(`Sent meeting email via MSG91 for ${role.toUpperCase()}. Status: ${resEmail.statusCode}. Response: ${data}`));
-              });
-              reqEmail.on('error', (e: any) => console.error('MSG91 Email Error:', e.message));
-              reqEmail.write(msg91Payload);
-              reqEmail.end();
+              if (role === 'psych' || role === 'to') {
+                // Send candidate email using MSG91 template 'psych_interview_candidate'
+                const candidatePayload = {
+                  to: [{ name: studentName, email: studentEmail }],
+                  from: {
+                    name: "Integrated SSB Virtuosos",
+                    email: "noreply@ssbwithisv.in"
+                  },
+                  domain: "noreply.ssbwithisv.in",
+                  template_id: "psych_interview_candidate",
+                  variables: {
+                    candidate_name: studentName,
+                    assessor_name: assessorName || 'Assessor',
+                    assessor_role: assessorRoleName,
+                    date: formattedDate,
+                    time: formattedTime,
+                    meeting_link: meetingLink || '#'
+                  }
+                };
+                sendMsg91Email(candidatePayload, 'Candidate');
+
+                // Send assessor email using MSG91 template 'psych_interview_assessor'
+                if (assessorEmail) {
+                  const assessorPayload = {
+                    to: [{ name: assessorName || 'Assessor', email: assessorEmail }],
+                    from: {
+                      name: "Integrated SSB Virtuosos",
+                      email: "noreply@ssbwithisv.in"
+                    },
+                    domain: "noreply.ssbwithisv.in",
+                    template_id: "psych_interview_assessor",
+                    variables: {
+                      candidate_name: studentName,
+                      assessor_name: assessorName || 'Assessor',
+                      assessor_role: assessorRoleName,
+                      date: formattedDate,
+                      time: formattedTime,
+                      meeting_link: meetingLink || '#'
+                    }
+                  };
+                  sendMsg91Email(assessorPayload, 'Assessor');
+                } else {
+                  console.warn(`[EMAIL WARNING] Assessor email is missing. Cannot send meeting email for ${role.toUpperCase()} Assessor.`);
+                }
+              } else if (role === 'io') {
+                // Send candidate email using MSG91 template 'interview_template_6'
+                const candidatePayload = {
+                  to: [{ name: studentName, email: studentEmail }],
+                  from: {
+                    name: "Integrated SSB Virtuosos",
+                    email: "noreply@ssbwithisv.in"
+                  },
+                  domain: "noreply.ssbwithisv.in",
+                  template_id: "interview_template_6",
+                  variables: {
+                    candidate_name: `${studentName} (${roleLabel})`,
+                    interview_type: roleLabel,
+                    date: formattedDate,
+                    time: formattedTime,
+                    meeting_link: meetingLink || '#'
+                  }
+                };
+                sendMsg91Email(candidatePayload, 'Candidate');
+
+                // Send IO assessor email using MSG91 template 'io_interview_template'
+                if (assessorEmail) {
+                  const assessorPayload = {
+                    to: [{ name: assessorName || 'Assessor', email: assessorEmail }],
+                    from: {
+                      name: "Integrated SSB Virtuosos",
+                      email: "noreply@ssbwithisv.in"
+                    },
+                    domain: "noreply.ssbwithisv.in",
+                    template_id: "io_interview_template",
+                    variables: {
+                      candidate_name: studentName,
+                      assessor_name: assessorName || 'Assessor',
+                      assessor_role: assessorRoleName,
+                      date: formattedDate,
+                      time: formattedTime,
+                      meeting_link: meetingLink || '#'
+                    }
+                  };
+                  sendMsg91Email(assessorPayload, 'Assessor');
+                } else {
+                  console.warn(`[EMAIL WARNING] Assessor email is missing. Cannot send meeting email for IO Assessor.`);
+                }
+              } else {
+                // Legacy template behavior for other roles (GTO) using 'interview_template_6' to both
+                const recipients = [{ name: studentName, email: studentEmail }];
+                if (assessorEmail) {
+                  recipients.push({ name: assessorName || 'Assessor', email: assessorEmail });
+                }
+
+                const legacyPayload = {
+                  to: recipients,
+                  from: {
+                    name: "Integrated SSB Virtuosos",
+                    email: "noreply@ssbwithisv.in"
+                  },
+                  domain: "noreply.ssbwithisv.in",
+                  template_id: "interview_template_6",
+                  variables: {
+                    candidate_name: `${studentName} (${roleLabel})`,
+                    interview_type: roleLabel,
+                    date: formattedDate,
+                    time: formattedTime,
+                    meeting_link: meetingLink || '#'
+                  }
+                };
+                sendMsg91Email(legacyPayload, 'Combined-Legacy');
+              }
             } catch (emailErr) {
               console.error("Failed to send meeting email:", emailErr);
             }
@@ -1316,7 +1678,7 @@ async function startServer() {
         return res.status(403).json({ message: 'Access Denied: Administrative privileges required' });
       }
 
-      const submission = await Submission.findById(req.params.id);
+      const submission = await Submission.findById(req.params.id).select('-piqFileData');
       if (!submission) return res.status(404).json({ message: 'Submission not found' });
 
       submission.status = 'REPORT_RELEASED';
@@ -1412,7 +1774,7 @@ async function startServer() {
         return res.status(403).json({ message: 'Access Denied: Administrative privileges required' });
       }
 
-      const submission = await Submission.findById(req.params.id);
+      const submission = await Submission.findById(req.params.id).select('-piqFileData');
       if (!submission) return res.status(404).json({ message: 'Submission not found' });
 
       const { assessorType, action, remarks } = req.body;

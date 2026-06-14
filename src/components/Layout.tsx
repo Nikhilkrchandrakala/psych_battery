@@ -34,7 +34,7 @@ const Layout: React.FC = () => {
     { label: 'My Dashboard', path: '/', icon: LayoutDashboard, show: profile?.role === 'student' },
     // Assessors only: candidate dossier list
     { label: 'Candidates', path: '/assessor', icon: Users, show: profile?.role === 'assessor' },
-    { label: 'Meetings', path: '/meetings', icon: Calendar, show: profile?.role === 'assessor' },
+    { label: 'Meetings', path: '/meetings', icon: Calendar, show: profile?.role === 'assessor' && profile?.assessorType !== 'GTO' },
     // Admin only: admin hub
     { label: 'Admin Hub', path: '/admin?tab=progress', icon: Shield, show: isAdminUser },
     // Admin only: assessment catalogue

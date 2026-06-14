@@ -532,9 +532,20 @@ const AdminDashboard: React.FC = () => {
 
                 <div className="shrink-0 w-full md:w-auto">
                   {isBroadcasted ? (
-                    <div className="px-6 py-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                      <CheckCircle size={16} />
-                      Results Broadcasted & Qualitative Comments Released
+                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                      <div className="px-6 py-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 w-full sm:w-auto">
+                        <CheckCircle size={16} />
+                        Results Broadcasted & Qualitative Comments Released
+                      </div>
+                      <button
+                        onClick={() => handleBroadcastSub(s.id!)}
+                        disabled={broadcasting}
+                        className="w-full sm:w-auto px-6 py-4 bg-app-card border border-app-border hover:border-app-accent text-app-text-bright rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-white/5 shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+                        title="Re-send the updated remarks and reports to the candidate"
+                      >
+                        <Send size={16} />
+                        {broadcasting ? 'Rebroadcasting...' : 'Rebroadcast Results'}
+                      </button>
                     </div>
                   ) : (
                     <button
