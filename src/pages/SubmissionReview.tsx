@@ -801,14 +801,7 @@ const SubmissionReview: React.FC = () => {
                 <span className="px-2 py-0.5 rounded bg-app-accent/10 border border-app-accent/20 text-[9px] font-black text-app-accent uppercase tracking-[0.15em] leading-none">
                   {submission.status.replace(/_/g, ' ')}
                 </span>
-                {piqFiles.length > 0 && (
-                  <>
-                    <span className="w-1 h-1 bg-app-border rounded-full" />
-                    <span className={cn('px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-[0.15em] leading-none', PIQ_STATUS_STYLES[piqStatus])}>
-                      PIQ: {piqStatus}
-                    </span>
-                  </>
-                )}
+
               </div>
             </div>
           </div>

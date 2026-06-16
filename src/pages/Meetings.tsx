@@ -967,112 +967,115 @@ const Meetings: React.FC = () => {
       </div>
 
       {/* Sticky Filters & Search Control Bar */}
-      <div className="sticky top-0 z-40 bg-app-bg/95 backdrop-blur-md py-4 border-b border-app-border flex flex-col gap-4">
-        <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-          
-          {/* Global Search Bar */}
-          <div className="relative w-full lg:max-w-md shrink-0">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-app-text-muted">
-              <Search size={18} />
+      <div className="sticky top-0 z-40 bg-app-bg/85 backdrop-blur-md py-4 mb-6 border-b border-app-border/40 flex flex-col gap-4">
+        
+        {/* Row 1: Global Search Bar (Right aligned, upper to filters) */}
+        <div className="flex justify-end w-full">
+          <div className="relative w-full lg:max-w-xs xl:max-w-sm group">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-app-text-muted group-focus-within:text-app-accent transition-colors duration-200">
+              <Search size={16} />
             </span>
             <input 
               ref={searchInputRef}
               type="text" 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search Candidate, Chest #, Batch #, Assessor (Press '/' to focus)" 
-              className="w-full pl-11 pr-4 py-3 bg-app-sidebar border border-app-border rounded-2xl text-sm text-app-text-bright placeholder-app-text-muted focus:border-app-accent/60 outline-none transition-colors"
+              placeholder="Search Candidate, Chest #..." 
+              className="w-full pl-11 pr-10 py-2.5 bg-app-sidebar/60 hover:bg-app-sidebar border border-app-border/80 focus:border-app-accent rounded-xl text-xs text-app-text-bright placeholder-app-text-muted/70 outline-none transition-all duration-200"
             />
             {search && (
               <button 
                 onClick={() => setSearch('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-app-text-muted hover:text-app-text-bright transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-app-text-muted hover:text-app-text-bright transition-colors"
               >
-                <X size={16} />
+                <X size={14} />
               </button>
             )}
           </div>
+        </div>
 
-          {/* Quick filters dropdown group */}
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:justify-end">
+        {/* Row 2: Quick filters dropdown group (All in one line below search) */}
+        <div className="flex flex-wrap items-center gap-3 w-full">
+          
+          {/* Status Filter */}
+          <div className="flex items-center gap-2 bg-app-sidebar/40 border border-app-border/80 rounded-xl px-3 py-1.5 hover:border-app-border-bright transition-colors">
+            <span className="text-[10px] text-app-text-muted font-bold tracking-wider uppercase select-none">Status:</span>
             <select 
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-3 bg-app-sidebar border border-app-border rounded-xl text-xs text-app-text-bright outline-none focus:border-app-accent/60 cursor-pointer"
+              className="bg-transparent border-none text-xs text-app-text-bright outline-none cursor-pointer pr-2 font-semibold"
             >
-              <option value="">All Statuses</option>
-              <option value="Today">Today</option>
-              <option value="Upcoming">Upcoming</option>
-              <option value="Completed">Completed</option>
-              <option value="Missed">Missed</option>
+              <option value="" className="bg-app-sidebar text-app-text-bright">All</option>
+              <option value="Today" className="bg-app-sidebar text-app-text-bright">Today</option>
+              <option value="Upcoming" className="bg-app-sidebar text-app-text-bright">Upcoming</option>
+              <option value="Completed" className="bg-app-sidebar text-app-text-bright">Completed</option>
+              <option value="Missed" className="bg-app-sidebar text-app-text-bright">Missed</option>
             </select>
+          </div>
 
-            <select 
-              value={meetingTypeFilter}
-              onChange={(e) => setMeetingTypeFilter(e.target.value)}
-              className="px-4 py-3 bg-app-sidebar border border-app-border rounded-xl text-xs text-app-text-bright outline-none focus:border-app-accent/60 cursor-pointer"
-            >
-              <option value="">All Meeting Types</option>
-              <option value="psych">Psychologist Feedback</option>
-              <option value="to">TO Aptitude</option>
-              <option value="gto">GTO Outdoor Case</option>
-              <option value="io">IO Interview</option>
-            </select>
-
+          {/* Batch Filter */}
+          <div className="flex items-center gap-2 bg-app-sidebar/40 border border-app-border/80 rounded-xl px-3 py-1.5 hover:border-app-border-bright transition-colors">
+            <span className="text-[10px] text-app-text-muted font-bold tracking-wider uppercase select-none">Batch:</span>
             <input 
               type="text" 
               value={batchFilter}
               onChange={(e) => setBatchFilter(e.target.value)}
-              placeholder="Filter Batch"
-              className="px-4 py-2.5 bg-app-sidebar border border-app-border rounded-xl text-xs text-app-text-bright placeholder-app-text-muted focus:border-app-accent/60 outline-none w-28"
+              placeholder="All"
+              className="bg-transparent border-none text-xs text-app-text-bright outline-none w-16 placeholder-app-text-muted/50 font-semibold"
             />
+          </div>
 
-            <div className="flex items-center gap-1.5 bg-app-sidebar border border-app-border rounded-xl px-3 py-1">
-              <input 
-                type="date" 
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="bg-transparent border-none text-[10px] text-app-text-bright outline-none cursor-pointer w-24 font-mono"
-              />
-              <span className="text-app-text-muted text-[10px] uppercase font-bold">to</span>
-              <input 
-                type="date" 
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="bg-transparent border-none text-[10px] text-app-text-bright outline-none cursor-pointer w-24 font-mono"
-              />
-            </div>
+          {/* From Date Filter */}
+          <div className="flex items-center gap-2 bg-app-sidebar/40 border border-app-border/80 rounded-xl px-3 py-1.5 hover:border-app-border-bright transition-colors">
+            <span className="text-[10px] text-app-text-muted font-bold tracking-wider uppercase select-none">From:</span>
+            <input 
+              type="date" 
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="bg-transparent border-none text-[11px] text-app-text-bright outline-none cursor-pointer w-24 font-mono font-medium"
+            />
+          </div>
 
-            {(search || statusFilter || meetingTypeFilter || batchFilter || startDate || endDate) && (
-              <button 
-                onClick={handleClearFilters}
-                className="p-3 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+          {/* To Date Filter */}
+          <div className="flex items-center gap-2 bg-app-sidebar/40 border border-app-border/80 rounded-xl px-3 py-1.5 hover:border-app-border-bright transition-colors">
+            <span className="text-[10px] text-app-text-muted font-bold tracking-wider uppercase select-none">To:</span>
+            <input 
+              type="date" 
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="bg-transparent border-none text-[11px] text-app-text-bright outline-none cursor-pointer w-24 font-mono font-medium"
+            />
+          </div>
+
+          {/* Clear Filters Button */}
+          {(search || statusFilter || meetingTypeFilter || batchFilter || startDate || endDate) && (
+            <button 
+              onClick={handleClearFilters}
+              className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+            >
+              Clear
+            </button>
+          )}
+
+          {/* View Mode Toggle Switch */}
+          <div className="flex bg-app-sidebar/40 border border-app-border/80 rounded-xl p-1 shrink-0 ml-auto">
+            {[
+              { mode: 'table', icon: <List size={14} />, label: 'Table' },
+              { mode: 'card', icon: <Grid size={14} />, label: 'Cards' },
+              { mode: 'calendar', icon: <CalendarDays size={14} />, label: 'Calendar' }
+            ].map(t => (
+              <button
+                key={t.mode}
+                onClick={() => setViewMode(t.mode as any)}
+                className={cn(
+                  "p-1.5 rounded-lg text-app-text-muted hover:text-app-text-bright transition-all flex items-center gap-1 text-[10px] font-black uppercase tracking-wider",
+                  viewMode === t.mode && "bg-app-accent text-black hover:text-black font-black"
+                )}
+                title={t.label}
               >
-                Clear
+                {t.icon}
               </button>
-            )}
-
-            {/* View Mode Toggle Switch */}
-            <div className="flex bg-app-card border border-app-border rounded-xl p-1">
-              {[
-                { mode: 'table', icon: <List size={14} />, label: 'Table' },
-                { mode: 'card', icon: <Grid size={14} />, label: 'Cards' },
-                { mode: 'calendar', icon: <CalendarDays size={14} />, label: 'Calendar' }
-              ].map(t => (
-                <button
-                  key={t.mode}
-                  onClick={() => setViewMode(t.mode as any)}
-                  className={cn(
-                    "p-2 rounded-lg text-app-text-muted hover:text-app-text-bright transition-all flex items-center gap-1 text-[10px] font-black uppercase tracking-wider",
-                    viewMode === t.mode && "bg-app-accent text-black hover:text-black font-black"
-                  )}
-                  title={t.label}
-                >
-                  {t.icon}
-                </button>
-              ))}
-            </div>
-
+            ))}
           </div>
 
         </div>
