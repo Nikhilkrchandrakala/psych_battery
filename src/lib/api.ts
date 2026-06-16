@@ -42,7 +42,7 @@ export const api = {
     create: (data: any) => fetchWithAuth('/submissions', { method: 'POST', body: JSON.stringify(data) }),
     update: (id: string, data: any) => fetchWithAuth(`/submissions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     complete: (id: string) => fetchWithAuth(`/submissions/${id}/complete`, { method: 'POST' }),
-    broadcast: (id: string) => fetchWithAuth(`/submissions/${id}/broadcast`, { method: 'POST' }),
+    broadcast: (id: string, data?: any) => fetchWithAuth(`/submissions/${id}/broadcast`, { method: 'POST', body: data ? JSON.stringify(data) : undefined }),
     audit: (id: string, data: any) => fetchWithAuth(`/submissions/${id}/audit`, { method: 'POST', body: JSON.stringify(data) }),
   },
   meetings: {

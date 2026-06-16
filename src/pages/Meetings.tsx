@@ -217,7 +217,9 @@ const Meetings: React.FC = () => {
       await api.submissions.update(meeting.submissionId, {
         [`${prefix}MeetingDate`]: null,
         [`${prefix}MeetingLink`]: '',
-        [`${prefix}MeetingCompleted`]: false
+        [`${prefix}MeetingCompleted`]: false,
+        triggerEmail: true,
+        meetingRole: prefix
       });
       
       // Refresh list
@@ -435,17 +437,6 @@ const Meetings: React.FC = () => {
                     </td>
                     <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
-                        {m.meetingLink && (
-                          <a 
-                            href={m.meetingLink} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="p-1.5 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 rounded-lg transition-colors"
-                            title="Join Meeting"
-                          >
-                            <Video size={16} />
-                          </a>
-                        )}
                         {!isCompleted && (
                           <button 
                             onClick={() => handleMarkAsComplete(m)}

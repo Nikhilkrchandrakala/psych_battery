@@ -147,7 +147,7 @@ const SubmissionSchema = new mongoose.Schema({
   
   // Isolated Assessor Tracking Fields
   psychRemarks: { type: String, default: '' },
-  psychStatus: { type: String, enum: ['PENDING', 'UNDER_REVIEW', 'COMPLETED'], default: 'PENDING' },
+  psychStatus: { type: String, enum: ['PENDING', 'UNDER_REVIEW', 'COMPLETED', 'NOT_REQUIRED'], default: 'PENDING' },
   gtoRemarks: { type: String, default: '' },
   gtoStatus: { type: String, enum: ['PENDING', 'UNDER_REVIEW', 'COMPLETED', 'NOT_REQUIRED'], default: 'PENDING' },
   ioRemarks: { type: String, default: '' },

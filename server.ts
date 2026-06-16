@@ -689,9 +689,16 @@ async function startServer() {
         return res.status(400).json({ message: 'No files uploaded' });
       }
 
+      const candidateUser = await User.findById(submission.userId);
+      let isIOOnly = false;
+      if (candidateUser) {
+        const stages = (candidateUser.clinicalStage || '').split(',').map((st: string) => st.trim()).filter(Boolean);
+        isIOOnly = stages.includes('interview') && !stages.includes('full_course') && !stages.includes('psych');
+      }
+
       const piqType = req.body.piqType || req.query.piqType || 'piq1';
       const currentPiq1Status = submission.piq1Status || (submission as any).piq1Status || 'PENDING';
-      if (piqType === 'piq2' && currentPiq1Status !== 'VERIFIED') {
+      if (piqType === 'piq2' && !isIOOnly && currentPiq1Status !== 'VERIFIED') {
         return res.status(400).json({ message: 'PIQ 2 upload is only allowed after PIQ 1 has been successfully uploaded and verified.' });
       }
 
@@ -1306,8 +1313,45 @@ async function startServer() {
       return res.json(submission);
     }
 
+    let submissionId = req.params.id;
+    if (submissionId.startsWith('pending-')) {
+      try {
+        const candidateId = submissionId.substring(8);
+        const candidateUser = await User.findById(candidateId);
+        if (!candidateUser) {
+          return res.status(404).json({ message: 'Candidate not found' });
+        }
+
+        const activeAssessment = await Assessment.findOne({ active: true });
+        const assessmentId = activeAssessment ? activeAssessment._id : null;
+
+        let submission = await Submission.findOne({ userId: candidateId });
+        if (!submission) {
+          let gtoStatus = candidateUser.assignedGTO ? 'PENDING' : 'NOT_REQUIRED';
+          let ioStatus = candidateUser.assignedIO ? 'PENDING' : 'NOT_REQUIRED';
+          let toStatus = candidateUser.assignedTO ? 'PENDING' : 'NOT_REQUIRED';
+          let psychStatus = candidateUser.assignedPsych ? 'PENDING' : 'NOT_REQUIRED';
+
+          submission = new Submission({
+            userId: candidateId,
+            assessmentId: assessmentId,
+            status: 'PENDING',
+            startedAt: null,
+            psychStatus,
+            gtoStatus,
+            ioStatus,
+            toStatus
+          });
+          await submission.save();
+        }
+        submissionId = (submission as any)._id.toString();
+      } catch (err: any) {
+        return res.status(500).json({ message: err.message });
+      }
+    }
+
     try {
-      const submission = await Submission.findById(req.params.id)
+      const submission = await Submission.findById(submissionId)
         .select('-piqFileData').populate('userId', 'name email assignedGTO assignedTO assignedPsych assignedIO clinicalStage profileImage chestNo batch')
         .populate('assessmentId', 'title');
       res.json(submission);
@@ -1441,9 +1485,46 @@ async function startServer() {
       return res.status(404).json({ message: 'Submission not found' });
     }
 
+    let submissionId = req.params.id;
+    if (submissionId.startsWith('pending-')) {
+      try {
+        const candidateId = submissionId.substring(8);
+        const candidateUser = await User.findById(candidateId);
+        if (!candidateUser) {
+          return res.status(404).json({ message: 'Candidate not found' });
+        }
+
+        const activeAssessment = await Assessment.findOne({ active: true });
+        const assessmentId = activeAssessment ? activeAssessment._id : null;
+
+        let submission = await Submission.findOne({ userId: candidateId });
+        if (!submission) {
+          let gtoStatus = candidateUser.assignedGTO ? 'PENDING' : 'NOT_REQUIRED';
+          let ioStatus = candidateUser.assignedIO ? 'PENDING' : 'NOT_REQUIRED';
+          let toStatus = candidateUser.assignedTO ? 'PENDING' : 'NOT_REQUIRED';
+          let psychStatus = candidateUser.assignedPsych ? 'PENDING' : 'NOT_REQUIRED';
+
+          submission = new Submission({
+            userId: candidateId,
+            assessmentId: assessmentId,
+            status: 'PENDING',
+            startedAt: null,
+            psychStatus,
+            gtoStatus,
+            ioStatus,
+            toStatus
+          });
+          await submission.save();
+        }
+        submissionId = (submission as any)._id.toString();
+      } catch (err: any) {
+        return res.status(500).json({ message: err.message });
+      }
+    }
+
     try {
-      const oldSubmission = await Submission.findById(req.params.id).select('-piqFileData').populate('userId', 'name email');
-      const submission = await Submission.findByIdAndUpdate(req.params.id, req.body, { new: true }).select('-piqFileData').populate('userId', 'name email');
+      const oldSubmission = await Submission.findById(submissionId).select('-piqFileData').populate('userId', 'name email');
+      const submission = await Submission.findByIdAndUpdate(submissionId, req.body, { new: true }).select('-piqFileData').populate('userId', 'name email');
       
       // Check for meeting link changes and send email if necessary
       const roles = ['psych', 'gto', 'io', 'to'];
@@ -1451,21 +1532,25 @@ async function startServer() {
         const linkField = `${role}MeetingLink`;
         const dateField = `${role}MeetingDate`;
         
-        const linkChanged = req.body[linkField] && req.body[linkField] !== (oldSubmission as any)[linkField];
-        const dateChanged = req.body[dateField] && new Date(req.body[dateField]).getTime() !== new Date((oldSubmission as any)[dateField] || 0).getTime();
+        const linkChanged = req.body[linkField] !== undefined && req.body[linkField] !== (oldSubmission as any)[linkField];
+        const dateChanged = req.body[dateField] !== undefined && (
+          req.body[dateField] === null 
+            ? (oldSubmission as any)[dateField] !== null 
+            : new Date(req.body[dateField]).getTime() !== new Date((oldSubmission as any)[dateField] || 0).getTime()
+        );
         const explicitlyTriggered = req.body.triggerEmail && req.body.meetingRole === role;
         
         if (explicitlyTriggered || linkChanged || dateChanged) {
           const studentEmail = (submission.userId as any)?.email;
           const studentName = (submission.userId as any)?.name || 'Candidate';
-          const meetingLink = req.body[linkField];
-          const meetingDate = req.body[dateField] || (submission as any)[dateField];
+          const meetingLink = req.body[linkField] !== undefined ? req.body[linkField] : (submission as any)[linkField];
+          const meetingDate = req.body[dateField] !== undefined ? req.body[dateField] : (submission as any)[dateField];
           
           let assessorEmail = '';
           let assessorName = '';
           try {
-            // First check the assigned assessor on the User profile in MongoDB
-            const student = await User.findById(submission.userId);
+            const studentId = submission.userId && (submission.userId as any)._id ? (submission.userId as any)._id : submission.userId;
+            const student = await User.findById(studentId);
             let assessorId = null;
             if (student) {
               if (role === 'psych' && student.assignedPsych) {
@@ -1507,7 +1592,12 @@ async function startServer() {
             try {
               let formattedDate = 'TBA';
               let formattedTime = 'TBA';
-              if (meetingDate) {
+              const isCancelled = (req.body[dateField] === null) || (submission && (submission as any)[dateField] === null && oldSubmission && (oldSubmission as any)[dateField] !== null);
+              
+              if (isCancelled) {
+                formattedDate = 'Cancelled';
+                formattedTime = 'Cancelled';
+              } else if (meetingDate) {
                 const d = new Date(meetingDate);
                 formattedDate = d.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
                 formattedTime = d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true });
@@ -1516,8 +1606,8 @@ async function startServer() {
               const roleLabels: Record<string, string> = {
                 psych: 'Psychologist Feedback',
                 gto: 'GTO Outdoor Case',
-                io: 'Interviewing Officer (IO) Interview',
-                to: 'Technical Officer (TO) Aptitude'
+                io: 'Interviewing Officer Interview',
+                to: 'Technical Officer Aptitude'
               };
               const roleLabel = roleLabels[role] || role.toUpperCase();
               const assessorRoleName = role === 'psych' ? 'Psychologist' : role === 'to' ? 'Technical Officer' : role === 'gto' ? 'GTO Assessor' : 'Interviewing Officer';
@@ -1600,7 +1690,7 @@ async function startServer() {
                   domain: "noreply.ssbwithisv.in",
                   template_id: "interview_template_6",
                   variables: {
-                    candidate_name: `${studentName} (${roleLabel})`,
+                    candidate_name: studentName,
                     interview_type: roleLabel,
                     date: formattedDate,
                     time: formattedTime,
@@ -1678,16 +1768,63 @@ async function startServer() {
         return res.status(403).json({ message: 'Access Denied: Administrative privileges required' });
       }
 
-      const submission = await Submission.findById(req.params.id).select('-piqFileData');
+      console.log("[DEBUG BROADCAST] req.body:", req.body);
+      const { assessorType } = req.body;
+
+      let submissionId = req.params.id;
+      if (submissionId.startsWith('pending-')) {
+        try {
+          const candidateId = submissionId.substring(8);
+          const candidateUser = await User.findById(candidateId);
+          if (!candidateUser) {
+            return res.status(404).json({ message: 'Candidate not found' });
+          }
+
+          const activeAssessment = await Assessment.findOne({ active: true });
+          const assessmentId = activeAssessment ? activeAssessment._id : null;
+
+          let submission = await Submission.findOne({ userId: candidateId });
+          if (!submission) {
+            let gtoStatus = candidateUser.assignedGTO ? 'PENDING' : 'NOT_REQUIRED';
+            let ioStatus = candidateUser.assignedIO ? 'PENDING' : 'NOT_REQUIRED';
+            let toStatus = candidateUser.assignedTO ? 'PENDING' : 'NOT_REQUIRED';
+            let psychStatus = candidateUser.assignedPsych ? 'PENDING' : 'NOT_REQUIRED';
+
+            submission = new Submission({
+              userId: candidateId,
+              assessmentId: assessmentId,
+              status: 'PENDING',
+              startedAt: null,
+              psychStatus,
+              gtoStatus,
+              ioStatus,
+              toStatus
+            });
+            await submission.save();
+          }
+          submissionId = (submission as any)._id.toString();
+        } catch (err: any) {
+          return res.status(500).json({ message: err.message });
+        }
+      }
+
+      const submission = await Submission.findById(submissionId).select('-piqFileData');
       if (!submission) return res.status(404).json({ message: 'Submission not found' });
 
-      submission.status = 'REPORT_RELEASED';
-      submission.reportVisibility = {
-        psych: true,
-        io: true,
-        gto: true,
-        to: true
-      };
+      const isIndividual = assessorType && ['psych', 'io', 'gto', 'to'].includes(assessorType.toLowerCase());
+
+      if (isIndividual) {
+        const type = assessorType.toLowerCase();
+        submission.set(`reportVisibility.${type}`, true);
+      } else {
+        submission.status = 'REPORT_RELEASED';
+        submission.reportVisibility = {
+          psych: true,
+          io: true,
+          gto: true,
+          to: true
+        };
+      }
 
       await submission.save();
 
@@ -1701,68 +1838,77 @@ async function startServer() {
         if (student.assignedTO) recipientIds.push(student.assignedTO.toString());
 
         const candidateName = student.name || 'Candidate';
+        const notifTitle = isIndividual 
+          ? `${assessorType.toUpperCase()} Report Released` 
+          : 'Results Broadcasted';
+        const notifMessage = isIndividual
+          ? `The ${assessorType.toUpperCase()} evaluation report for ${candidateName} has been released by the Admin.`
+          : `The official evaluation report for ${candidateName} has been broadcasted by the Admin.`;
+
         for (const recipientId of new Set(recipientIds)) {
           const notification = new Notification({
             recipientId,
             studentId: submission.userId,
             submissionId: submission._id,
-            title: 'Results Broadcasted',
-            message: `The official evaluation report for ${candidateName} has been broadcasted by the Admin.`,
+            title: notifTitle,
+            message: notifMessage,
             isRead: false
           });
           await notification.save();
         }
 
-        // Send email via MSG91
-        if (!student.email) {
-          console.warn(`[EMAIL WARNING] Student email is missing. Cannot send results broadcast email.`);
-        } else if (!process.env.MSG91_AUTHKEY) {
-          console.warn(`[EMAIL WARNING] MSG91_AUTHKEY is missing in env. Cannot send results broadcast email to ${student.email}.`);
-        } else {
-          try {
-            const msg91Payload = JSON.stringify({
-              to: [
-                { name: candidateName, email: student.email }
-              ],
-              from: {
-                name: "Integrated SSB Virtuosos",
-                email: "noreply@ssbwithisv.in"
-              },
-              domain: "noreply.ssbwithisv.in",
-              template_id: "results_broadcast_template_1",
-              variables: {
-                candidate_name: candidateName,
-                evaluation_details: `Your psychological evaluation results are published. Overall Score: ${submission.score || '--'}.`,
-                report_link: `https://ssbwithisv.in/ProfileDashboard?tab=psycheTest`
-              }
-            });
+        // Send email via MSG91 ONLY for final broadcast
+        if (!isIndividual) {
+          if (!student.email) {
+            console.warn(`[EMAIL WARNING] Student email is missing. Cannot send results broadcast email.`);
+          } else if (!process.env.MSG91_AUTHKEY) {
+            console.warn(`[EMAIL WARNING] MSG91_AUTHKEY is missing in env. Cannot send results broadcast email to ${student.email}.`);
+          } else {
+            try {
+              const msg91Payload = JSON.stringify({
+                to: [
+                  { name: candidateName, email: student.email }
+                ],
+                from: {
+                  name: "Integrated SSB Virtuosos",
+                  email: "noreply@ssbwithisv.in"
+                },
+                domain: "noreply.ssbwithisv.in",
+                template_id: "results_broadcast_template_1",
+                variables: {
+                  candidate_name: candidateName,
+                  evaluation_details: `Your psychological evaluation results are published. Overall Score: ${submission.score || '--'}.`,
+                  report_link: `https://ssbwithisv.in/ProfileDashboard?tab=psycheTest`
+                }
+              });
 
-            const options = {
-              hostname: 'api.msg91.com',
-              path: '/api/v5/email/send',
-              method: 'POST',
-              headers: {
-                'authkey': process.env.MSG91_AUTHKEY,
-                'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(msg91Payload)
-              }
-            };
+              const options = {
+                hostname: 'api.msg91.com',
+                path: '/api/v5/email/send',
+                method: 'POST',
+                headers: {
+                  'authkey': process.env.MSG91_AUTHKEY,
+                  'Content-Type': 'application/json',
+                  'Content-Length': Buffer.byteLength(msg91Payload)
+                }
+              };
 
-            const reqEmail = https.request(options, (resEmail: any) => {
-              let data = '';
-              resEmail.on('data', (chunk: string) => data += chunk);
-              resEmail.on('end', () => console.log(`Sent results broadcast email via MSG91. Status: ${resEmail.statusCode}. Response: ${data}`));
-            });
-            reqEmail.on('error', (e: any) => console.error('MSG91 Results Email Error:', e.message));
-            reqEmail.write(msg91Payload);
-            reqEmail.end();
-          } catch (emailErr) {
-            console.error("Failed to send broadcast email:", emailErr);
+              const reqEmail = https.request(options, (resEmail: any) => {
+                let data = '';
+                resEmail.on('data', (chunk: string) => data += chunk);
+                resEmail.on('end', () => console.log(`Sent results broadcast email via MSG91. Status: ${resEmail.statusCode}. Response: ${data}`));
+              });
+              reqEmail.on('error', (e: any) => console.error('MSG91 Results Email Error:', e.message));
+              reqEmail.write(msg91Payload);
+              reqEmail.end();
+            } catch (emailErr) {
+              console.error("Failed to send broadcast email:", emailErr);
+            }
           }
         }
       }
 
-      res.json({ message: 'Results successfully broadcasted to student', submission });
+      res.json({ message: 'Results successfully broadcasted', submission });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }

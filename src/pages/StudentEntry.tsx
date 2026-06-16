@@ -39,6 +39,14 @@ const StudentEntry: React.FC = () => {
   useEffect(() => {
     const determineRoute = async () => {
       if (!user) return;
+
+      const userStages = profile?.clinicalStage ? profile.clinicalStage.split(",").map((s: string) => s.trim().toLowerCase()) : [];
+      const isFullOrPsych = userStages.includes("full_course") || userStages.includes("psych") || userStages.includes("psychology");
+      if (!isFullOrPsych) {
+        window.location.href = `${mainSiteUrl}/ProfileDashboard?tab=psycheTest`;
+        return;
+      }
+
       try {
         const [assessmentsList, submissionsList] = await Promise.all([
           api.assessments.list(),

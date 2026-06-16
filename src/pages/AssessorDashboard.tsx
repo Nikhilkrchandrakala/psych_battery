@@ -317,7 +317,7 @@ const AssessorDashboard: React.FC = () => {
                           </div>
                         </td>
                        <td className="p-6 text-right">
-                          {sub.status === 'PENDING' ? (
+                          {sub.status === 'PENDING' && activeAssessorType !== 'GTO' && activeAssessorType !== 'IO' ? (
                             <span className="inline-flex items-center gap-2 text-[10px] font-black text-app-text-muted uppercase tracking-widest cursor-not-allowed opacity-50" title="Candidate has not started their assessment yet">
                               Awaiting Action
                             </span>
@@ -332,7 +332,7 @@ const AssessorDashboard: React.FC = () => {
                               >
                                 {sub.status === 'REPORT_RELEASED' && activeAssessorType !== 'GTO' ? 'View Finalized Report' : <Eye size={18} />} 
                                 {sub.status === 'REPORT_RELEASED' && activeAssessorType !== 'GTO' && <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />}
-                            </Link>
+                             </Link>
                           )}
                        </td>
                      </tr>

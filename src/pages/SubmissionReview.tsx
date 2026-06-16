@@ -854,7 +854,7 @@ const SubmissionReview: React.FC = () => {
         <div className="flex gap-1 bg-app-sidebar/50 p-1 rounded-2xl border border-app-border w-fit shadow-inner">
           {[
             { id: 'dossier', label: 'Document Viewer', icon: FileSearch },
-            { id: 'meeting', label: 'Feedback Scheduler', icon: Calendar },
+            { id: 'meeting', label: activeAssessorType === 'IO' ? 'Mock Interview' : 'Feedback Scheduler', icon: Calendar },
             { id: 'evaluation', label: 'Assessment', icon: MessageSquare },
             ...(submission.status === 'REPORT_RELEASED' ? [{ id: 'feedback', label: 'All Assessor Feedback', icon: Users }] : [])
           ].filter(tab => {
@@ -1324,16 +1324,22 @@ const SubmissionReview: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-3 text-app-accent">
                 <Calendar size={24} />
-                <h3 className="text-2xl font-black text-app-text-bright tracking-tight">{activeAssessorType} Feedback Scheduler</h3>
+                <h3 className="text-2xl font-black text-app-text-bright tracking-tight">
+                  {activeAssessorType === 'IO' ? 'Mock Interview' : `${activeAssessorType} Feedback Scheduler`}
+                </h3>
               </div>
               <p className="text-app-text-muted text-sm font-serif italic leading-relaxed">
-                Schedule a follow-up feedback session or review with the candidate to discuss their performance from the {activeAssessorType} perspective.
+                {activeAssessorType === 'IO'
+                  ? 'Schedule a mock interview with the candidate to evaluate their performance.'
+                  : `Schedule a follow-up feedback session or review with the candidate to discuss their performance from the ${activeAssessorType} perspective.`}
               </p>
             </div>
 
             <div className="space-y-8">
               <div className="space-y-3">
-                <label className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 block">{activeAssessorType} Feedback Meeting Date & Hour</label>
+                <label className="text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2 block">
+                  {activeAssessorType === 'IO' ? 'Mock Interview Date & Hour' : `${activeAssessorType} Feedback Meeting Date & Hour`}
+                </label>
                 <ModernDateTimePicker
                   value={meetingDate}
                   onChange={setMeetingDate}

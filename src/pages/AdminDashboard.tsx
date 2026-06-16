@@ -401,6 +401,26 @@ const AdminDashboard: React.FC = () => {
           const traitsScoreEntries = traitsList.filter(t => scoresMap[t.id] !== undefined && scoresMap[t.id] > 0);
           const finalMarks = scoresMap.marks || 0;
 
+          const isAssessorVisible = s.reportVisibility?.[type.toLowerCase() as 'psych' | 'io' | 'gto' | 'to'];
+          const isCompleted = statusVal === 'COMPLETED';
+
+          const handleIndividualBroadcast = async () => {
+            if (broadcasting) return;
+            setBroadcasting(true);
+            try {
+              const response = await api.submissions.broadcast(s.id!, { assessorType: type.toLowerCase() });
+              const updatedSub = response.submission;
+              setSubmissions(prev => prev.map(item => item.id === s.id ? { ...item, ...updatedSub } : item));
+              setSelectedSubmission(prev => prev && prev.id === s.id ? { ...prev, ...updatedSub } : prev);
+              alert(`Success! ${type.toUpperCase()} qualitative remarks have been released/broadcasted to the candidate.`);
+            } catch (err: any) {
+              console.error('Failed to broadcast individual assessor result:', err);
+              alert(err.message || 'Failed to broadcast result.');
+            } finally {
+              setBroadcasting(false);
+            }
+          };
+
           return (
             <div className="bg-app-card border border-app-border rounded-3xl p-6 space-y-4 shadow-xl">
               <div className="flex justify-between items-center border-b border-app-border pb-3">
@@ -408,12 +428,29 @@ const AdminDashboard: React.FC = () => {
                   <h4 className="text-xs font-black uppercase text-app-text-bright tracking-widest">{title}</h4>
                   <span className="text-[9px] font-black text-app-text-muted uppercase tracking-wider block mt-0.5">Assigned evaluator</span>
                 </div>
-                <span className={cn(
-                  "px-2.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border",
-                  statusVal === 'COMPLETED' ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse"
-                )}>
-                  {statusVal}
-                </span>
+                <div className="flex items-center gap-3">
+                  {isCompleted && !isBroadcasted && (
+                    <button
+                      onClick={handleIndividualBroadcast}
+                      disabled={broadcasting}
+                      className={cn(
+                        "px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider border cursor-pointer active:scale-95 transition-all flex items-center gap-1.5",
+                        isAssessorVisible 
+                          ? "bg-app-card border-app-border text-app-text-bright hover:border-app-accent" 
+                          : "bg-gradient-to-br from-[#C5A028] to-[#8C6A0F] text-white border-transparent hover:opacity-90 shadow-md shadow-app-accent/10"
+                      )}
+                    >
+                      <Send size={10} />
+                      {isAssessorVisible ? 'Rebroadcast' : 'Broadcast'}
+                    </button>
+                  )}
+                  <span className={cn(
+                    "px-2.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border",
+                    statusVal === 'COMPLETED' ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse"
+                  )}>
+                    {statusVal}
+                  </span>
+                </div>
               </div>
 
               {/* Written Remarks */}
@@ -532,20 +569,9 @@ const AdminDashboard: React.FC = () => {
 
                 <div className="shrink-0 w-full md:w-auto">
                   {isBroadcasted ? (
-                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-                      <div className="px-6 py-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 w-full sm:w-auto">
-                        <CheckCircle size={16} />
-                        Results Broadcasted & Qualitative Comments Released
-                      </div>
-                      <button
-                        onClick={() => handleBroadcastSub(s.id!)}
-                        disabled={broadcasting}
-                        className="w-full sm:w-auto px-6 py-4 bg-app-card border border-app-border hover:border-app-accent text-app-text-bright rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-white/5 shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
-                        title="Re-send the updated remarks and reports to the candidate"
-                      >
-                        <Send size={16} />
-                        {broadcasting ? 'Rebroadcasting...' : 'Rebroadcast Results'}
-                      </button>
+                    <div className="px-6 py-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 w-full sm:w-auto">
+                      <CheckCircle size={16} />
+                      Final Results Broadcasted & Released
                     </div>
                   ) : (
                     <button
@@ -554,7 +580,7 @@ const AdminDashboard: React.FC = () => {
                       className="w-full md:w-auto px-8 py-4 bg-gradient-to-br from-[#C5A028] to-[#8C6A0F] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:opacity-90 shadow-xl shadow-app-accent/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
                     >
                       <Send size={16} />
-                      {broadcasting ? 'Broadcasting...' : 'Broadcast Results to Student'}
+                      {broadcasting ? 'Broadcasting...' : 'Broadcast Final Result to Student'}
                     </button>
                   )}
                 </div>
