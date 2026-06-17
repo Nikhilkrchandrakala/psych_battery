@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { AssessmentSubmission, UserProfile } from '../types';
 import { useAuth } from '../components/AuthProvider';
-import { Users, Search, Filter, ExternalLink, Shield, ArrowRight, User as UserIcon, Bell, Check, Eye } from 'lucide-react';
+import { Users, Search, Filter, ExternalLink, Shield, User as UserIcon, Bell, Check, Eye } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface NotificationItem {
@@ -225,14 +225,13 @@ const AssessorDashboard: React.FC = () => {
              <div className="bg-app-sidebar border border-app-border rounded-[2.5rem] overflow-hidden shadow-2xl">
                <table className="w-full text-left border-collapse">
                  <thead>
-                   <tr className="border-b border-app-border bg-black/20">
-                     <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Candidate Identity</th>
-                     <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Lifecycle Status</th>
-                     <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Course</th>
-                     <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Allotted Assessors</th>
-                     <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Session Date</th>
-                     <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted text-right">Cadence</th>
-                   </tr>
+                    <tr className="border-b border-app-border bg-black/20">
+                      <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Candidate Identity</th>
+                      <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Lifecycle Status</th>
+                      <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Course</th>
+                      <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Allotted Assessors</th>
+                      <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted text-right">Cadence</th>
+                    </tr>
                  </thead>
                  <tbody>
                    {submissions.map((sub) => (
@@ -311,11 +310,7 @@ const AssessorDashboard: React.FC = () => {
                             )}
                           </div>
                         </td>
-                        <td className="p-6">
-                          <div className="text-[11px] font-black text-app-text-bright">
-                            {sub.startedAt || sub.createdAt ? new Date(sub.startedAt || sub.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'}
-                          </div>
-                        </td>
+
                        <td className="p-6 text-right">
                           {sub.status === 'PENDING' && activeAssessorType !== 'GTO' && activeAssessorType !== 'IO' ? (
                             <span className="inline-flex items-center gap-2 text-[10px] font-black text-app-text-muted uppercase tracking-widest cursor-not-allowed opacity-50" title="Candidate has not started their assessment yet">
@@ -330,8 +325,7 @@ const AssessorDashboard: React.FC = () => {
                                 )}
                                 title={sub.status === 'REPORT_RELEASED' ? 'View Finalized Report' : 'Initialize Review'}
                               >
-                                {sub.status === 'REPORT_RELEASED' && activeAssessorType !== 'GTO' ? 'View Finalized Report' : <Eye size={18} />} 
-                                {sub.status === 'REPORT_RELEASED' && activeAssessorType !== 'GTO' && <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />}
+                                <Eye size={18} />
                              </Link>
                           )}
                        </td>

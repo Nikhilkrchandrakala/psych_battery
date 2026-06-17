@@ -153,7 +153,7 @@ const AssessmentEngine: React.FC = () => {
 
       if (timerRef.current) clearInterval(timerRef.current);
 
-      if (!isPaused) {
+      if (!isPaused && !isScreenLocked) {
         timerRef.current = setInterval(() => {
           timeLeftRef.current -= 1;
           const t = timeLeftRef.current;
@@ -177,7 +177,7 @@ const AssessmentEngine: React.FC = () => {
 
       if (timerRef.current) clearInterval(timerRef.current);
 
-      if (!isPaused) {
+      if (!isPaused && !isScreenLocked) {
         timerRef.current = setInterval(() => {
           timeLeftRef.current -= 1;
           const t = timeLeftRef.current;
@@ -195,7 +195,7 @@ const AssessmentEngine: React.FC = () => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isStarted, isCompleted, currentModuleIndex, currentSlideInModule, isPaused, currentModuleConfig, currentSlide]);
+  }, [isStarted, isCompleted, currentModuleIndex, currentSlideInModule, isPaused, isScreenLocked, currentModuleConfig, currentSlide]);
 
   // Keyboard controls & Security environment listeners
   useEffect(() => {
@@ -272,12 +272,25 @@ const AssessmentEngine: React.FC = () => {
       }
     };
 
+    const handleFullscreenChange = () => {
+      if (!isAdminPreview && isStarted && !isCompleted) {
+        if (!document.fullscreenElement) {
+          if (Date.now() - startedAtRef.current < 3000) {
+            console.log("Ignoring fullscreen exit event during start grace period");
+            return;
+          }
+          setIsScreenLocked(true);
+        }
+      }
+    };
+
     const preventDefaultContext = (e: MouseEvent) => e.preventDefault();
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     window.addEventListener('blur', handleBlur);
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
     window.addEventListener('contextmenu', preventDefaultContext);
 
     return () => {
@@ -285,6 +298,7 @@ const AssessmentEngine: React.FC = () => {
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('blur', handleBlur);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
       window.removeEventListener('contextmenu', preventDefaultContext);
     };
   }, [isStarted, isCompleted, currentModule, isAdminPreview, handleNextSlide, handlePrevSlide, currentModuleConfig, currentSlideInModule, currentModuleSlides.length, allowCandidateSkip]);
@@ -389,10 +403,10 @@ const AssessmentEngine: React.FC = () => {
           </div>
           <h2 className="text-3xl font-black tracking-tight text-white uppercase">SECURITY BLOCK ACTIVE</h2>
           <p className="text-sm text-zinc-400 font-medium leading-relaxed">
-            Screen capture attempt, tab switching, or loss of focus detected. Timed evaluations are strictly monitored. Your activity has been logged.
+            Fullscreen exit, screen capture attempt, tab switching, or loss of focus detected. Timed evaluations are strictly monitored. Your activity has been logged.
           </p>
           <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-xl text-red-400 text-xs font-bold leading-normal">
-            To prevent automatic disqualification, click the button below to resume focus and return to the test.
+            To prevent automatic disqualification, click the button below to resume focus, re-enter fullscreen mode, and return to the test.
           </div>
           <button
             onClick={() => {

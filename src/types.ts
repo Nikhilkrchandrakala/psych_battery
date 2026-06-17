@@ -104,6 +104,10 @@ export interface AssessmentSubmission {
   toMeetingDate?: any;
   toMeetingLink?: string;
   finalReport?: string;
+  releasedPsychRemarks?: string;
+  releasedGtoRemarks?: string;
+  releasedIoRemarks?: string;
+  releasedToRemarks?: string;
   reportVisibility?: {
     psych?: boolean;
     io?: boolean;

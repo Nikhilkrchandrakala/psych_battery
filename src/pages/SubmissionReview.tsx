@@ -98,9 +98,10 @@ const ASSESSOR_GRID_CONFIG = {
 interface ModernDateTimePickerProps {
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }
 
-const ModernDateTimePicker: React.FC<ModernDateTimePickerProps> = ({ value, onChange }) => {
+const ModernDateTimePicker: React.FC<ModernDateTimePickerProps> = ({ value, onChange, disabled }) => {
   const initialDate = value ? new Date(value) : new Date();
   
   const [currentMonth, setCurrentMonth] = useState(initialDate.getMonth());
@@ -315,6 +316,7 @@ const ModernDateTimePicker: React.FC<ModernDateTimePickerProps> = ({ value, onCh
                 <button
                   key={`day-${day}`}
                   type="button"
+                  disabled={disabled}
                   onClick={() => handleDayClick(day)}
                   className={cn(
                     "p-2 rounded-xl text-center transition-all cursor-pointer relative font-bold",
@@ -347,6 +349,7 @@ const ModernDateTimePicker: React.FC<ModernDateTimePickerProps> = ({ value, onCh
                 <button
                   key={slot.label}
                   type="button"
+                  disabled={disabled}
                   onClick={() => handleTimeChange(slot.h, slot.m)}
                   className={cn(
                     "py-2 px-3 rounded-xl text-[10px] font-black tracking-wider transition-all cursor-pointer text-center",
@@ -409,7 +412,7 @@ const ModernDateTimePicker: React.FC<ModernDateTimePickerProps> = ({ value, onCh
         <button
           type="button"
           onClick={handleConfirm}
-          disabled={!tempDate || isConfirmed}
+          disabled={disabled || !tempDate || isConfirmed}
           className={cn(
             "w-full sm:w-auto px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer",
             isConfirmed 
@@ -494,6 +497,14 @@ const SubmissionReview: React.FC = () => {
 
   const showRoleToggle = !profile?.assessorType;
 
+  // Determine if the current active assessor has finalized their evaluation
+  const isAssessorCompleted = (() => {
+    if (!submission) return false;
+    const prefix = activeAssessorType.toLowerCase();
+    const statusField = `${prefix}Status`;
+    return (submission as any)[statusField] === 'COMPLETED';
+  })();
+
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
@@ -560,6 +571,22 @@ const SubmissionReview: React.FC = () => {
       setRemarks((submission as any).ioRemarks || '');
     } else if (activeAssessorType === 'TO') {
       setRemarks((submission as any).toRemarks || '');
+    }
+
+    const roleScoresField = `${activeAssessorType.toLowerCase()}Scores`;
+    const roleScores = (submission as any)[roleScoresField];
+    if (roleScores && Object.keys(roleScores).length > 0) {
+      setScores(roleScores);
+    } else {
+      const initialScores: Record<string, number | string> = {};
+      Object.values(SPECIALIZED_TRAITS).forEach(groups => {
+        Object.values(groups).forEach(traits => {
+          Object.keys(traits).forEach(k => {
+            initialScores[k] = 0;
+          });
+        });
+      });
+      setScores(initialScores);
     }
 
     // Role-based meeting link logic
@@ -809,21 +836,21 @@ const SubmissionReview: React.FC = () => {
 
         <div className="flex flex-col items-end gap-2 text-right">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => handleUpdate('UNDER_REVIEW')}
-              disabled={saving || ((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded)}
-              className="px-6 py-3 bg-app-card border border-app-border rounded-2xl text-xs font-black text-app-text-bright hover:bg-white/5 transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            >
-              Save Preliminary
-            </button>
-            <button
-              onClick={() => handleUpdate('COMPLETED')}
-              disabled={saving || ((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded)}
-              className="px-6 py-3 bg-gradient-to-br from-[#C5A028] to-[#8C6A0F] text-white rounded-2xl text-xs font-black hover:opacity-90 transition-all shadow-lg shadow-app-accent/30 active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            >
-              {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-              Finalize Evaluation
-            </button>
+            {isAssessorCompleted ? (
+              <div className="px-6 py-3 bg-green-500/10 border border-green-500/20 text-green-400 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                <CheckCircle2 size={16} />
+                Evaluation Finalized & Locked
+              </div>
+            ) : (
+                <button
+                  onClick={() => handleUpdate('COMPLETED')}
+                  disabled={saving || ((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded)}
+                  className="px-6 py-3 bg-gradient-to-br from-[#C5A028] to-[#8C6A0F] text-white rounded-2xl text-xs font-black hover:opacity-90 transition-all shadow-lg shadow-app-accent/30 active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                  Finalize Evaluation
+                </button>
+            )}
           </div>
           
           {/* Temporal Markers */}
@@ -1146,6 +1173,7 @@ const SubmissionReview: React.FC = () => {
                   <textarea
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
+                    disabled={isAssessorCompleted}
                     placeholder={
                       activeAssessorType === 'Psych' ? 'Enter comprehensive psychological profile and timeline analysis...' :
                       activeAssessorType === 'GTO' ? 'Enter GTO group dynamic behavior and outdoor performance marks...' :
@@ -1159,7 +1187,7 @@ const SubmissionReview: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleUploadRemarks}
-                      disabled={saving || ((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded)}
+                      disabled={saving || isAssessorCompleted || ((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded)}
                       className="px-6 py-2.5 bg-app-card border border-app-border hover:border-app-accent text-app-text-bright rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                     >
                       Upload Remarks
@@ -1240,6 +1268,7 @@ const SubmissionReview: React.FC = () => {
                                         type="number"
                                         min={0}
                                         max={9}
+                                        disabled={isAssessorCompleted}
                                         value={scores[t.id] ?? ''}
                                         onChange={(e) => {
                                           const valStr = e.target.value;
@@ -1266,6 +1295,7 @@ const SubmissionReview: React.FC = () => {
                                       type="number"
                                       min={0}
                                       max={999}
+                                      disabled={isAssessorCompleted}
                                       value={scores['marks'] ?? ''}
                                       onChange={(e) => {
                                         const valStr = e.target.value;
@@ -1296,7 +1326,7 @@ const SubmissionReview: React.FC = () => {
                         <button
                           type="button"
                           onClick={handleUploadMarks}
-                          disabled={saving || ((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded)}
+                          disabled={saving || isAssessorCompleted || ((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded)}
                           className="px-6 py-2.5 bg-app-card border border-app-border hover:border-app-accent text-app-text-bright rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                         >
                           Upload Marks
@@ -1336,6 +1366,7 @@ const SubmissionReview: React.FC = () => {
                 <ModernDateTimePicker
                   value={meetingDate}
                   onChange={setMeetingDate}
+                  disabled={isAssessorCompleted}
                 />
               </div>
 
@@ -1345,6 +1376,7 @@ const SubmissionReview: React.FC = () => {
                   type="url"
                   value={meetingLink}
                   onChange={(e) => setMeetingLink(e.target.value)}
+                  disabled={isAssessorCompleted}
                   placeholder="https://meet.google.com/xxx-xxxx-xxx"
                   className="w-full bg-app-card border border-app-border rounded-2xl p-4 text-sm font-black text-app-text-bright focus:outline-none focus:border-app-accent transition-all placeholder:text-app-text-muted/20"
                 />
@@ -1352,7 +1384,7 @@ const SubmissionReview: React.FC = () => {
 
               <button
                 onClick={() => handleUpdate('MEETING_SCHEDULED')}
-                disabled={saving || ((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded)}
+                disabled={saving || isAssessorCompleted || ((activeAssessorType === 'Psych' || activeAssessorType === 'TO') && !isDossierUploaded)}
                 className="w-full py-4 bg-app-card border border-app-border hover:border-app-accent text-app-text-bright rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all shadow-lg shadow-black/40 hover:bg-app-accent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 Confirm & Transmit Invite

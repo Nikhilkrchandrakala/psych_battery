@@ -429,7 +429,7 @@ const AdminDashboard: React.FC = () => {
                   <span className="text-[9px] font-black text-app-text-muted uppercase tracking-wider block mt-0.5">Assigned evaluator</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  {isCompleted && !isBroadcasted && (
+                  {!isBroadcasted && (
                     <button
                       onClick={handleIndividualBroadcast}
                       disabled={broadcasting}

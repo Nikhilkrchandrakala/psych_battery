@@ -1613,9 +1613,20 @@ async function startServer() {
               const assessorRoleName = role === 'psych' ? 'Psychologist' : role === 'to' ? 'Technical Officer' : role === 'gto' ? 'GTO Assessor' : 'Interviewing Officer';
 
               const sendMsg91Email = (payload: any, label: string) => {
-                const msg91Payload = JSON.stringify(payload);
+                const formattedPayload = {
+                  recipients: [
+                    {
+                      to: payload.to,
+                      variables: payload.variables
+                    }
+                  ],
+                  from: payload.from,
+                  domain: payload.domain,
+                  template_id: payload.template_id
+                };
+                const msg91Payload = JSON.stringify(formattedPayload);
                 const options = {
-                  hostname: 'api.msg91.com',
+                  hostname: 'control.msg91.com',
                   path: '/api/v5/email/send',
                   method: 'POST',
                   headers: {
@@ -1816,6 +1827,11 @@ async function startServer() {
       if (isIndividual) {
         const type = assessorType.toLowerCase();
         submission.set(`reportVisibility.${type}`, true);
+
+        // Copy current assessor remarks to released/broadcasted field
+        const remarksField = `${type}Remarks`;
+        const releasedRemarksField = `released${type.charAt(0).toUpperCase() + type.slice(1)}Remarks`;
+        submission.set(releasedRemarksField, submission.get(remarksField) || '');
       } else {
         submission.status = 'REPORT_RELEASED';
         submission.reportVisibility = {
@@ -1824,6 +1840,12 @@ async function startServer() {
           gto: true,
           to: true
         };
+
+        // Copy all assessor remarks to released fields
+        submission.set('releasedPsychRemarks', (submission as any).psychRemarks || '');
+        submission.set('releasedGtoRemarks', (submission as any).gtoRemarks || '');
+        submission.set('releasedIoRemarks', (submission as any).ioRemarks || '');
+        submission.set('releasedToRemarks', (submission as any).toRemarks || '');
       }
 
       await submission.save();
@@ -1866,24 +1888,28 @@ async function startServer() {
           } else {
             try {
               const msg91Payload = JSON.stringify({
-                to: [
-                  { name: candidateName, email: student.email }
+                recipients: [
+                  {
+                    to: [
+                      { name: candidateName, email: student.email }
+                    ],
+                    variables: {
+                      candidate_name: candidateName,
+                      evaluation_details: `Your psychological evaluation results are published. Overall Score: ${submission.score || '--'}.`,
+                      report_link: `https://ssbwithisv.in/ProfileDashboard?tab=psycheTest`
+                    }
+                  }
                 ],
                 from: {
                   name: "Integrated SSB Virtuosos",
                   email: "noreply@ssbwithisv.in"
                 },
                 domain: "noreply.ssbwithisv.in",
-                template_id: "results_broadcast_template_1",
-                variables: {
-                  candidate_name: candidateName,
-                  evaluation_details: `Your psychological evaluation results are published. Overall Score: ${submission.score || '--'}.`,
-                  report_link: `https://ssbwithisv.in/ProfileDashboard?tab=psycheTest`
-                }
+                template_id: "results_broadcast_template_1"
               });
 
               const options = {
-                hostname: 'api.msg91.com',
+                hostname: 'control.msg91.com',
                 path: '/api/v5/email/send',
                 method: 'POST',
                 headers: {

@@ -155,6 +155,12 @@ const SubmissionSchema = new mongoose.Schema({
   toRemarks: { type: String, default: '' },
   toStatus: { type: String, enum: ['PENDING', 'UNDER_REVIEW', 'COMPLETED', 'NOT_REQUIRED'], default: 'PENDING' },
 
+  releasedPsychRemarks: { type: String, default: '' },
+  releasedGtoRemarks: { type: String, default: '' },
+  releasedIoRemarks: { type: String, default: '' },
+  releasedToRemarks: { type: String, default: '' },
+
+
   workflowStage: { type: String, default: 'PIQ_PENDING' },
   reportVisibility: {
     psych: { type: Boolean, default: false },
