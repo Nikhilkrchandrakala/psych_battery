@@ -61,7 +61,7 @@ const AssessmentEngine: React.FC = () => {
   const currentModule = activeModules[currentModuleIndex] || 'INTRO';
   const currentModuleSlides = moduleSlideMap[currentModule] || [];
 
-  const isAdminPreview = profile?.role === 'admin' || profile?.role === 'assessor';
+  const isAdminPreview = profile?.role === 'admin' || profile?.role === 'assessor' || profile?.role === 'owner';
   const allowCandidateSkip = assessment?.allowCandidateSkip === true;
 
   const currentModuleConfig: ModuleConfig = useMemo(() => {
@@ -89,7 +89,7 @@ const AssessmentEngine: React.FC = () => {
   // Data fetch auto-start for admin and candidate
   useEffect(() => {
     if (!loading && assessment && user) {
-      if (profile?.role === 'admin') {
+      if (profile?.role === 'admin' || profile?.role === 'owner') {
         setIsStarted(true);
       } else if (autoStart && !isStarted) {
         startAssessment();

@@ -18,7 +18,7 @@ const Layout: React.FC = () => {
   const handleBackToAdmin = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    const isAssessorOrAdmin = profile?.role === 'assessor' || profile?.role === 'admin';
+    const isAssessorOrAdmin = profile?.role === 'assessor' || profile?.role === 'admin' || profile?.role === 'owner';
     const activeToken = localStorage.getItem('auth_token') || '';
     
     const dest = isAssessorOrAdmin
@@ -71,7 +71,7 @@ const Layout: React.FC = () => {
           <nav className="space-y-1">
             {/* Back to Profile / Back to Admin Panel */}
             <a
-              href={profile?.role === 'assessor' || profile?.role === 'admin'
+              href={profile?.role === 'assessor' || profile?.role === 'admin' || profile?.role === 'owner'
                 ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080/Profile.html' : 'https://admin.ssbwithisv.in/Profile.html')
                 : `${mainSiteUrl}/ProfileDashboard`
               }
@@ -79,7 +79,7 @@ const Layout: React.FC = () => {
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group font-medium text-sm text-app-text-muted hover:text-app-accent hover:bg-app-accent/5 mb-4"
             >
               <ArrowLeft size={18} className="group-hover:text-app-accent transition-colors" />
-              <span>{profile?.role === 'assessor' || profile?.role === 'admin' ? 'Back to Admin Panel' : 'Return to Profile'}</span>
+              <span>{profile?.role === 'assessor' || profile?.role === 'admin' || profile?.role === 'owner' ? 'Back to Admin Panel' : 'Return to Profile'}</span>
               <ExternalLink size={12} className="ml-auto opacity-40" />
             </a>
 
@@ -109,7 +109,7 @@ const Layout: React.FC = () => {
         </div>
 
         <div className="mt-auto p-4 border-t border-app-border bg-black/20">
-          {user && profile?.role !== 'assessor' && profile?.role !== 'admin' && (
+          {user && profile?.role !== 'assessor' && profile?.role !== 'admin' && profile?.role !== 'owner' && (
             <div className="flex items-center gap-3 p-2">
               <div className="w-10 h-10 rounded-full bg-app-card border border-app-border flex items-center justify-center shrink-0 overflow-hidden">
                 {profile?.profileImage ? (
@@ -120,7 +120,7 @@ const Layout: React.FC = () => {
               </div>
               <div className="flex-grow min-w-0">
                 <div className="text-xs font-bold text-app-text-bright truncate">{profile?.name}</div>
-                <div className="text-[10px] text-app-text-muted uppercase font-black tracking-widest truncate">{(profile?.role as string) === 'admin' ? 'SUPER ADMIN' : profile?.role}</div>
+                <div className="text-[10px] text-app-text-muted uppercase font-black tracking-widest truncate">{profile?.role === 'owner' ? 'OWNER' : (profile?.role === 'admin' ? 'SUPER ADMIN' : profile?.role)}</div>
               </div>
               <button
                 onClick={handleLogout}
@@ -160,12 +160,12 @@ const Layout: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-4 text-xs font-bold text-app-text-muted">
-            {profile?.role === 'assessor' || profile?.role === 'admin' ? (
+            {profile?.role === 'assessor' || profile?.role === 'admin' || profile?.role === 'owner' ? (
               <div className="flex items-center gap-3 py-1 px-3 bg-app-card rounded-2xl border border-app-border shadow-inner">
                 <div className="text-right">
                   <div className="text-xs font-bold text-app-text-bright leading-tight">{profile?.name}</div>
                   <div className="text-[9px] text-[#8fa0b5] font-black uppercase tracking-widest leading-none mt-1">
-                    {profile?.assessorType ? `${profile.assessorType} Assessor` : (profile?.role === 'admin' ? 'SUPER ADMIN' : 'Assessor')}
+                    {profile?.assessorType ? `${profile.assessorType} Assessor` : (profile?.role === 'owner' ? 'OWNER' : (profile?.role === 'admin' ? 'SUPER ADMIN' : 'Assessor'))}
                   </div>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-app-sidebar border border-app-border flex items-center justify-center overflow-hidden shrink-0">
@@ -231,7 +231,7 @@ const Layout: React.FC = () => {
               })}
               <div className="pt-4 mt-4 border-t border-app-border space-y-4">
                 <a
-                  href={profile?.role === 'assessor' || profile?.role === 'admin'
+                  href={profile?.role === 'assessor' || profile?.role === 'admin' || profile?.role === 'owner'
                     ? (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080/Profile.html' : 'https://admin.ssbwithisv.in/Profile.html')
                     : `${mainSiteUrl}/ProfileDashboard`
                   }
@@ -239,7 +239,7 @@ const Layout: React.FC = () => {
                   onClick={handleBackToAdmin}
                 >
                   <ArrowLeft size={24} />
-                  {profile?.role === 'assessor' || profile?.role === 'admin' ? 'Back to Admin Panel' : 'Return to Profile'}
+                  {profile?.role === 'assessor' || profile?.role === 'admin' || profile?.role === 'owner' ? 'Back to Admin Panel' : 'Return to Profile'}
                 </a>
                  <button
                   onClick={handleLogout}

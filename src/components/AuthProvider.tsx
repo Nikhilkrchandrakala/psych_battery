@@ -60,8 +60,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(userData);
       setProfile(userData);
       setIsAdminUser(
-        userData.role === 'admin' && 
-        (userData.permissions?.includes('super_admin') || userData.permissions?.includes('evaluations'))
+        userData.role === 'owner' ||
+        (userData.role === 'admin' && 
+         (userData.permissions?.includes('super_admin') || 
+          userData.permissions?.includes('evaluations') || 
+          userData.permissions?.includes('psych_battery')))
       );
 
       // Role-based auto-routing after SSO or bypass entry
@@ -69,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const currentPath = window.location.pathname;
         const isEntryPoint = currentPath === '/' || currentPath === '/auth-sync';
         if (isEntryPoint) {
-          if (userData.role === 'admin') {
+          if (userData.role === 'admin' || userData.role === 'owner') {
             window.history.replaceState({}, '', '/admin');
           } else if (userData.role === 'assessor') {
             window.history.replaceState({}, '', '/assessor');

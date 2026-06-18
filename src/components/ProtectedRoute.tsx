@@ -32,8 +32,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, requireAd
     return <Navigate to="/" replace />;
   }
 
-  if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
-    return <Navigate to="/" replace />;
+  if (allowedRoles && profile) {
+    const isAllowed = allowedRoles.includes(profile.role) || (allowedRoles.includes('admin') && profile.role === 'owner');
+    if (!isAllowed) {
+      return <Navigate to="/" replace />;
+    }
   }
 
   return <Outlet />;

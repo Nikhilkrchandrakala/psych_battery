@@ -22,7 +22,7 @@ import Meetings from './pages/Meetings';
  */
 const RoleRedirect: React.FC = () => {
   const { profile } = useAuth();
-  if (profile?.role === 'admin') return <Navigate to="/admin" replace />;
+  if (profile?.role === 'admin' || profile?.role === 'owner') return <Navigate to="/admin" replace />;
   if (profile?.role === 'assessor') return <Navigate to="/assessor" replace />;
   return <StudentEntry />;
 };

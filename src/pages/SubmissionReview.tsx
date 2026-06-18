@@ -976,7 +976,7 @@ const SubmissionReview: React.FC = () => {
                   ? `No files uploaded yet for ${selectedPiqTab === 'piq1' ? 'PIQ 1' : 'PIQ 2'}.` 
                   : 'No Dossier sheets uploaded yet by the candidate.';
 
-                const isAssessorAuthorized = ['Psych', 'TO'].includes(activeAssessorType) || profile?.role === 'admin';
+                const isAssessorAuthorized = ['Psych', 'TO'].includes(activeAssessorType) || profile?.role === 'admin' || profile?.role === 'owner';
                 const currentStatus = selectedPiqTab === 'piq1' 
                   ? (submission as any).piq1Status || (piq1Files.length > 0 ? 'VERIFIED' : 'PENDING') 
                   : (submission as any).piq2Status || 'PENDING';

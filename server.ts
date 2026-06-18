@@ -206,7 +206,7 @@ const authenticate = async (req: any, res: any, next: any) => {
     let foundUser = null;
 
     // Check role from decoded payload
-    if (decoded.role === 'admin' || decoded.role === 'franchise' || decoded.role === 'assessor') {
+    if (decoded.role === 'owner' || decoded.role === 'admin' || decoded.role === 'franchise' || decoded.role === 'assessor') {
       const admin = await AdminUser.findById(decoded.id);
       if (admin) {
         foundUser = admin.toObject ? admin.toObject() : admin;
@@ -239,10 +239,10 @@ const authenticate = async (req: any, res: any, next: any) => {
     }
     req.user = foundUser;
     
-    // Enforce "evaluations" permission for admins globally in PsychBattery (except for /api/auth/me so frontend can redirect)
-    if (req.user.role === 'admin' && req.path !== '/api/auth/me') {
+    // Enforce "evaluations" / "psych_battery" permission for admins/owners globally in PsychBattery (except for /api/auth/me so frontend can redirect)
+    if ((req.user.role === 'admin' || req.user.role === 'owner') && req.path !== '/api/auth/me') {
       const perms = req.user.permissions || [];
-      if (!perms.includes('super_admin') && !perms.includes('evaluations')) {
+      if (req.user.role !== 'owner' && !perms.includes('super_admin') && !perms.includes('evaluations') && !perms.includes('psych_battery')) {
         return res.status(403).json({ message: 'Access Denied: You do not have the Candidate Evaluations permission.' });
       }
     }
@@ -255,7 +255,7 @@ const authenticate = async (req: any, res: any, next: any) => {
 };
 
 const isAdmin = (req: any, res: any, next: any) => {
-  if (req.user && req.user.role === 'admin') {
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'owner')) {
     next();
   } else {
     res.status(403).json({ message: 'Admin access required' });
@@ -637,7 +637,10 @@ async function startServer() {
           }
         });
         const superAdmins = await AdminUser.find({
-          permissions: { $in: ['evaluations', 'super_admin'] }
+          $or: [
+            { role: 'owner' },
+            { permissions: { $in: ['evaluations', 'super_admin', 'psych_battery'] } }
+          ]
         });
         superAdmins.forEach(sa => {
           const adminId = sa._id.toString();
@@ -803,7 +806,10 @@ async function startServer() {
             }
           });
           const superAdmins = await AdminUser.find({
-            permissions: { $in: ['evaluations', 'super_admin'] }
+            $or: [
+              { role: 'owner' },
+              { permissions: { $in: ['evaluations', 'super_admin', 'psych_battery'] } }
+            ]
           });
           superAdmins.forEach(sa => {
             const adminId = sa._id.toString();
@@ -1243,7 +1249,7 @@ async function startServer() {
       let mappedSubmissions = Array.from(uniqueSubmissionsMap.values());
 
       // Append pending submissions for students that are allotted but haven't uploaded anything
-      if (req.user.role === 'assessor' || req.user.role === 'admin') {
+      if (req.user.role === 'assessor' || req.user.role === 'admin' || req.user.role === 'owner') {
         let candidateQuery: any = {};
 
         if (req.user.role === 'assessor') {
@@ -1258,7 +1264,7 @@ async function startServer() {
             // Assessor has no type, don't query candidates
             candidateQuery = null;
           }
-        } else if (req.user.role === 'admin') {
+        } else if (req.user.role === 'admin' || req.user.role === 'owner') {
           // Admins should see ALL candidates that have AT LEAST ONE assessor assigned
           candidateQuery = {
             $or: [
@@ -1290,8 +1296,8 @@ async function startServer() {
         }
       }
 
-      // For admin, ensure they ONLY see students that have at least one assigned assessor
-      if (req.user.role === 'admin') {
+      // For admin/owner, ensure they ONLY see students that have at least one assigned assessor
+      if (req.user.role === 'admin' || req.user.role === 'owner') {
         mappedSubmissions = mappedSubmissions.filter(sub => {
           const st = sub.student;
           if (!st) return false;
@@ -1452,7 +1458,12 @@ async function startServer() {
       const admins = await User.find({ role: 'admin' });
       admins.forEach(a => { if (!recipientIds.includes(a._id.toString())) recipientIds.push(a._id.toString()); });
       
-      const superAdmins = await AdminUser.find({ permissions: { $in: ['evaluations', 'super_admin'] } });
+      const superAdmins = await AdminUser.find({
+        $or: [
+          { role: 'owner' },
+          { permissions: { $in: ['evaluations', 'super_admin', 'psych_battery'] } }
+        ]
+      });
       superAdmins.forEach(sa => { if (!recipientIds.includes(sa._id.toString())) recipientIds.push(sa._id.toString()); });
 
       const candidateName = student ? student.name : 'Candidate';
