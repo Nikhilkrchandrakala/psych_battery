@@ -815,11 +815,8 @@ const SubmissionReview: React.FC = () => {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-4xl font-black tracking-tighter text-app-text-bright">{studentName}</h1>
-                <span className="px-2.5 py-1 rounded-lg bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-[0.15em] text-app-text-bright">
-                  Batch: {student?.batch || '--'}
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-[0.15em] text-app-text-bright">
-                  Chest: {student?.chestNo || '--'}
+                <span className="px-2.5 py-1 rounded-lg bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-[0.15em] text-app-text-bright whitespace-nowrap">
+                  Batch: {student?.batch || '--'} | Chest: {student?.chestNo || '--'}
                 </span>
               </div>
               <div className="flex items-center gap-3 mt-1">
@@ -1219,7 +1216,7 @@ const SubmissionReview: React.FC = () => {
                               </colgroup>
                               <thead>
                                 {/* Factor Headers Row */}
-                                <tr className="bg-black/30 border-b border-app-border divide-x divide-app-border/40 text-[9px] font-black text-app-accent uppercase tracking-widest text-center">
+                                <tr className="bg-black/30 border-b border-app-border divide-x divide-app-border/40 text-xs font-black text-app-accent uppercase tracking-widest text-center">
                                   <th className="px-2 py-3 text-left overflow-hidden text-ellipsis whitespace-nowrap">Trainee / Chest No</th>
                                   {gridConfig.factors.map((f, i) => (
                                     <th key={i} colSpan={f.colSpan} className="px-1 py-2 leading-tight">
@@ -1231,13 +1228,13 @@ const SubmissionReview: React.FC = () => {
                                   </th>
                                 </tr>
                                 {/* OLQ Codes Row */}
-                                <tr className="bg-black/10 border-b border-app-border divide-x divide-app-border/40 text-[10px] font-black text-app-text-bright uppercase tracking-wider text-center">
-                                  <td className="px-2 py-2 text-left text-app-text-muted text-[8px] overflow-hidden text-ellipsis whitespace-nowrap">Code</td>
+                                <tr className="bg-black/10 border-b border-app-border divide-x divide-app-border/40 text-xs font-black text-app-text-bright uppercase tracking-wider text-center">
+                                  <td className="px-2 py-2 text-left text-app-text-muted text-[10px] overflow-hidden text-ellipsis whitespace-nowrap">Code</td>
                                   {gridConfig.traits.map((t) => (
-                                    <td key={t.id} className="px-1 py-2 font-mono text-[9px] hover:bg-black/20 group relative cursor-help overflow-hidden text-ellipsis whitespace-nowrap">
+                                    <td key={t.id} className="px-1 py-2 font-mono text-xs hover:bg-black/20 group relative cursor-help overflow-hidden text-ellipsis whitespace-nowrap">
                                       <span className="underline decoration-dotted decoration-app-text-muted/50">{t.code}</span>
                                       {/* Tooltip for description */}
-                                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-black border border-app-border text-white text-[9px] font-bold py-1.5 px-3 rounded-lg shadow-2xl whitespace-nowrap z-50">
+                                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-black border border-app-border text-white text-xs font-bold py-1.5 px-3 rounded-lg shadow-2xl whitespace-nowrap z-50">
                                         {t.name}
                                       </div>
                                     </td>
@@ -1249,15 +1246,12 @@ const SubmissionReview: React.FC = () => {
                                 <tr className="divide-x divide-app-border/40 hover:bg-black/10 transition-colors">
                                   <td className="px-2 py-3">
                                     <div className="flex flex-col overflow-hidden">
-                                      <span className="text-[11px] font-black text-app-text-bright uppercase tracking-wide leading-tight truncate mb-1">
+                                      <span className="text-xs font-black text-app-text-bright uppercase tracking-wide leading-tight truncate mb-1">
                                         {student?.name || 'Trainee'}
                                       </span>
                                       <div className="flex items-center gap-1">
-                                        <span className="px-1 py-0.5 rounded bg-black/30 border border-app-border text-[7px] font-black uppercase tracking-widest text-app-text-bright truncate">
-                                          B: {student?.batch || '--'}
-                                        </span>
-                                        <span className="px-1 py-0.5 rounded bg-black/30 border border-app-border text-[7px] font-black uppercase tracking-widest text-app-text-bright truncate">
-                                          C: {student?.chestNo || '--'}
+                                        <span className="px-1 py-0.5 rounded bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-widest text-app-text-bright truncate whitespace-nowrap">
+                                          B: {student?.batch || '--'} | C: {student?.chestNo || '--'}
                                         </span>
                                       </div>
                                     </div>
@@ -1286,7 +1280,7 @@ const SubmissionReview: React.FC = () => {
                                         }}
                                         onFocus={(e) => e.target.select()}
                                         placeholder="--"
-                                        className="w-full bg-transparent border-0 text-center text-xs font-black text-app-text-bright focus:outline-none focus:ring-1 focus:ring-app-accent/50 focus:bg-black/30 rounded py-2 px-0.5 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        className="w-full bg-transparent border-0 text-center text-sm font-black text-app-text-bright focus:outline-none focus:ring-1 focus:ring-app-accent/50 focus:bg-black/30 rounded py-2 px-0.5 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                       />
                                     </td>
                                   ))}
@@ -1313,7 +1307,7 @@ const SubmissionReview: React.FC = () => {
                                       }}
                                       onFocus={(e) => e.target.select()}
                                       placeholder="--"
-                                      className="w-full bg-app-accent/15 border-0 text-center text-xs font-black text-app-accent focus:outline-none focus:ring-1 focus:ring-app-accent/80 focus:bg-app-accent/20 rounded py-2 px-1 transition-all font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                      className="w-full bg-app-accent/15 border-0 text-center text-sm font-black text-app-accent focus:outline-none focus:ring-1 focus:ring-app-accent/80 focus:bg-app-accent/20 rounded py-2 px-1 transition-all font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     />
                                   </td>
                                 </tr>
@@ -1419,7 +1413,7 @@ const SubmissionReview: React.FC = () => {
                   <div className="border-b border-app-border pb-3">
                     <h4 className="text-xs font-black uppercase text-app-text-bright tracking-widest">{feedback.title}</h4>
                   </div>
-                  <div className="bg-black/30 border border-app-border p-4 rounded-2xl min-h-[140px] overflow-y-auto leading-relaxed text-xs font-serif italic text-app-text-bright">
+                  <div className="bg-black/30 border border-app-border p-4 rounded-2xl min-h-[140px] overflow-y-auto leading-relaxed text-sm font-serif italic text-app-text-bright">
                     {feedback.remarks ? feedback.remarks : 'No qualitative comments recorded.'}
                   </div>
                 </div>

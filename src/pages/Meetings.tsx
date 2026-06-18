@@ -518,11 +518,8 @@ const Meetings: React.FC = () => {
               <div>
                 <h3 className="text-base font-black text-app-text-bright group-hover:text-app-accent transition-colors">{m.student.name}</h3>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-widest text-app-text-bright">
-                    B: {m.student.batch}
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-widest text-app-text-bright">
-                    C: {m.student.chestNo}
+                  <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-widest text-app-text-bright whitespace-nowrap">
+                    B: {m.student.batch} | C: {m.student.chestNo}
                   </span>
                 </div>
               </div>
@@ -1221,11 +1218,8 @@ const Meetings: React.FC = () => {
                     <h5 className="text-base font-black text-app-text-bright">{selectedMeeting.student.name}</h5>
                     <p className="text-xs text-app-text-muted mt-0.5 font-mono">{selectedMeeting.student.email}</p>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="px-2 py-0.5 rounded bg-black/40 border border-app-border text-[9px] font-black uppercase tracking-widest text-app-text-bright font-mono">
-                        Batch: {selectedMeeting.student.batch}
-                      </span>
-                      <span className="px-2 py-0.5 rounded bg-black/40 border border-app-border text-[9px] font-black uppercase tracking-widest text-app-text-bright font-mono">
-                        Chest #: {selectedMeeting.student.chestNo}
+                      <span className="px-2 py-0.5 rounded bg-black/40 border border-app-border text-[9px] font-black uppercase tracking-widest text-app-text-bright font-mono whitespace-nowrap">
+                        Batch: {selectedMeeting.student.batch} | Chest #: {selectedMeeting.student.chestNo}
                       </span>
                     </div>
                   </div>

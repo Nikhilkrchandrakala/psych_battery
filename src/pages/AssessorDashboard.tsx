@@ -248,11 +248,8 @@ const AssessorDashboard: React.FC = () => {
                             <div>
                               <div className="flex items-center gap-2 mb-1">
                                 <div className="text-sm font-black text-app-text-bright">{sub.student?.name || 'Unknown Candidate'}</div>
-                                <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[8px] font-black uppercase tracking-widest text-app-text-bright">
-                                  B: {sub.student?.batch || '--'}
-                                </span>
-                                <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[8px] font-black uppercase tracking-widest text-app-text-bright">
-                                  C: {sub.student?.chestNo || '--'}
+                                <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[8px] font-black uppercase tracking-widest text-app-text-bright whitespace-nowrap">
+                                  B: {sub.student?.batch || '--'} | C: {sub.student?.chestNo || '--'}
                                 </span>
                               </div>
                               <div className="text-[10px] font-bold text-app-text-muted uppercase tracking-widest">{sub.student?.email || 'N/A'}</div>

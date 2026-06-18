@@ -302,11 +302,8 @@ const AdminDashboard: React.FC = () => {
                     <td className="p-6">
                        <div className="flex items-center gap-2 mb-1">
                          <div className="text-sm font-black text-app-text-bright">{studentName}</div>
-                         <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[8px] font-black uppercase tracking-widest text-app-text-bright">
-                           B: {student?.batch || '--'}
-                         </span>
-                         <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[8px] font-black uppercase tracking-widest text-app-text-bright">
-                           C: {student?.chestNo || '--'}
+                         <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[8px] font-black uppercase tracking-widest text-app-text-bright whitespace-nowrap">
+                           B: {student?.batch || '--'} | C: {student?.chestNo || '--'}
                          </span>
                        </div>
                        <div className="text-[9px] font-black text-app-text-muted uppercase tracking-widest">{studentEmail}</div>
@@ -455,21 +452,21 @@ const AdminDashboard: React.FC = () => {
 
               {/* Written Remarks */}
               <div className="space-y-1.5">
-                <span className="text-[9px] font-black uppercase text-app-text-muted tracking-widest">Written Remarks & Feedback</span>
-                <div className="bg-black/30 border border-app-border p-4 rounded-2xl max-h-[140px] overflow-y-auto leading-relaxed text-xs font-serif italic text-app-text-bright">
+                <span className="text-[11px] font-black uppercase text-app-text-muted tracking-widest">Written Remarks & Feedback</span>
+                <div className="bg-black/30 border border-app-border p-4 rounded-2xl max-h-[140px] overflow-y-auto leading-relaxed text-sm font-serif italic text-app-text-bright">
                   {remarksVal ? remarksVal : 'No qualitative comments recorded yet.'}
                 </div>
               </div>
 
               {/* Ticks and Marks (Grades) */}
               <div className="space-y-2">
-                <span className="text-[9px] font-black uppercase text-app-accent tracking-widest block">Scorecard Ticks & Marks</span>
+                <span className="text-[11px] font-black uppercase text-app-accent tracking-widest block">Scorecard Ticks & Marks</span>
                 {traitsScoreEntries.length > 0 ? (
                   <div className="bg-app-sidebar border border-app-border rounded-xl overflow-x-auto shadow-2xl hide-scrollbar">
                     <table className="w-full border-collapse text-left table-fixed min-w-[700px]">
                       <thead>
                         {/* Factor Headers Row */}
-                        <tr className="bg-black/30 border-b border-app-border divide-x divide-app-border/40 text-[9px] font-black text-app-accent uppercase tracking-widest text-center">
+                        <tr className="bg-black/30 border-b border-app-border divide-x divide-app-border/40 text-[11px] font-black text-app-accent uppercase tracking-widest text-center">
                           {gridConfig.factors.map((f, i) => (
                             <th key={i} colSpan={f.colSpan} className="px-1 py-2 leading-tight">
                               {f.label}
@@ -480,11 +477,11 @@ const AdminDashboard: React.FC = () => {
                           </th>
                         </tr>
                         {/* OLQ Codes Row */}
-                        <tr className="bg-black/10 border-b border-app-border divide-x divide-app-border/40 text-[10px] font-black text-app-text-bright uppercase tracking-wider text-center">
+                        <tr className="bg-black/10 border-b border-app-border divide-x divide-app-border/40 text-xs font-black text-app-text-bright uppercase tracking-wider text-center">
                           {gridConfig.traits.map((t) => (
-                            <td key={t.id} className="w-[5.8%] px-1 py-2 font-mono text-[9px] hover:bg-black/20 group relative cursor-help overflow-hidden text-ellipsis whitespace-nowrap">
+                            <td key={t.id} className="w-[5.8%] px-1 py-2 font-mono text-xs hover:bg-black/20 group relative cursor-help overflow-hidden text-ellipsis whitespace-nowrap">
                               <span className="underline decoration-dotted decoration-app-text-muted/50">{t.code}</span>
-                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-black border border-app-border text-white text-[9px] font-bold py-1.5 px-3 rounded-lg shadow-2xl whitespace-nowrap z-50">
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-black border border-app-border text-white text-xs font-bold py-1.5 px-3 rounded-lg shadow-2xl whitespace-nowrap z-50">
                                 {t.name}
                               </div>
                             </td>
@@ -495,13 +492,13 @@ const AdminDashboard: React.FC = () => {
                         <tr className="divide-x divide-app-border/40 hover:bg-black/10 transition-colors">
                           {gridConfig.traits.map((t) => (
                             <td key={t.id} className="p-0.5 text-center">
-                              <div className="w-full text-center text-xs font-black text-app-text-bright py-2 px-0.5">
+                              <div className="w-full text-center text-sm font-black text-app-text-bright py-2 px-0.5">
                                 {scoresMap[t.id] ?? 0}
                               </div>
                             </td>
                           ))}
                           <td className="p-0.5 text-center bg-app-accent/5">
-                            <div className="w-full text-center text-xs font-black text-app-accent py-2 px-1 font-mono">
+                            <div className="w-full text-center text-sm font-black text-app-accent py-2 px-1 font-mono">
                               {finalMarks}
                             </div>
                           </td>
@@ -510,7 +507,7 @@ const AdminDashboard: React.FC = () => {
                     </table>
                   </div>
                 ) : (
-                  <div className="text-[10px] italic text-app-text-muted bg-black/10 p-4 rounded-2xl text-center">
+                  <div className="text-xs italic text-app-text-muted bg-black/10 p-4 rounded-2xl text-center">
                     No numeric traits graded yet.
                   </div>
                 )}
@@ -530,11 +527,8 @@ const AdminDashboard: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center gap-3">
                     <h2 className="text-3xl font-black text-app-text-bright tracking-tight uppercase">Audit: {studentName}</h2>
-                    <span className="px-2.5 py-0.5 bg-app-accent/10 border border-app-accent/20 rounded text-[9px] font-black text-app-accent uppercase tracking-wider leading-none">
-                      Batch: {student?.batch || '--'}
-                    </span>
-                    <span className="px-2.5 py-0.5 bg-app-accent/10 border border-app-accent/20 rounded text-[9px] font-black text-app-accent uppercase tracking-wider leading-none">
-                      Chest No: {student?.chestNo || '--'}
+                    <span className="px-2.5 py-0.5 bg-app-accent/10 border border-app-accent/20 rounded text-[9px] font-black text-app-accent uppercase tracking-wider leading-none whitespace-nowrap">
+                      Batch: {student?.batch || '--'} | Chest No: {student?.chestNo || '--'}
                     </span>
                   </div>
                   <p className="text-xs text-app-text-muted font-serif italic">{studentEmail}</p>

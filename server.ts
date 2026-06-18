@@ -1785,8 +1785,8 @@ async function startServer() {
   // --- SUPER ADMIN AUDITING & BROADCAST ENDPOINTS ---
   app.post('/api/submissions/:id/broadcast', authenticate, async (req: any, res) => {
     try {
-      // Security: Only admins can broadcast reports
-      if (req.user.role !== 'admin') {
+      // Security: Only admins and owners can broadcast reports
+      if (req.user.role !== 'admin' && req.user.role !== 'owner') {
         return res.status(403).json({ message: 'Access Denied: Administrative privileges required' });
       }
 
@@ -1953,7 +1953,7 @@ async function startServer() {
 
   app.post('/api/submissions/:id/audit', authenticate, async (req: any, res) => {
     try {
-      if (req.user.role !== 'admin') {
+      if (req.user.role !== 'admin' && req.user.role !== 'owner') {
         return res.status(403).json({ message: 'Access Denied: Administrative privileges required' });
       }
 
