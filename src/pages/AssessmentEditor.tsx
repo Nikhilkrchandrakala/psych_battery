@@ -6,11 +6,13 @@ import {
   Save, Plus, Trash2, ChevronUp, ChevronDown, 
   Image as ImageIcon, Type, MessageSquare, 
   Clock, Play, Settings, ArrowLeft, Loader2,
-  Layout, Eye, Shield, Timer, Navigation,
-  Bold, Italic, List, ListOrdered, Palette, AlignLeft, AlignCenter
+  Layout, Eye, Shield, Timer, Navigation, AlignJustify,
+  Bold, Italic, List, ListOrdered, Palette, AlignLeft, AlignCenter,
+  ArrowUpFromLine, ArrowDownToLine
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
+import { SlideRenderer } from '../components/SlideRenderer';
 
 const EditableContent: React.FC<{
   value: string;
@@ -243,6 +245,8 @@ const AssessmentEditor: React.FC = () => {
   const [allSlides, setAllSlides] = useState<AssessmentSlide[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeModule, setActiveModule] = useState<ModuleId>('INTRO');
   const [activeSlideId, setActiveSlideId] = useState<string | null>(null);
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
@@ -257,13 +261,15 @@ const AssessmentEditor: React.FC = () => {
         const fetchedSlides = await api.assessments.slides(id);
         setAllSlides(fetchedSlides);
 
-        // Set initial active module to one with slides
-        const firstModuleWithSlides = MODULE_ORDER.find(m => 
-          fetchedSlides.some((s: AssessmentSlide) => s.module === m)
-        );
-        if (firstModuleWithSlides) {
-          setActiveModule(firstModuleWithSlides);
-          const firstSlide = fetchedSlides.find((s: AssessmentSlide) => s.module === firstModuleWithSlides);
+        // Set initial active module to one from URL, or the first one with slides
+        const urlModule = new URLSearchParams(window.location.search).get('module') as ModuleId;
+        const targetModule = urlModule && MODULE_ORDER.includes(urlModule) 
+          ? urlModule 
+          : MODULE_ORDER.find(m => fetchedSlides.some((s: AssessmentSlide) => s.module === m));
+
+        if (targetModule) {
+          setActiveModule(targetModule);
+          const firstSlide = fetchedSlides.find((s: AssessmentSlide) => s.module === targetModule);
           if (firstSlide) setActiveSlideId(firstSlide.id);
         }
       } catch (error) {
@@ -304,7 +310,7 @@ const AssessmentEditor: React.FC = () => {
     setAssessment({ ...assessment, modules: updatedModules as Record<ModuleId, ModuleConfig> });
   };
 
-  const addSlide = () => {
+  const addSlide = (direction: 'before' | 'after' = 'after', targetId?: string) => {
     const newSlide: AssessmentSlide = {
       id: `new-${Date.now()}`,
       assessmentId: id!,
@@ -322,11 +328,11 @@ const AssessmentEditor: React.FC = () => {
       .filter(s => s.module === activeModule)
       .sort((a, b) => a.order - b.order);
 
-    const activeIndex = activeSlideId 
-      ? currentModuleSlides.findIndex(s => s.id === activeSlideId)
-      : currentModuleSlides.length - 1;
+    const activeIndex = targetId 
+      ? currentModuleSlides.findIndex(s => s.id === targetId)
+      : (activeSlideId ? currentModuleSlides.findIndex(s => s.id === activeSlideId) : currentModuleSlides.length - 1);
 
-    const insertIndex = activeIndex >= 0 ? activeIndex + 1 : currentModuleSlides.length;
+    const insertIndex = activeIndex >= 0 ? activeIndex + (direction === 'after' ? 1 : 0) : currentModuleSlides.length;
     
     currentModuleSlides.splice(insertIndex, 0, newSlide);
     const withNewOrders = currentModuleSlides.map((s, i) => ({ ...s, order: i }));
@@ -548,7 +554,7 @@ const AssessmentEditor: React.FC = () => {
               {MODULE_LABELS[activeModule].label} Slides
             </span>
             <button 
-              onClick={addSlide}
+              onClick={() => addSlide('after')}
               className="p-1.5 hover:bg-app-accent hover:text-white rounded-lg text-app-accent border border-app-accent/20 transition-all"
             >
               <Plus size={16} />
@@ -577,60 +583,22 @@ const AssessmentEditor: React.FC = () => {
                     <span className="text-[9px] font-black text-app-text-muted uppercase tracking-widest">
                       {index + 1}. {slide.slideType}
                     </span>
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={(e) => { e.stopPropagation(); moveSlide(slide.id, 'up'); }} className="p-0.5 hover:text-app-text-bright"><ChevronUp size={12} /></button>
-                      <button onClick={(e) => { e.stopPropagation(); moveSlide(slide.id, 'down'); }} className="p-0.5 hover:text-app-text-bright"><ChevronDown size={12} /></button>
-                      <button onClick={(e) => { e.stopPropagation(); deleteSlide(slide.id); }} className="p-0.5 hover:text-red-400"><Trash2 size={12} /></button>
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 px-1 py-0.5 rounded-lg border border-white/5 backdrop-blur-sm z-10">
+                      <button onClick={(e) => { e.stopPropagation(); addSlide('before', slide.id); }} className="p-0.5 text-emerald-400/70 hover:text-emerald-400" title="Insert Slide Before"><ArrowUpFromLine size={12} /></button>
+                      <button onClick={(e) => { e.stopPropagation(); addSlide('after', slide.id); }} className="p-0.5 text-emerald-400/70 hover:text-emerald-400" title="Insert Slide After"><ArrowDownToLine size={12} /></button>
+                      <div className="w-[1px] h-3 bg-white/10 mx-0.5"></div>
+                      <button onClick={(e) => { e.stopPropagation(); moveSlide(slide.id, 'up'); }} className="p-0.5 text-app-text-muted hover:text-app-text-bright" title="Move Up"><ChevronUp size={12} /></button>
+                      <button onClick={(e) => { e.stopPropagation(); moveSlide(slide.id, 'down'); }} className="p-0.5 text-app-text-muted hover:text-app-text-bright" title="Move Down"><ChevronDown size={12} /></button>
+                      <div className="w-[1px] h-3 bg-white/10 mx-0.5"></div>
+                      <button onClick={(e) => { e.stopPropagation(); deleteSlide(slide.id); }} className="p-0.5 text-red-400/70 hover:text-red-400" title="Delete Slide"><Trash2 size={12} /></button>
                     </div>
                   </div>
                   
                   <div 
-                    className="w-full aspect-video rounded-lg bg-black/40 border border-app-border overflow-hidden flex items-center justify-center relative"
-                    style={{ filter: slide.inverted ? 'invert(1)' : 'none' }}
+                    className="w-full aspect-video rounded-lg bg-black/40 border border-app-border overflow-hidden flex items-center justify-center relative pointer-events-none"
+                    style={{ containerType: 'inline-size' }}
                   >
-                    {slide.slideType === 'IMAGE' ? (
-                      slide.imageUrl ? (
-                        <img src={slide.imageUrl} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <ImageIcon size={14} className="text-app-text-muted" />
-                      )
-                    ) : slide.slideType === 'BLACKOUT' ? (
-                      <div className="text-[9px] font-bold text-app-text-muted text-center px-2 line-clamp-3 p-1 w-full h-full flex items-center justify-center">
-                         ■ BLACKOUT
-                      </div>
-                    ) : slide.slideType === 'BREAK' ? (
-                      <div className="text-[9px] font-bold text-app-text-muted text-center px-2 line-clamp-3 p-1 w-full h-full flex items-center justify-center">
-                         ⏸ BREAK
-                      </div>
-                    ) : (
-                      <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center bg-app-bg">
-                        <div 
-                          className="origin-center flex flex-col items-center justify-center shrink-0"
-                          style={{ 
-                            width: '1280px', 
-                            height: '720px', 
-                            transform: 'scale(0.19)',
-                            containerType: 'inline-size'
-                          }}
-                        >
-                           {slide.slideType === 'WORD' ? (
-                             <div className="w-full h-full flex items-center justify-center p-[6cqi]">
-                               <h3 
-                                 className="font-black tracking-tighter text-app-text-bright leading-none text-center font-sans break-words max-w-full text-[8cqi]"
-                                 dangerouslySetInnerHTML={{ __html: slide.content || '' }}
-                               />
-                             </div>
-                           ) : (
-                             <div className="w-full h-full bg-app-sidebar rounded-3xl p-[6cqi] flex flex-col items-center justify-center overflow-hidden">
-                               <div 
-                                 className="text-app-text-bright font-sans whitespace-pre-wrap break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-12 [&_ol]:pl-12 text-left leading-relaxed w-full"
-                                 dangerouslySetInnerHTML={{ __html: slide.content || '' }}
-                               />
-                             </div>
-                           )}
-                        </div>
-                      </div>
-                    )}
+                    <SlideRenderer slide={slide} animated={false} invertContentOnly={false} />
                     <div className="absolute bottom-0.5 right-1 bg-black/60 px-1 py-0.5 rounded text-[7px] font-bold text-white">
                       {slide.displayTime}s
                     </div>
@@ -646,7 +614,7 @@ const AssessmentEditor: React.FC = () => {
                   No slides in {MODULE_LABELS[activeModule].label}
                 </p>
                 <button 
-                  onClick={addSlide}
+                  onClick={() => addSlide('after')}
                   className="text-[10px] font-black text-app-accent underline uppercase tracking-widest hover:opacity-80"
                 >
                   Add First Slide
@@ -667,19 +635,35 @@ const AssessmentEditor: React.FC = () => {
             
             <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 w-full md:w-auto">
               {activeSlide && (activeSlide.slideType === 'WORD' || activeSlide.slideType === 'TEXT') && (
-                <div className="flex items-center gap-2 bg-app-sidebar border border-app-border rounded-xl px-3 py-1.5 shadow-xl">
-                  <Type size={14} className="text-app-text-muted" />
-                  <input 
-                    type="range" 
-                    min="0.2" max="4" step="0.05" 
-                    value={activeSlide.typographyScale || 1}
-                    onChange={(e) => updateSlide(activeSlide.id, { typographyScale: parseFloat(e.target.value) })}
-                    className="w-24 accent-app-accent cursor-pointer"
-                    title={`Text Scale: ${Math.round((activeSlide.typographyScale || 1) * 100)}%`}
-                  />
-                  <span className="text-[10px] font-bold text-app-text-muted w-8 text-right">
-                    {Math.round((activeSlide.typographyScale || 1) * 100)}%
-                  </span>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 bg-app-sidebar border border-app-border rounded-xl px-3 py-1.5 shadow-xl">
+                    <Type size={14} className="text-app-text-muted" />
+                    <input 
+                      type="range" 
+                      min="0.2" max="4" step="0.05" 
+                      value={activeSlide.typographyScale || 1}
+                      onChange={(e) => updateSlide(activeSlide.id, { typographyScale: parseFloat(e.target.value) })}
+                      className="w-20 md:w-24 accent-app-accent cursor-pointer"
+                      title={`Text Scale: ${Math.round((activeSlide.typographyScale || 1) * 100)}%`}
+                    />
+                    <span className="text-[10px] font-bold text-app-text-muted w-8 text-right">
+                      {Math.round((activeSlide.typographyScale || 1) * 100)}%
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-app-sidebar border border-app-border rounded-xl px-3 py-1.5 shadow-xl">
+                    <AlignJustify size={14} className="text-app-text-muted" />
+                    <input 
+                      type="range" 
+                      min="1.0" max="2.0" step="0.1" 
+                      value={activeSlide.lineHeight || 1.6}
+                      onChange={(e) => updateSlide(activeSlide.id, { lineHeight: parseFloat(e.target.value) })}
+                      className="w-20 md:w-24 accent-app-accent cursor-pointer"
+                      title={`Line Height: ${activeSlide.lineHeight || 1.6}`}
+                    />
+                    <span className="text-[10px] font-bold text-app-text-muted w-6 text-right">
+                      {Number(activeSlide.lineHeight || 1.6).toFixed(1)}
+                    </span>
+                  </div>
                 </div>
               )}
               <TextFormattingToolbar />
@@ -723,7 +707,8 @@ const AssessmentEditor: React.FC = () => {
                         )}
                         style={{ 
                           containerType: 'inline-size',
-                          fontSize: `calc(${activeSlide.slideType === 'WORD' ? '8cqi' : '1.1cqi'} * ${activeSlide.typographyScale || 1})`
+                          fontSize: `calc(${activeSlide.slideType === 'WORD' ? '8cqi' : '1.1cqi'} * ${activeSlide.typographyScale || 1})`,
+                          lineHeight: activeSlide.lineHeight || 1.6
                         }}
                       />
                     </div>
@@ -763,127 +748,151 @@ const AssessmentEditor: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar">
-            {/* Global Assessment Settings */}
-            <div className="p-4 bg-app-card rounded-xl border border-app-border space-y-4">
-              <div className="flex items-center gap-2">
-                <Shield size={14} className="text-red-400" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-app-text-muted">
-                  Global Test Settings
-                </span>
-              </div>
-
-              {/* Allow Candidate Skip Toggle */}
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div 
-                  onClick={() => setAssessment(prev => prev ? { ...prev, allowCandidateSkip: !prev.allowCandidateSkip } : null)}
-                  className={cn(
-                    "w-8 h-5 rounded-full border transition-all relative",
-                    assessment?.allowCandidateSkip
-                      ? "bg-app-accent border-app-accent"
-                      : "bg-app-card border-app-border"
-                  )}
-                >
-                  <div className={cn(
-                    "w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-all",
-                    assessment?.allowCandidateSkip ? "left-[14px]" : "left-[3px]"
-                  )} />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest group-hover:text-app-text-bright transition-colors">
-                    Allow Candidate Skip
-                  </span>
-                  <span className="text-[8px] font-bold text-app-text-muted/60 mt-0.5">
-                    {assessment?.allowCandidateSkip 
-                      ? 'Candidates CAN manually advance slides' 
-                      : 'Candidates MUST wait for timer on every slide'}
+            {/* Advanced Settings Accordion */}
+            <div className="bg-app-card rounded-xl border border-app-border overflow-hidden">
+              <button
+                onClick={() => setIsAdvancedSettingsOpen(!isAdvancedSettingsOpen)}
+                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Settings size={14} className="text-app-text-muted" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-app-text-muted">
+                    Advanced Settings
                   </span>
                 </div>
-              </label>
-            </div>
+                {isAdvancedSettingsOpen ? (
+                  <ChevronUp size={16} className="text-app-text-muted" />
+                ) : (
+                  <ChevronDown size={16} className="text-app-text-muted" />
+                )}
+              </button>
 
-            {/* Module Config Section */}
-            <div className="p-4 bg-app-card rounded-xl border border-app-border space-y-4">
-              <div className="flex items-center gap-2">
-                <Timer size={14} className={MODULE_LABELS[activeModule].color} />
-                <span className="text-[10px] font-black uppercase tracking-widest text-app-text-muted">
-                  {MODULE_LABELS[activeModule].label} Module Settings
-                </span>
-              </div>
-
-              {/* Timing Mode Toggle */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Timing Mode</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => updateModuleConfig({ timingMode: 'per-slide' })}
-                    className={cn(
-                      "py-2 px-3 rounded-lg border text-[9px] font-black uppercase tracking-wider transition-all",
-                      currentModuleConfig.timingMode === 'per-slide'
-                        ? "bg-app-accent/15 border-app-accent text-app-accent"
-                        : "bg-app-card border-app-border text-app-text-muted hover:text-app-text-bright"
-                    )}
-                  >
-                    Per-Slide
-                  </button>
-                  <button
-                    onClick={() => updateModuleConfig({ timingMode: 'global', globalDuration: currentModuleConfig.globalDuration || 1800 })}
-                    className={cn(
-                      "py-2 px-3 rounded-lg border text-[9px] font-black uppercase tracking-wider transition-all",
-                      currentModuleConfig.timingMode === 'global'
-                        ? "bg-app-accent/15 border-app-accent text-app-accent"
-                        : "bg-app-card border-app-border text-app-text-muted hover:text-app-text-bright"
-                    )}
-                  >
-                    Global Timer
-                  </button>
-                </div>
-              </div>
-
-              {/* Global Duration (only when global) */}
-              {currentModuleConfig.timingMode === 'global' && (
-                <>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Total Duration</label>
-                      <span className="text-xs font-black text-app-accent">{Math.floor(currentModuleConfig.globalDuration / 60)} min</span>
+              {/* Collapsible Content */}
+              {isAdvancedSettingsOpen && (
+                <div className="p-4 border-t border-app-border space-y-4 bg-black/20">
+                  {/* Global Settings Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Shield size={14} className="text-rose-400" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-app-text-muted">
+                        Global Test Settings
+                      </span>
                     </div>
-                    <input 
-                      type="range" min="60" max="3600" step="60"
-                      value={currentModuleConfig.globalDuration}
-                      onChange={(e) => updateModuleConfig({ globalDuration: parseInt(e.target.value) })}
-                      className="w-full accent-app-accent"
-                    />
-                    <div className="flex justify-between text-[8px] font-bold text-app-text-muted uppercase">
-                      <span>1 min</span><span>60 min</span>
-                    </div>
+
+                    {/* Allow Candidate Skip Toggle */}
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <div 
+                        onClick={() => setAssessment(prev => prev ? { ...prev, allowCandidateSkip: !prev.allowCandidateSkip } : null)}
+                        className={cn(
+                          "w-8 h-5 rounded-full border transition-all relative",
+                          assessment?.allowCandidateSkip
+                            ? "bg-app-accent border-app-accent"
+                            : "bg-app-card border-app-border"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-all",
+                          assessment?.allowCandidateSkip ? "left-[14px]" : "left-[3px]"
+                        )} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest group-hover:text-app-text-bright transition-colors">
+                          Allow Candidate Skip
+                        </span>
+                        <span className="text-[8px] font-bold text-app-text-muted/60 mt-0.5">
+                          {assessment?.allowCandidateSkip 
+                            ? 'Candidates CAN manually advance slides' 
+                            : 'Candidates MUST wait for timer on every slide'}
+                        </span>
+                      </div>
+                    </label>
                   </div>
 
-                </>
-              )}
+                  {/* Module Config Section */}
+                  <div className="pt-4 border-t border-app-border space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Timer size={14} className={MODULE_LABELS[activeModule].color} />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-app-text-muted">
+                        {MODULE_LABELS[activeModule].label} Module Settings
+                      </span>
+                    </div>
 
-              {/* Navigable Toggle */}
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div 
-                  onClick={() => updateModuleConfig({ navigable: !currentModuleConfig.navigable })}
-                  className={cn(
-                    "w-8 h-5 rounded-full border transition-all relative",
-                    currentModuleConfig.navigable
-                      ? "bg-app-accent border-app-accent"
-                      : "bg-app-card border-app-border"
-                  )}
-                >
-                  <div className={cn(
-                    "w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-all",
-                    currentModuleConfig.navigable ? "left-[14px]" : "left-[3px]"
-                  )} />
+                    {/* Timing Mode Toggle */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Timing Mode</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => updateModuleConfig({ timingMode: 'per-slide' })}
+                          className={cn(
+                            "py-2 px-3 rounded-lg border text-[9px] font-black uppercase tracking-wider transition-all",
+                            currentModuleConfig.timingMode === 'per-slide'
+                              ? "bg-app-accent/15 border-app-accent text-app-accent"
+                              : "bg-app-card border-app-border text-app-text-muted hover:text-app-text-bright"
+                          )}
+                        >
+                          Per-Slide
+                        </button>
+                        <button
+                          onClick={() => updateModuleConfig({ timingMode: 'global', globalDuration: currentModuleConfig.globalDuration || 1800 })}
+                          className={cn(
+                            "py-2 px-3 rounded-lg border text-[9px] font-black uppercase tracking-wider transition-all",
+                            currentModuleConfig.timingMode === 'global'
+                              ? "bg-app-accent/15 border-app-accent text-app-accent"
+                              : "bg-app-card border-app-border text-app-text-muted hover:text-app-text-bright"
+                          )}
+                        >
+                          Global Timer
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Global Duration (only when global) */}
+                    {currentModuleConfig.timingMode === 'global' && (
+                      <>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <label className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Total Duration</label>
+                            <span className="text-xs font-black text-app-accent">{Math.floor(currentModuleConfig.globalDuration / 60)} min</span>
+                          </div>
+                          <input 
+                            type="range" min="60" max="3600" step="60"
+                            value={currentModuleConfig.globalDuration}
+                            onChange={(e) => updateModuleConfig({ globalDuration: parseInt(e.target.value) })}
+                            className="w-full accent-app-accent"
+                          />
+                          <div className="flex justify-between text-[8px] font-bold text-app-text-muted uppercase">
+                            <span>1 min</span><span>60 min</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Navigable Toggle */}
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <div 
+                        onClick={() => updateModuleConfig({ navigable: !currentModuleConfig.navigable })}
+                        className={cn(
+                          "w-8 h-5 rounded-full border transition-all relative",
+                          currentModuleConfig.navigable
+                            ? "bg-app-accent border-app-accent"
+                            : "bg-app-card border-app-border"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-all",
+                          currentModuleConfig.navigable ? "left-[14px]" : "left-[3px]"
+                        )} />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Navigation size={12} className="text-app-text-muted" />
+                        <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest group-hover:text-app-text-bright transition-colors">
+                          Student Can Navigate
+                        </span>
+                      </div>
+                    </label>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Navigation size={12} className="text-app-text-muted" />
-                  <span className="text-[10px] font-black text-app-text-muted uppercase tracking-widest group-hover:text-app-text-bright transition-colors">
-                    Student Can Navigate
-                  </span>
-                </div>
-              </label>
+              )}
             </div>
 
             {/* Active Slide Properties */}

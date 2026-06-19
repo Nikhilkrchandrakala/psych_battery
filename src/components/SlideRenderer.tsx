@@ -75,11 +75,11 @@ export const SlideRenderer: React.FC<SlideRendererProps> = ({
         <div className="relative max-w-full px-[4cqi] w-full h-full flex flex-col overflow-hidden min-h-0 min-w-0">
           <div className="absolute inset-0 bg-app-accent/10 rounded-full blur-[150px]" />
           <div 
-            className="flex-1 font-sans font-normal text-app-text-bright tracking-tight w-full p-[4cqi] text-center font-black flex items-center justify-center whitespace-pre-wrap break-words relative z-10 min-h-0 overflow-hidden"
+            className="flex-1 font-sans text-app-text-bright uppercase tracking-tighter w-full p-[4cqi] text-center font-black flex items-center justify-center whitespace-pre-wrap break-words relative z-10 min-h-0 overflow-hidden [&_*]:!text-[1em] [&_font]:!text-[1em] [&_*]:!font-black"
             dangerouslySetInnerHTML={{ __html: slide.content }}
             style={{ 
               fontSize: `calc(clamp(0.5rem, 6cqi, 10rem) * ${slide.typographyScale || 1})`,
-              lineHeight: '1.2',
+              lineHeight: slide.lineHeight || 1.2,
               filter: invertContentOnly && slide.inverted ? 'invert(1)' : 'none'
             }}
           />
@@ -107,13 +107,14 @@ export const SlideRenderer: React.FC<SlideRendererProps> = ({
       )}
 
       {slide.slideType === 'TEXT' && (
-        <div className="w-full max-w-[92%] mx-auto px-[4cqi] py-[4cqi] flex flex-col justify-start">
+        <div className="w-full h-full flex flex-col items-center justify-center overflow-hidden p-[6cqi]">
           <div 
             style={{ 
-              fontSize: `calc(clamp(0.7rem, 2.2cqi, 2.8rem) * ${slide.typographyScale || 1})`, 
-              lineHeight: '1.6'
+              containerType: 'inline-size',
+              fontSize: `calc(1.1cqi * ${slide.typographyScale || 1})`, 
+              lineHeight: slide.lineHeight || 1.6
             }}
-            className="text-app-text-bright font-sans break-words text-left space-y-[1.2cqi] [&_p]:mb-[1.2cqi] [&_div]:mb-[1.2cqi] [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:list-inside [&_ol]:list-inside [&_ul]:pl-[2cqi] [&_ol]:pl-[2cqi] [&_li]:mb-[0.8cqi] [&_li]:leading-relaxed"
+            className="w-full font-sans font-normal text-app-text-bright tracking-tight break-words text-left [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:list-inside [&_ol]:list-inside [&_ul]:pl-[4cqi] [&_ol]:pl-[4cqi] [&_li]:my-[1cqi]"
             dangerouslySetInnerHTML={{ __html: cleanHTML(slide.content || "") }}
           />
         </div>
@@ -129,10 +130,8 @@ export const SlideRenderer: React.FC<SlideRendererProps> = ({
 
   const isTextSlide = slide.slideType === 'TEXT';
   const containerClasses = cn(
-    "flex-1 w-full h-full flex flex-col bg-app-sidebar min-h-0 min-w-0 relative",
-    isTextSlide 
-      ? "items-start justify-start overflow-y-auto" 
-      : "items-center justify-center overflow-hidden"
+    "flex-1 w-full h-full flex flex-col bg-app-sidebar min-h-0 min-w-0 relative items-center justify-center",
+    isTextSlide ? "overflow-y-auto" : "overflow-hidden"
   );
 
   if (!animated) {

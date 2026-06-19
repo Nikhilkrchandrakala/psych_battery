@@ -351,7 +351,7 @@ const AssessmentEngine: React.FC = () => {
       document.exitFullscreen().catch(e => console.log(e));
     }
     if (isAdminPreview) {
-      navigate(`/admin/assessment/${id}`);
+      navigate(`/admin/assessment/${id}?module=${currentModule}`);
     } else {
       window.location.href = `${mainSiteUrl}/ProfileDashboard?tab=psycheTest`;
     }

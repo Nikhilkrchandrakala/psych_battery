@@ -51,6 +51,7 @@ const AssessmentSchema = new mongoose.Schema({
       ['INTRO',   { timingMode: 'per-slide', globalDuration: 0, navigable: false }],
       ['TAT',     { timingMode: 'per-slide', globalDuration: 0, navigable: false }],
       ['WAT',     { timingMode: 'per-slide', globalDuration: 0, navigable: false }],
+      ['WAT_INST',{ timingMode: 'per-slide', globalDuration: 0, navigable: false }],
       ['SRT_INST',{ timingMode: 'per-slide', globalDuration: 0, navigable: false }],
       ['SRT',     { timingMode: 'global',    globalDuration: 1800, navigable: true }],
       ['SDT_INST',{ timingMode: 'per-slide', globalDuration: 0, navigable: false }],
@@ -80,7 +81,7 @@ const SlideSchema = new mongoose.Schema({
   slideType: { type: String, required: true },
   module: {
     type: String,
-    enum: ['INTRO', 'TAT', 'WAT', 'SRT_INST', 'SRT', 'SDT_INST', 'SDT', 'CLOSING'],
+    enum: ['INTRO', 'TAT', 'WAT_INST', 'WAT', 'SRT_INST', 'SRT', 'SDT_INST', 'SDT', 'CLOSING'],
     default: 'INTRO'
   },
   imageUrl: String,
@@ -88,6 +89,7 @@ const SlideSchema = new mongoose.Schema({
   displayTime: { type: Number, default: 5 },
   order: { type: Number, default: 0 },
   typographyScale: { type: Number, default: 1 },
+  lineHeight: { type: Number, default: 1.6 },
   inverted: { type: Boolean, default: false },
   isInstruction: { type: Boolean, default: false },
 }, { timestamps: true });
