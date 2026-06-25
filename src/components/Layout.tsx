@@ -120,7 +120,7 @@ const Layout: React.FC = () => {
               </div>
               <div className="flex-grow min-w-0">
                 <div className="text-xs font-bold text-app-text-bright truncate">{profile?.name}</div>
-                <div className="text-[10px] text-app-text-muted uppercase font-black tracking-widest truncate">{profile?.role === 'owner' ? 'OWNER' : (profile?.role === 'admin' ? 'SUPER ADMIN' : profile?.role)}</div>
+                <div className="text-[10px] text-app-text-muted uppercase font-black tracking-widest truncate">{profile?.role}</div>
               </div>
               <button
                 onClick={handleLogout}
