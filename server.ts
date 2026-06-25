@@ -833,6 +833,7 @@ async function startServer() {
           console.log(`PIQ OCR Completed and Assessor Notification created for submission ${submissionId}`);
 
           // --- SMS NOTIFICATION TEST ---
+          /*
           try {
             const targetNumber = process.env.ADMIN_SMS_NUMBER || '9884050857';
             const message = `Candidate ${candidateName} has uploaded their PIQ form. Ready for review.`;
@@ -884,6 +885,7 @@ async function startServer() {
           } catch (e) {
              console.error('Failed to trigger SMS notifications:', e);
           }
+          */
       }
     } catch (err) {
       console.error("PIQ OCR Pipeline Error:", err);
