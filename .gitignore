@@ -28,3 +28,10 @@ folder structure.txt
 
 # Uploads
 public/uploads/assessments/*
+
+# Deploy keys
+github_deploy_key*
+vps_deploy_key*
+*.key
+*.pub
+

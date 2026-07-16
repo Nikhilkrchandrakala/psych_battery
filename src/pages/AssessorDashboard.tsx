@@ -223,113 +223,115 @@ const AssessorDashboard: React.FC = () => {
              </div>
            ) : (
              <div className="bg-app-sidebar border border-app-border rounded-[2.5rem] overflow-hidden shadow-2xl">
-               <table className="w-full text-left border-collapse">
-                 <thead>
-                    <tr className="border-b border-app-border bg-black/20">
-                      <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Candidate Identity</th>
-                      <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Lifecycle Status</th>
-                      <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Course</th>
-                      <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Allotted Assessors</th>
-                      <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted text-right">Cadence</th>
-                    </tr>
-                 </thead>
-                 <tbody>
-                   {submissions.map((sub) => (
-                     <tr key={sub.id} className="border-b border-app-border hover:bg-white/5 transition-colors group">
-                       <td className="p-6">
-                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-app-card border border-app-border overflow-hidden flex items-center justify-center shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-                              {sub.student?.profileImage ? (
-                                <img src={sub.student.profileImage} alt={sub.student.name || 'Candidate'} className="w-full h-full object-cover" />
-                              ) : (
-                                <UserIcon size={24} className="text-app-text-muted" />
+               <div className="overflow-x-auto custom-scrollbar">
+                 <table className="w-full text-left border-collapse min-w-[1000px]">
+                   <thead>
+                      <tr className="border-b border-app-border bg-black/20">
+                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Candidate Identity</th>
+                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Lifecycle Status</th>
+                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Course</th>
+                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted">Allotted Assessors</th>
+                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted text-right">Cadence</th>
+                      </tr>
+                   </thead>
+                   <tbody>
+                     {submissions.map((sub) => (
+                       <tr key={sub.id} className="border-b border-app-border hover:bg-white/5 transition-colors group">
+                         <td className="p-6">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-2xl bg-app-card border border-app-border overflow-hidden flex items-center justify-center shrink-0 shadow-inner group-hover:scale-105 transition-transform">
+                                {sub.student?.profileImage ? (
+                                  <img src={sub.student.profileImage} alt={sub.student.name || 'Candidate'} className="w-full h-full object-cover" />
+                                ) : (
+                                  <UserIcon size={24} className="text-app-text-muted" />
+                                )}
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <div className="text-sm font-black text-app-text-bright">{sub.student?.name || 'Unknown Candidate'}</div>
+                                  <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[8px] font-black uppercase tracking-widest text-app-text-bright whitespace-nowrap">
+                                    B: {sub.student?.batch || '--'} | C: {sub.student?.chestNo || '--'}
+                                  </span>
+                                </div>
+                                <div className="text-[10px] font-bold text-app-text-muted uppercase tracking-widest">{sub.student?.email || 'N/A'}</div>
+                              </div>
+                           </div>
+                         </td>
+                         <td className="p-6">
+                            <span className={cn(
+                              "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm",
+                              sub.status === 'COMPLETED' ? "bg-green-500/10 text-green-400 border-green-500/20 shadow-green-500/5" :
+                              sub.status === 'MEETING_SCHEDULED' ? "bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-amber-500/5" :
+                              sub.status === 'UPLOADED' ? "bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-blue-500/5" :
+                              "bg-app-card text-app-text-muted border-app-border"
+                            )}>
+                              {sub.status.replace('_', ' ')}
+                            </span>
+                         </td>
+                         <td className="p-6">
+                             <span className="px-2.5 py-1 rounded bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-[0.15em] text-app-text-bright">
+                               {(() => {
+                                 const stage = sub.student?.clinicalStage || '';
+                                 const parts = stage.split(',').map((s: string) => s.trim()).filter(Boolean);
+                                 if (parts.length === 0) return 'Full Course';
+                                 
+                                 const names = parts.map((part: string) => {
+                                   switch(part) {
+                                     case 'full_course': return 'Full Course';
+                                     case 'ssb_ppdt': return 'Intro & PPDT';
+                                     case 'psych': return 'Psychology';
+                                     case 'interview': return 'Interview';
+                                     case 'group_testing': return 'GTO Tasks';
+                                     default: return part.toUpperCase();
+                                   }
+                                 });
+                                 return names.join(', ');
+                               })()}
+                             </span>
+                          </td>
+                          <td className="p-6">
+                            <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                              {sub.student?.assignedPsych && (
+                                <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded text-[9px] font-black uppercase tracking-wider">Psych</span>
+                              )}
+                              {sub.student?.assignedGTO && (
+                                <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded text-[9px] font-black uppercase tracking-wider">GTO</span>
+                              )}
+                              {sub.student?.assignedIO && (
+                                <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[9px] font-black uppercase tracking-wider">IO</span>
+                              )}
+                              {sub.student?.assignedTO && (
+                                <span className="px-1.5 py-0.5 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded text-[9px] font-black uppercase tracking-wider">TO</span>
+                              )}
+                              {!sub.student?.assignedPsych && !sub.student?.assignedGTO && !sub.student?.assignedIO && !sub.student?.assignedTO && (
+                                <span className="text-[10px] italic text-app-text-muted">None Allotted</span>
                               )}
                             </div>
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <div className="text-sm font-black text-app-text-bright">{sub.student?.name || 'Unknown Candidate'}</div>
-                                <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[8px] font-black uppercase tracking-widest text-app-text-bright whitespace-nowrap">
-                                  B: {sub.student?.batch || '--'} | C: {sub.student?.chestNo || '--'}
-                                </span>
-                              </div>
-                              <div className="text-[10px] font-bold text-app-text-muted uppercase tracking-widest">{sub.student?.email || 'N/A'}</div>
-                            </div>
-                         </div>
-                       </td>
-                       <td className="p-6">
-                          <span className={cn(
-                            "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm",
-                            sub.status === 'COMPLETED' ? "bg-green-500/10 text-green-400 border-green-500/20 shadow-green-500/5" :
-                            sub.status === 'MEETING_SCHEDULED' ? "bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-amber-500/5" :
-                            sub.status === 'UPLOADED' ? "bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-blue-500/5" :
-                            "bg-app-card text-app-text-muted border-app-border"
-                          )}>
-                            {sub.status.replace('_', ' ')}
-                          </span>
-                       </td>
-                       <td className="p-6">
-                           <span className="px-2.5 py-1 rounded bg-black/30 border border-app-border text-[9px] font-black uppercase tracking-[0.15em] text-app-text-bright">
-                             {(() => {
-                               const stage = sub.student?.clinicalStage || '';
-                               const parts = stage.split(',').map((s: string) => s.trim()).filter(Boolean);
-                               if (parts.length === 0) return 'Full Course';
-                               
-                               const names = parts.map((part: string) => {
-                                 switch(part) {
-                                   case 'full_course': return 'Full Course';
-                                   case 'ssb_ppdt': return 'Intro & PPDT';
-                                   case 'psych': return 'Psychology';
-                                   case 'interview': return 'Interview';
-                                   case 'group_testing': return 'GTO Tasks';
-                                   default: return part.toUpperCase();
-                                 }
-                               });
-                               return names.join(', ');
-                             })()}
-                           </span>
-                        </td>
-                        <td className="p-6">
-                          <div className="flex flex-wrap gap-1.5 max-w-[200px]">
-                            {sub.student?.assignedPsych && (
-                              <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded text-[9px] font-black uppercase tracking-wider">Psych</span>
-                            )}
-                            {sub.student?.assignedGTO && (
-                              <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded text-[9px] font-black uppercase tracking-wider">GTO</span>
-                            )}
-                            {sub.student?.assignedIO && (
-                              <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[9px] font-black uppercase tracking-wider">IO</span>
-                            )}
-                            {sub.student?.assignedTO && (
-                              <span className="px-1.5 py-0.5 bg-teal-500/10 text-teal-400 border border-teal-500/20 rounded text-[9px] font-black uppercase tracking-wider">TO</span>
-                            )}
-                            {!sub.student?.assignedPsych && !sub.student?.assignedGTO && !sub.student?.assignedIO && !sub.student?.assignedTO && (
-                              <span className="text-[10px] italic text-app-text-muted">None Allotted</span>
-                            )}
-                          </div>
-                        </td>
+                          </td>
 
-                       <td className="p-6 text-right">
-                          {sub.status === 'PENDING' && activeAssessorType !== 'GTO' && activeAssessorType !== 'IO' ? (
-                            <span className="inline-flex items-center gap-2 text-[10px] font-black text-app-text-muted uppercase tracking-widest cursor-not-allowed opacity-50" title="Candidate has not started their assessment yet">
-                              Awaiting Action
-                            </span>
-                          ) : (
-                              <Link 
-                                to={`/review/${sub.id}`}
-                                className={cn(
-                                  "inline-flex items-center gap-2 text-[10px] font-black transition-all uppercase tracking-widest group/btn",
-                                  sub.status === 'REPORT_RELEASED' ? "text-green-400 hover:text-green-300" : "text-app-accent hover:text-white"
-                                )}
-                                title={sub.status === 'REPORT_RELEASED' ? 'View Finalized Report' : 'Initialize Review'}
-                              >
-                                <Eye size={18} />
-                             </Link>
-                          )}
-                       </td>
-                     </tr>
-                   ))}
-                 </tbody>
-               </table>
+                         <td className="p-6 text-right">
+                            {sub.status === 'PENDING' && activeAssessorType !== 'GTO' && activeAssessorType !== 'IO' ? (
+                              <span className="inline-flex items-center gap-2 text-[10px] font-black text-app-text-muted uppercase tracking-widest cursor-not-allowed opacity-50" title="Candidate has not started their assessment yet">
+                                Awaiting Action
+                              </span>
+                            ) : (
+                                <Link 
+                                  to={`/review/${sub.id}`}
+                                  className={cn(
+                                    "inline-flex items-center gap-2 text-[10px] font-black transition-all uppercase tracking-widest group/btn",
+                                    sub.status === 'REPORT_RELEASED' ? "text-green-400 hover:text-green-300" : "text-app-accent hover:text-white"
+                                  )}
+                                  title={sub.status === 'REPORT_RELEASED' ? 'View Finalized Report' : 'Initialize Review'}
+                                >
+                                  <Eye size={18} />
+                               </Link>
+                            )}
+                         </td>
+                       </tr>
+                     ))}
+                   </tbody>
+                 </table>
+               </div>
              </div>
            )}
         </div>

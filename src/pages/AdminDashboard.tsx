@@ -220,124 +220,126 @@ const AdminDashboard: React.FC = () => {
       )}
 
       {activeTab === 'assignments' && (
-         <div className="bg-app-sidebar border border-app-border rounded-[2.5rem] overflow-hidden shadow-2xl animate-in fade-in duration-500">
-           <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-black/10">
-                  <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border">Candidate</th>
-                  <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border text-center">Candidate Step</th>
-                  <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border text-center">Psychologist</th>
-                  <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border text-center">GTO</th>
-                  <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border text-center">Interview (IO)</th>
-                  <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border text-center">Technical (TO)</th>
-                  <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {submissions.map((s) => {
-                  const student = s.student || users.find(u => u.uid === s.userId) || users.find(u => u.id === s.userId);
-                  const studentName = student?.name || 'Unknown Candidate';
-                  const studentEmail = student?.email || 'N/A';
-                  
-                  // Candidate Step calculation
-                  const hasPiq = s.piqFiles && s.piqFiles.length > 0;
-                  const isTestCompleted = s.status === 'COMPLETED' || s.status === 'REVIEW_PENDING' || s.status === 'TEST_COMPLETED' || s.status === 'REPORT_RELEASED';
-                  const hasDossier = s.uploadedFiles && s.uploadedFiles.length > 0;
-
-                  let candidateStepContent;
-                  if (hasDossier) {
-                    candidateStepContent = (
-                      <div className="flex items-center justify-center gap-1.5" title="All Documents Uploaded / Timed Test Complete">
-                        <span className="w-4 h-4 rounded-full border-2 border-green-500 flex items-center justify-center shrink-0 shadow-[0_0_8px_rgba(34,197,94,0.3)] animate-pulse">
-                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                        </span>
-                        <span className="text-[10px] font-black text-green-400 uppercase tracking-widest">Sealed</span>
-                      </div>
-                    );
-                  } else if (isTestCompleted) {
-                    candidateStepContent = (
-                      <span className="px-2.5 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] font-black uppercase tracking-wider">
-                        Candidate Evaluation
-                      </span>
-                    );
-                  } else if (hasPiq) {
-                    candidateStepContent = (
-                      <span className="px-2.5 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[9px] font-black uppercase tracking-wider">
-                        PIQ Uploaded
-                      </span>
-                    );
-                  } else {
-                    candidateStepContent = (
-                      <span className="px-2.5 py-1 rounded bg-app-card text-app-text-muted border border-app-border text-[9px] font-black uppercase tracking-wider">
-                        PIQ Pending
-                      </span>
-                    );
-                  }
-
-                  // Dots rendering helper
-                  const renderAssessorDot = (assigned: any, statusVal: string, name: string) => {
-                    if (!assigned) {
-                      return (
-                        <div className="flex items-center justify-center" title="Not required for this candidate's course">
-                          <span className="w-3 h-3 bg-gray-700 rounded-full shadow-inner inline-block" />
-                        </div>
-                      );
-                    }
-                    if (statusVal === 'COMPLETED') {
-                      return (
-                        <div className="flex items-center justify-center" title={`${name}: Evaluation Finalized & Locked`}>
-                          <span className="w-3.5 h-3.5 bg-green-500 rounded-full shadow-[0_0_8px_#22C55E] inline-block" />
-                        </div>
-                      );
-                    }
-                    return (
-                      <div className="flex items-center justify-center" title={`${name}: Assessment Pending`}>
-                        <span className="w-3.5 h-3.5 bg-amber-500 rounded-full animate-pulse shadow-[0_0_8px_#F59E0B] inline-block" />
-                      </div>
-                    );
-                  };
-
-                  return (
-                  <tr key={s.id} className="border-b border-app-border hover:bg-white/5 transition-colors group">
-                    <td className="p-6">
-                       <div className="flex items-center gap-2 mb-1">
-                         <div className="text-sm font-black text-app-text-bright">{studentName}</div>
-                         <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[8px] font-black uppercase tracking-widest text-app-text-bright whitespace-nowrap">
-                           B: {student?.batch || '--'} | C: {student?.chestNo || '--'}
+          <div className="bg-app-sidebar border border-app-border rounded-[2.5rem] overflow-hidden shadow-2xl animate-in fade-in duration-500">
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left border-collapse min-w-[1000px]">
+                 <thead>
+                   <tr className="bg-black/10">
+                     <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border">Candidate</th>
+                     <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border text-center">Candidate Step</th>
+                     <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border text-center">Psychologist</th>
+                     <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border text-center">GTO</th>
+                     <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border text-center">Interview (IO)</th>
+                     <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border text-center">Technical (TO)</th>
+                     <th className="p-6 text-[10px] font-black uppercase tracking-[0.2em] text-app-text-muted border-b border-app-border text-right">Actions</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {submissions.map((s) => {
+                     const student = s.student || users.find(u => u.uid === s.userId) || users.find(u => u.id === s.userId);
+                     const studentName = student?.name || 'Unknown Candidate';
+                     const studentEmail = student?.email || 'N/A';
+                     
+                     // Candidate Step calculation
+                     const hasPiq = s.piqFiles && s.piqFiles.length > 0;
+                     const isTestCompleted = s.status === 'COMPLETED' || s.status === 'REVIEW_PENDING' || s.status === 'TEST_COMPLETED' || s.status === 'REPORT_RELEASED';
+                     const hasDossier = s.uploadedFiles && s.uploadedFiles.length > 0;
+   
+                     let candidateStepContent;
+                     if (hasDossier) {
+                       candidateStepContent = (
+                         <div className="flex items-center justify-center gap-1.5" title="All Documents Uploaded / Timed Test Complete">
+                           <span className="w-4 h-4 rounded-full border-2 border-green-500 flex items-center justify-center shrink-0 shadow-[0_0_8px_rgba(34,197,94,0.3)] animate-pulse">
+                             <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                           </span>
+                           <span className="text-[10px] font-black text-green-400 uppercase tracking-widest">Sealed</span>
+                         </div>
+                       );
+                     } else if (isTestCompleted) {
+                       candidateStepContent = (
+                         <span className="px-2.5 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] font-black uppercase tracking-wider">
+                           Candidate Evaluation
                          </span>
-                       </div>
-                       <div className="text-[9px] font-black text-app-text-muted uppercase tracking-widest">{studentEmail}</div>
-                    </td>
-                    <td className="p-6 text-center">
-                       {candidateStepContent}
-                    </td>
-                    <td className="p-6 text-center">
-                       {renderAssessorDot(student?.assignedPsych, s.psychStatus || 'PENDING', 'Psychologist')}
-                    </td>
-                    <td className="p-6 text-center">
-                       {renderAssessorDot(student?.assignedGTO, (s as any).gtoStatus || 'PENDING', 'GTO Assessor')}
-                    </td>
-                    <td className="p-6 text-center">
-                       {renderAssessorDot(student?.assignedIO, (s as any).ioStatus || 'PENDING', 'Interviewing Officer')}
-                    </td>
-                    <td className="p-6 text-center">
-                       {renderAssessorDot(student?.assignedTO, (s as any).toStatus || 'PENDING', 'Technical Officer')}
-                    </td>
-                    <td className="p-6 text-right">
-                       <button
-                         onClick={() => setSelectedSubmission(s)}
-                         className="p-2 text-app-text-muted hover:text-app-accent hover:scale-115 active:scale-95 transition-all inline-flex items-center cursor-pointer"
-                         title="Audit Scorecard Details"
-                       >
-                         <Eye size={20} />
-                       </button>
-                    </td>
-                  </tr>
-                  );
-                })}
-              </tbody>
-           </table>
-         </div>
+                       );
+                     } else if (hasPiq) {
+                       candidateStepContent = (
+                         <span className="px-2.5 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[9px] font-black uppercase tracking-wider">
+                           PIQ Uploaded
+                         </span>
+                       );
+                     } else {
+                       candidateStepContent = (
+                         <span className="px-2.5 py-1 rounded bg-app-card text-app-text-muted border border-app-border text-[9px] font-black uppercase tracking-wider">
+                           PIQ Pending
+                         </span>
+                       );
+                     }
+   
+                     // Dots rendering helper
+                     const renderAssessorDot = (assigned: any, statusVal: string, name: string) => {
+                       if (!assigned) {
+                         return (
+                           <div className="flex items-center justify-center" title="Not required for this candidate's course">
+                             <span className="w-3 h-3 bg-gray-700 rounded-full shadow-inner inline-block" />
+                           </div>
+                         );
+                       }
+                       if (statusVal === 'COMPLETED') {
+                         return (
+                           <div className="flex items-center justify-center" title={`${name}: Evaluation Finalized & Locked`}>
+                             <span className="w-3.5 h-3.5 bg-green-500 rounded-full shadow-[0_0_8px_#22C55E] inline-block" />
+                           </div>
+                         );
+                       }
+                       return (
+                         <div className="flex items-center justify-center" title={`${name}: Assessment Pending`}>
+                           <span className="w-3.5 h-3.5 bg-amber-500 rounded-full animate-pulse shadow-[0_0_8px_#F59E0B] inline-block" />
+                         </div>
+                       );
+                     };
+   
+                     return (
+                     <tr key={s.id} className="border-b border-app-border hover:bg-white/5 transition-colors group">
+                       <td className="p-6">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="text-sm font-black text-app-text-bright">{studentName}</div>
+                            <span className="px-1.5 py-0.5 rounded bg-black/30 border border-app-border text-[8px] font-black uppercase tracking-widest text-app-text-bright whitespace-nowrap">
+                              B: {student?.batch || '--'} | C: {student?.chestNo || '--'}
+                            </span>
+                          </div>
+                          <div className="text-[9px] font-black text-app-text-muted uppercase tracking-widest">{studentEmail}</div>
+                       </td>
+                       <td className="p-6 text-center">
+                          {candidateStepContent}
+                       </td>
+                       <td className="p-6 text-center">
+                          {renderAssessorDot(student?.assignedPsych, s.psychStatus || 'PENDING', 'Psychologist')}
+                       </td>
+                       <td className="p-6 text-center">
+                          {renderAssessorDot(student?.assignedGTO, (s as any).gtoStatus || 'PENDING', 'GTO Assessor')}
+                       </td>
+                       <td className="p-6 text-center">
+                          {renderAssessorDot(student?.assignedIO, (s as any).ioStatus || 'PENDING', 'Interviewing Officer')}
+                       </td>
+                       <td className="p-6 text-center">
+                          {renderAssessorDot(student?.assignedTO, (s as any).toStatus || 'PENDING', 'Technical Officer')}
+                       </td>
+                       <td className="p-6 text-right">
+                          <button
+                            onClick={() => setSelectedSubmission(s)}
+                            className="p-2 text-app-text-muted hover:text-app-accent hover:scale-115 active:scale-95 transition-all inline-flex items-center cursor-pointer"
+                            title="Audit Scorecard Details"
+                          >
+                            <Eye size={20} />
+                          </button>
+                       </td>
+                     </tr>
+                     );
+                   })}
+                 </tbody>
+              </table>
+            </div>
+          </div>
       )}
 
       {/* ── SUPER ADMIN AUDIT DETAILS VIEW MODAL ──────────────────────────────── */}

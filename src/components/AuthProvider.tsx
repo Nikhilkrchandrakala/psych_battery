@@ -117,11 +117,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setProfile(null);
     setIsAdminUser(false);
 
-    // Redirect based on user role
-    if (role === 'assessor' || role === 'admin') {
+    // Redirect based on user role and context
+    const isAdministrative = role === 'assessor' || role === 'admin' || role === 'owner' || isAdminUser || window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/assessor');
+    if (isAdministrative) {
       window.location.href = ADMIN_PANEL_URL;
     } else {
-      window.location.href = `${MAIN_SITE_URL}/ProfileDashboard`;
+      window.location.href = `${MAIN_SITE_URL}/SignIn`;
     }
   };
 

@@ -241,13 +241,6 @@ const Layout: React.FC = () => {
                   <ArrowLeft size={24} />
                   {profile?.role === 'assessor' || profile?.role === 'admin' || profile?.role === 'owner' ? 'Back to Admin Panel' : 'Return to Profile'}
                 </a>
-                 <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-4 text-red-400 font-medium text-lg"
-                >
-                  <LogOut size={24} />
-                  Sign Out
-                </button>
               </div>
             </nav>
           </aside>

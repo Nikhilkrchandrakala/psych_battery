@@ -111,7 +111,7 @@ export const SlideRenderer: React.FC<SlideRendererProps> = ({
           <div 
             style={{ 
               containerType: 'inline-size',
-              fontSize: `calc(1.1cqi * ${slide.typographyScale || 1})`, 
+              fontSize: `calc(clamp(15px, 2.2cqi, 22px) * ${slide.typographyScale || 1})`, 
               lineHeight: slide.lineHeight || 1.6
             }}
             className="w-full font-sans font-normal text-app-text-bright tracking-tight break-words text-left [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:list-inside [&_ol]:list-inside [&_ul]:pl-[4cqi] [&_ol]:pl-[4cqi] [&_li]:my-[1cqi]"
