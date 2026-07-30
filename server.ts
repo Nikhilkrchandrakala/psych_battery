@@ -720,6 +720,7 @@ async function startServer() {
       submission.piqFiles = [...(submission.piqFiles || []), ...filePaths];
       if (piqType === 'piq2') {
         submission.piq2Status = 'VERIFIED';
+        submission.piqStatus = 'PARSED';
       } else {
         submission.piq1Status = 'VERIFIED';
         submission.piqStatus = 'PARSED';
@@ -782,6 +783,7 @@ async function startServer() {
         submission.piqParsedData = combinedText;
         if (piqType === 'piq2') {
           submission.piq2Status = 'VERIFIED';
+          submission.piqStatus = 'PARSED';
         } else {
           submission.piq1Status = 'VERIFIED';
           submission.piqStatus = 'PARSED';

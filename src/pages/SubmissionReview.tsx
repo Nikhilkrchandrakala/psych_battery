@@ -478,13 +478,7 @@ const SubmissionReview: React.FC = () => {
     }
   }, [profile]);
 
-  const isIOOnly = (() => {
-    if (!student?.clinicalStage) return false;
-    const stages = student.clinicalStage.split(',').map((s: string) => s.trim().toLowerCase()).filter(Boolean);
-    return stages.includes('interview') && !stages.includes('full_course') && !stages.includes('psych') && !stages.includes('psychology');
-  })();
-
-  // Tab and index redirection based on assessor role or student course type
+  // Tab and index redirection based on assessor role
   useEffect(() => {
     if (activeAssessorType === 'GTO') {
       setActiveTab('evaluation');
@@ -494,16 +488,12 @@ const SubmissionReview: React.FC = () => {
 
     if (activeAssessorType === 'IO') {
       setViewerMode('piq');
-    }
-
-    if (isIOOnly) {
-      setSelectedPiqTab('piq1');
-    } else if (activeAssessorType === 'IO') {
       setSelectedPiqTab('piq2');
+      setActivePiqIndex(0);
+    } else {
+      setActivePiqIndex(0);
     }
-
-    setActivePiqIndex(0);
-  }, [activeAssessorType, isIOOnly]);
+  }, [activeAssessorType]);
 
   const showRoleToggle = !profile?.assessorType;
 
@@ -746,11 +736,7 @@ const SubmissionReview: React.FC = () => {
   const handleVerifyPiq = async (piqType: 'piq1' | 'piq2') => {
     try {
       const fieldName = `${piqType}Status`;
-      const updatePayload: any = { [fieldName]: 'VERIFIED' };
-      // Also update piqStatus compatibility for piq1
-      if (piqType === 'piq1') {
-        updatePayload.piqStatus = 'PARSED';
-      }
+      const updatePayload: any = { [fieldName]: 'VERIFIED', piqStatus: 'PARSED' };
       const updated = await api.submissions.update(id!, updatePayload);
       setSubmission(prev => prev ? { ...prev, ...updated } : null);
       alert(`${piqType === 'piq2' ? 'PIQ 2 (Final)' : 'PIQ 1 (Initial)'} has been verified.`);
@@ -983,14 +969,14 @@ const SubmissionReview: React.FC = () => {
                   ? `No files uploaded yet for ${selectedPiqTab === 'piq1' ? 'PIQ 1' : 'PIQ 2'}.` 
                   : 'No Dossier sheets uploaded yet by the candidate.';
 
-                const isAssessorAuthorized = ['Psych', 'TO', 'IO', 'GTO'].includes(activeAssessorType) || profile?.role === 'admin' || profile?.role === 'owner';
+                const isAssessorAuthorized = ['Psych', 'TO'].includes(activeAssessorType) || profile?.role === 'admin' || profile?.role === 'owner';
                 const currentStatus = selectedPiqTab === 'piq1' 
                   ? (submission as any).piq1Status || (piq1Files.length > 0 ? 'VERIFIED' : 'PENDING') 
                   : (submission as any).piq2Status || 'PENDING';
 
                 return (
                   <div className="space-y-4">
-                    {viewerMode === 'piq' && !isIOOnly && (
+                    {viewerMode === 'piq' && activeAssessorType !== 'IO' && (
                       <div className="flex gap-2 p-1 bg-black/30 border border-app-border rounded-xl w-fit">
                         <button
                           type="button"
@@ -1044,34 +1030,36 @@ const SubmissionReview: React.FC = () => {
                         {/* Top: PDF / Image Viewer */}
                         <div className="w-full space-y-3">
                           <div className="flex items-center justify-between text-[10px] font-black text-app-text-muted uppercase tracking-[0.2em] px-2">
-                            <span>{viewerMode === 'piq' && isIOOnly ? `Personal Information Questionnaire (PIQ) - File ${activePiqIndex + 1} of ${activeFiles.length}` : `File ${activePiqIndex + 1} of ${activeFiles.length}`}</span>
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => setActivePiqIndex(i => Math.max(0, i - 1))}
-                                disabled={activePiqIndex === 0}
-                                className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent/50 disabled:opacity-30 transition-all"
-                              >
-                                <ChevronLeft size={12} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setActivePiqIndex(i => Math.min(activeFiles.length - 1, i + 1))}
-                                disabled={activePiqIndex === activeFiles.length - 1}
-                                className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent/50 disabled:opacity-30 transition-all"
-                              >
-                                <ChevronRight size={12} />
-                              </button>
-                              <a
-                                href={buildFileUrl(activeFiles[activePiqIndex], piqFiles.indexOf(activeFiles[activePiqIndex]))}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent text-app-text-muted hover:text-app-accent transition-all"
-                                title="Open full screen"
-                              >
-                                <Maximize2 size={12} />
-                              </a>
-                            </div>
+                            <span>{viewerMode === 'piq' && activeAssessorType === 'IO' ? 'Personal Information Questionnaire (PIQ)' : `File ${activePiqIndex + 1} of ${activeFiles.length}`}</span>
+                            {(viewerMode !== 'piq' || activeAssessorType !== 'IO') && (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setActivePiqIndex(i => Math.max(0, i - 1))}
+                                  disabled={activePiqIndex === 0}
+                                  className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent/50 disabled:opacity-30 transition-all"
+                                >
+                                  <ChevronLeft size={12} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setActivePiqIndex(i => Math.min(activeFiles.length - 1, i + 1))}
+                                  disabled={activePiqIndex === activeFiles.length - 1}
+                                  className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent/50 disabled:opacity-30 transition-all"
+                                >
+                                  <ChevronRight size={12} />
+                                </button>
+                                <a
+                                  href={buildFileUrl(activeFiles[activePiqIndex], piqFiles.indexOf(activeFiles[activePiqIndex]))}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="p-1.5 rounded-lg bg-app-card border border-app-border hover:border-app-accent text-app-text-muted hover:text-app-accent transition-all"
+                                  title="Open full screen"
+                                >
+                                  <Maximize2 size={12} />
+                                </a>
+                              </div>
+                            )}
                           </div>
 
                           <div className="bg-app-card rounded-3xl border border-app-border overflow-hidden shadow-2xl" style={{ height: '720px' }}>
@@ -1093,7 +1081,7 @@ const SubmissionReview: React.FC = () => {
                           </div>
 
                           {/* File tabs if multiple */}
-                          {activeFiles.length > 1 && (
+                          {activeFiles.length > 1 && (viewerMode !== 'piq' || activeAssessorType !== 'IO') && (
                             <div className="flex gap-2 flex-wrap">
                               {activeFiles.map((_, i) => (
                                 <button
